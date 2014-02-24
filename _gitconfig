@@ -1,0 +1,5 @@
+[user]
+	name = Bill Beesley
+	email = bbeesley@me.com
+[core]
+	editor = vi
