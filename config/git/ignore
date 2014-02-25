@@ -1,0 +1,4 @@
+# Global Ignores
+
+# Ignore gedit tmp files everywhere
+*~
