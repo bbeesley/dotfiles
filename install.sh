@@ -18,7 +18,7 @@ fi
 function setup {
 for i in $(ls ~/dotfiles | grep '^_'); do 
 dotname=$(echo $i | sed 's|^_|.|')
-if [[ ~/$dotname ]]
+if [[ -e ~/$dotname ]]
 then
 echo "You already have a $dotname in your home folder, I'll move it to the dotfiles directory and symlink it back"
 mv ~/$dotname ~/dotfiles/$i && ln -s ~/dotfiles/$i ~/$dotname
@@ -29,7 +29,7 @@ fi
 done
 for i in $(ls ~/dotfiles | grep '^_'); do 
 dotname=$(echo $i | sed 's|^_|.|')
-if [[ ~/$dotname ]]
+if [[ -e ~/$dotname ]]
 then
 echo "You already have a $dotname in your home folder, I'll move it to the dotfiles directory and symlink it back"
 mv ~/$dotname ~/dotfiles/$i && ln -s ~/dotfiles/$i ~/$dotname
@@ -42,10 +42,10 @@ done
 for i in $(find ~/dotfiles/ -maxdepth 2 -mindepth 2 -type d | grep -v '\.git'); do
 dotdir=$(dirname $i | grep -o '[^/]*$')
 sub=$(basename $i)
-if [[ ~/.$dotdir ]]
+if [[ -e ~/.$dotdir ]]
 then
 echo "OK, .$dotdir exists in your home dir"
-if [[ ~/.$dotdir/$sub ]]
+if [[ -e ~/.$dotdir/$sub ]]
 then
 echo "OK, you already have a local version of.$dotdir/$sub, moving it to dotfiles repo and symlinking"
 mv ~/.$dotdir/$sub ~/dotfiles/$dotdir/$sub && ln -s ~/dotfiles/$dotdir/$sub ~/.$dotdir/$sub
