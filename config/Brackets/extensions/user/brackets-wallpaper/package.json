@@ -1,0 +1,10 @@
+{
+    "name": "brackets-wallpaper",
+    "title": "Brackets Wallpaper",
+    "description": "Wallpaper for your coding.",
+    "version": "1.0.7",
+    "author": "growlScript",
+    "engines": {
+        "brackets": ">=0.26.0"
+    }
+}

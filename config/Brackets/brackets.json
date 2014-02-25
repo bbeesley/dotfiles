@@ -1,0 +1,12 @@
+{
+    "useTabChar": false,
+    "tabSize": 4,
+    "spaceUnits": 4,
+    "closeBrackets": true,
+    "showLineNumbers": true,
+    "styleActiveLine": false,
+    "wordWrap": true,
+    "linting.enabled": true,
+    "linting.collapsed": true,
+    "quickview.enabled": true
+}

@@ -1,0 +1,19 @@
+<ul id="git-branch-dropdown" class="dropdown-menu" tabindex="-1">
+    <li>
+        <a class="git-branch-new">
+            <span>{{Strings.CREATE_NEW_BRANCH}}</span>
+        </a>
+    </li>
+
+    {{#branchList.length}}
+    <li class="divider"></li>
+    {{/branchList.length}}
+
+    {{#branchList}}
+    <li>
+        <a class="git-branch-link" data-branch="{{.}}">
+            <span>{{.}}</span>
+        </a>
+    </li>
+    {{/branchList}}
+</ul>

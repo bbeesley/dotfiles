@@ -1,0 +1,56 @@
+/* Wallpaper styles */
+#wallpaper-container {
+    display: none;
+
+    &.wallpaper-active {
+        display: block;
+    }
+    
+    &, & div {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+    }
+    
+    .wallpaper-adjust {
+        background-size: auto 100%;
+    }
+    
+    // Fx
+    .fx-active[data-fx="whitefilm"] {
+        background-color: rgba(252, 252, 252, 0.8);
+    }
+    
+    .fx-active[data-fx="blackfilm"] {
+        background-color: rgba(60, 63, 65, 0.8);
+    }
+    
+    .fx-active[data-fx="blur"] {
+        -webkit-filter: blur(3px);
+        filter: blur(3px);
+    }
+}
+
+/* style for config window */
+#brackets-wp-pref {
+    .input-append input[type='text'] {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+    
+    input[readonly] {
+        cursor: default !important;
+    }
+    
+    .posSelector td {
+        width: 20px; height: 20px;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .posSelector input {
+        position: relative;
+    }
+}
