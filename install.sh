@@ -20,19 +20,8 @@ for i in $(ls ~/dotfiles | grep '^_'); do
 dotname=$(echo $i | sed 's|^_|.|')
 if [[ -e ~/$dotname ]]
 then
-echo "You already have a $dotname in your home folder, I'll move it to the dotfiles directory and symlink it back"
-mv ~/$dotname ~/dotfiles/$i && ln -s ~/dotfiles/$i ~/$dotname
-else 
-echo "You don't seem to have a $dotname in your home folder, linking the one from the dotfiles directory"
-ln -s ~/dotfiles/$i ~/$dotname
-fi
-done
-for i in $(ls ~/dotfiles | grep '^_'); do 
-dotname=$(echo $i | sed 's|^_|.|')
-if [[ -e ~/$dotname ]]
-then
-echo "You already have a $dotname in your home folder, I'll move it to the dotfiles directory and symlink it back"
-mv ~/$dotname ~/dotfiles/$i && ln -s ~/dotfiles/$i ~/$dotname
+echo "You already have a $dotname in your home folder, if it isn't a symlink I'll move it to the dotfiles directory and symlink it back"
+[[ ! -h ~/$dotname ]] && mv ~/$dotname ~/dotfiles/$i && ln -s ~/dotfiles/$i ~/$dotname || echo "never mind, it was a symlink"
 else 
 echo "You don't seem to have a $dotname in your home folder, linking the one from the dotfiles directory"
 ln -s ~/dotfiles/$i ~/$dotname
@@ -47,8 +36,8 @@ then
 echo "OK, .$dotdir exists in your home dir"
 if [[ -e ~/.$dotdir/$sub ]]
 then
-echo "OK, you already have a local version of.$dotdir/$sub, moving it to dotfiles repo and symlinking"
-mv ~/.$dotdir/$sub ~/dotfiles/$dotdir/$sub && ln -s ~/dotfiles/$dotdir/$sub ~/.$dotdir/$sub
+echo "OK, you already have a local version of.$dotdir/$sub, if it isn't a symlink I'll move it to dotfiles repo and symlink"
+[[ ! -h ~/.$dotdir/$sub ]] && mv ~/.$dotdir/$sub ~/dotfiles/$dotdir/$sub && ln -s ~/dotfiles/$dotdir/$sub ~/.$dotdir/$sub || echo "Never mind, it was a symlink"
 else
 echo "No $sub in your .$dotdir, symlinking the version from the dotfiles repo"
 ln -s ~/dotfiles/$dotdir/$sub ~/.$dotdir/$sub
