@@ -1,5 +1,13 @@
-[user]
-	name = Bill Beesley
-	email = bbeesley@me.com
 [core]
 	editor = vi
+	excludesfile = /home/bill/.config/git/ignore
+[user]
+	email = bbeesley@me.com
+	name = Bill Beesley
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+[push]
+	default = matching
