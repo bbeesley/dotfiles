@@ -2,3 +2,5 @@
 
 # Ignore gedit tmp files everywhere
 *~
+# Ignore vi tmp files
+*.swp
