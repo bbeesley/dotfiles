@@ -1,8 +1,13 @@
-# .Rprofile -- commands to execute at the beginning of each R session
-#
-# You can use this file to load packages, set options, etc.
-#
-# NOTE: changes in this file won't be reflected until after you quit
-# and start a new session
-#
+options(papersize="a4") 
+options(editor="vi") 
+options(tab.width = 2) 
+options(width = 238)
+options(graphics.record=TRUE) 
 
+.First <- function(){
+  cat("\nWelcome at", date(), "\n") 
+}
+
+.Last <- function(){ 
+  cat("\nGoodbye at ", date(), "\n")
+}

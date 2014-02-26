@@ -7,6 +7,6 @@
     "styleActiveLine": false,
     "wordWrap": true,
     "linting.enabled": true,
-    "linting.collapsed": true,
+    "linting.collapsed": false,
     "quickview.enabled": true
 }
