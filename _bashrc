@@ -11,3 +11,4 @@ fi
 # User specific aliases and functions
 export SVN_EDITOR=/usr/bin/vi
 source ~/.git-completion.bash
+alias fp="ps -Af | grep"
