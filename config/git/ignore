@@ -4,3 +4,6 @@
 *~
 # Ignore vi tmp files
 *.swp
+
+# Ignore Calc tmp files
+.~lock*
