@@ -6,9 +6,11 @@ Should work on all Brackets platforms (Win, Mac, Linux).
 
 You need to have [Node.js](http://nodejs.org/) installed.
 
-Windows users need to have [msysgit](https://code.google.com/p/msysgit/) installed.
+Windows users need to have [msysgit](https://code.google.com/p/msysgit/) installed (recommended is installation with [this setting](https://raw.github.com/zaggino/brackets-git/master/screenshots/gitInstall.png) and turning on the "Git can be called from anywhere" option).
 
 Mac users need to have [Git for OS X](https://code.google.com/p/git-osx-installer/) installed.
+
+Linux users simply ```sudo apt-get install git```.
 
 ## Installation
 
@@ -29,11 +31,11 @@ If you won't find the feature you were looking for, feel free to __open issues w
 
 ### Some screenshots:
 
-![main](https://raw.github.com/zaggino/brackets-git/master/screenshots/main.png)
+![main](https://raw.github.com/zaggino/brackets-git/master/screenshots/main.jpg)
 
-![commit dialog](https://raw.github.com/zaggino/brackets-git/master/screenshots/commitDialog.png)
+![commit dialog](https://raw.github.com/zaggino/brackets-git/master/screenshots/commitDialog.jpg)
 
-![settings dialog](https://raw.github.com/zaggino/brackets-git/master/screenshots/settingsDialog.png)
+![settings dialog](https://raw.github.com/zaggino/brackets-git/master/screenshots/settingsDialog.jpg)
 
 ## Contributing
 

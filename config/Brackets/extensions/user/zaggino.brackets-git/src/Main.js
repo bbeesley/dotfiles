@@ -3,33 +3,32 @@
 
 define(function (require, exports) {
     "use strict";
-    
+
     var q               = require("../thirdparty/q"),
         _               = brackets.getModule("thirdparty/lodash"),
         AppInit         = brackets.getModule("utils/AppInit"),
         CommandManager  = brackets.getModule("command/CommandManager"),
         Menus           = brackets.getModule("command/Menus"),
         DocumentManager = brackets.getModule("document/DocumentManager"),
-        EditorManager   = brackets.getModule("editor/EditorManager"),
         FileSystem      = brackets.getModule("filesystem/FileSystem"),
         FileUtils       = brackets.getModule("file/FileUtils"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
         Strings         = require("../strings"),
+        Preferences     = require("./Preferences"),
         ErrorHandler    = require("./ErrorHandler"),
         GitControl      = require("./GitControl"),
         GutterManager   = require("./GutterManager"),
         Panel           = require("./Panel"),
         Branch          = require("./Branch");
-    
+
     var $icon                   = $("<a id='git-toolbar-icon' href='#'></a>").attr("title", Strings.LOADING)
                                     .addClass("loading").appendTo($("#main-toolbar .buttons")),
-        gitControl              = null,
-        preferences             = null;
+        gitControl              = null;
 
     function getProjectRoot() {
         return ProjectManager.getProjectRoot().fullPath;
     }
-    
+
     var writeTestResults = {};
     function isProjectRootWritable() {
         var folder = getProjectRoot();
@@ -56,33 +55,38 @@ define(function (require, exports) {
         return result.promise;
     }
 
-    // This only launches, when bash is available
-    function initBashIcon() {
-        $(document).on("click", ".git-bash", function() {
-            gitControl.bashOpen(getProjectRoot());
+    // This checks if the project root is empty (to let Git clone repositories)
+    function isProjectRootEmpty() {
+        var defer = q.defer();
+        ProjectManager.getProjectRoot().getContents(function (err, entries) {
+            if (err) {
+                return defer.reject(err);
+            }
+            defer.resolve(entries.length === 0);
         });
+        return defer.promise;
     }
-    
+
     // This only launches when Git is available
     function initUi() {
-        Panel.init(gitControl, preferences);
-        Branch.init(gitControl, preferences);
-        
+        Panel.init(gitControl);
+        Branch.init(gitControl);
+
         // Attach events
         $icon.on("click", Panel.toggle);
-        
+
         // Show gitPanel when appropriate
-        if (preferences.getValue("panelEnabled")) {
+        if (Preferences.get("panelEnabled")) {
             Panel.toggle(true);
         }
     }
-    
+
     // Call this only when Git is available
     function attachEventsToBrackets() {
         $(ProjectManager).on("projectOpen projectRefresh", function () {
             Branch.refresh();
-            Panel.refresh();
-            highlightGitignore();
+            Panel.prepareRemotesPicker();
+            refreshIgnoreEntries().then(Panel.refresh);
         });
         $(FileSystem).on("change rename", function () {
             Branch.refresh();
@@ -90,16 +94,17 @@ define(function (require, exports) {
         });
         $(DocumentManager).on("documentSaved", function () {
             Panel.refresh();
-            refreshGitGutters();
+            GutterManager.refresh();
         });
         $(DocumentManager).on("currentDocumentChange", function () {
             Panel.refreshCurrentFile();
-            refreshGitGutters();
+            GutterManager.refresh();
         });
-        highlightGitignore();
-        refreshGitGutters();
+
+        refreshIgnoreEntries();
+        GutterManager.refresh();
     }
-    
+
     function _addRemoveItemInGitignore(selectedEntry, method) {
         var projectRoot = getProjectRoot(),
             entryPath = "/" + selectedEntry.fullPath.substring(projectRoot.length),
@@ -131,8 +136,7 @@ define(function (require, exports) {
                 if (err) {
                     return ErrorHandler.showError(err, "Failed modifying .gitignore");
                 }
-                Panel.refresh();
-                highlightGitignore();
+                refreshIgnoreEntries().then(Panel.refresh);
             });
         });
     }
@@ -157,110 +161,74 @@ define(function (require, exports) {
         return _addRemoveItemInGitignore(fileEntry, "remove");
     }
 
-    function highlightGitignore() {
-        var projectRoot = getProjectRoot();
-        FileSystem.getFileForPath(projectRoot + ".gitignore").read(function (err, content) {
-            if (err) { return; }
+    var _ignoreEntries = [];
 
-            var ignoreEntries = _.map(_.compact(content.split("\n")), function (line) {
+    function refreshProjectFiles(modifiedEntries) {
+        if (!Preferences.get("markModifiedInTree")) {
+            return;
+        }
+
+        function isIgnored(path) {
+            return _.any(_ignoreEntries, function (entry) {
+                return path.match(entry + "/?$");
+            });
+        }
+
+        $("#project-files-container").find("li").each(function () {
+            var $li = $(this),
+                fullPath = $li.data("entry").fullPath,
+                isModified = modifiedEntries.indexOf(fullPath) !== -1;
+            $li.toggleClass("git-ignored", isIgnored(fullPath))
+               .toggleClass("git-modified", isModified);
+        });
+    }
+
+    function refreshIgnoreEntries() {
+        if (!Preferences.get("markModifiedInTree")) {
+            return q();
+        }
+
+        var p = q.defer(),
+            projectRoot = getProjectRoot();
+
+        FileSystem.getFileForPath(projectRoot + ".gitignore").read(function (err, content) {
+            if (err) {
+                p.reject(err);
+                return;
+            }
+            _ignoreEntries = _.map(_.compact(content.split("\n")), function (line) {
                 line = line.trim();
                 if (line.indexOf("/") === 0) { line = line.substring(1); }
                 return projectRoot + line;
             });
-
-            $("#project-files-container").find("li").each(function () {
-                var $li = $(this),
-                    isIgnored = ignoreEntries.indexOf($li.data("entry").fullPath) !== -1;
-                $li.toggleClass("git-ignored", isIgnored);
-            });
+            p.resolve();
         });
+
+        return p.promise;
     }
 
-    function refreshGitGutters() {
-        if (!preferences.getValue("useGitGutter")) {
-            return;
-        }
-
-        var currentDoc = DocumentManager.getCurrentDocument();
-        if (!currentDoc) { return; }
-
-        var editor = EditorManager.getActiveEditor();
-        if (!editor || !editor._codeMirror) {
-            return;
-        }
-        GutterManager.prepareGutter(editor._codeMirror);
-
-        var filename = currentDoc.file.fullPath.substring(getProjectRoot().length);
-        gitControl.gitDiff(filename).then(function (diff) {
-            var added = [],
-                removed = [],
-                modified = [],
-                changesets = diff.split(/\n@@/).map(function (str) { return "@@" + str; });
-
-            // remove part before first
-            changesets.shift();
-
-            changesets.forEach(function (str) {
-                var m = str.match(/^@@ -([,0-9]+) \+([,0-9]+) @@/);
-                var s1 = m[1].split(",");
-                var s2 = m[2].split(",");
-
-                // removed stuff
-                var lineRemovedFrom;
-                var lineFrom = parseInt(s2[0], 10);
-                var lineCount = parseInt(s1[1], 10);
-                if (isNaN(lineCount)) { lineCount = 1; }
-                if (lineCount > 0) {
-                    lineRemovedFrom = lineFrom > 0 ? lineFrom - 1 : 0;
-                    removed.push({
-                        type: "removed",
-                        line: lineRemovedFrom,
-                        content: str.split("\n")
-                                    .filter(function (l) { return l.indexOf("-") === 0; })
-                                    .map(function (l) { return l.substring(1); })
-                                    .join("\n")
-                    });
-                }
-
-                // added stuff
-                lineFrom = parseInt(s2[0], 10);
-                lineCount = parseInt(s2[1], 10);
-                if (isNaN(lineCount)) { lineCount = 1; }
-                var isModified = false;
-                for (var i = lineFrom, lineTo = lineFrom + lineCount; i < lineTo; i++) {
-                    var lineNo = i > 0 ? i - 1 : 0;
-                    if (lineNo === lineRemovedFrom) {
-                        // modified
-                        var o = removed.pop();
-                        o.type = "modified";
-                        modified.push(o);
-                        isModified = o;
-                    } else {
-                        // added new
-                        added.push({
-                            type: isModified ? "modified" : "added",
-                            line: lineNo,
-                            parentMark: isModified || null
-                        });
-                    }
-                }
+    function sanitizeOutput(str) {
+        if (typeof str === "string") {
+            str = str.replace(/(https?:\/\/)([^:@\s]*):([^:@]*)?@/g, function (a, protocol, user/*, pass*/) {
+                return protocol + user + ":***@";
             });
-
-            // fix displaying of removed lines
-            removed.forEach(function (o) {
-                o.line = o.line + 1;
-            });
-
-            GutterManager.showGutters(editor._codeMirror, [].concat(added, removed, modified));
-        });
+        } else {
+            if (str != null) { // checks for both null & undefined
+                str = str.toString();
+            } else {
+                str = "";
+            }
+        }
+        return str;
     }
 
-    function init(nodeConnection, _preferences) {
-        preferences = exports.preferences = _preferences;
-        var TIMEOUT_VALUE = preferences.getValue("TIMEOUT_VALUE");
+    function init(nodeConnection) {
+        var debugOn       = Preferences.get("debugMode"),
+            extName       = "[brackets-git] ",
+            TIMEOUT_VALUE = Preferences.get("TIMEOUT_VALUE");
+
         // Creates an GitControl Instance
         gitControl = exports.gitControl = new GitControl({
-            preferences: preferences,
             handler: function (method, cmd, args, opts) {
                 var rv = q.defer(),
                     resolved = false;
@@ -269,22 +237,24 @@ define(function (require, exports) {
                 if (opts.cwd) { opts.customCwd = true; }
                 else { opts.cwd = getProjectRoot(); }
 
-                if (window.bracketsGit.debug) {
-                    console.log("cmd-" + method + ": " + (opts.customCwd ? opts.cwd + "\\" : "") + cmd + " " + args.join(" "));
+                if (debugOn) {
+                    console.log(extName + "cmd-" + method + ": " + (opts.customCwd ? opts.cwd + "\\" : "") + cmd + " " + args.join(" "));
                 }
 
                 // nodeConnection returns jQuery deffered, not Q
                 nodeConnection.domains["brackets-git"][method](opts.cwd, cmd, args)
-                    .then(function (out) {
-                        if (!resolved) {
-                            if (window.bracketsGit.debug) { console.log("cmd-" + method + "-out: " + out); }
-                            rv.resolve(out);
-                        }
-                    })
                     .fail(function (err) {
                         if (!resolved) {
-                            if (window.bracketsGit.debug) { console.log("cmd-" + method + "-fail: " + err); }
+                            err = sanitizeOutput(err);
+                            if (debugOn) { console.log(extName + "cmd-" + method + "-fail: \"" + err + "\""); }
                             rv.reject(err);
+                        }
+                    })
+                    .then(function (out) {
+                        if (!resolved) {
+                            out = sanitizeOutput(out);
+                            if (debugOn) { console.log(extName + "cmd-" + method + "-out: \"" + out + "\""); }
+                            rv.resolve(out);
                         }
                     })
                     .always(function () {
@@ -295,11 +265,18 @@ define(function (require, exports) {
                 setTimeout(function () {
                     if (!resolved) {
                         var err = new Error("cmd-" + method + "-timeout: " + cmd + " " + args.join(" "));
-                        ErrorHandler.logError(err);
+                        if (opts.timeoutExpected) {
+                            if (debugOn) {
+                                console.log(extName + "cmd-" + method + "-timeout: \"" + err + "\"");
+                            }
+                        } else {
+                            ErrorHandler.logError(err);
+                        }
+
                         rv.reject(err);
                         resolved = true;
                     }
-                }, opts.timeout || TIMEOUT_VALUE);
+                }, opts.timeout ? (opts.timeout * 1000) : TIMEOUT_VALUE);
 
                 return rv.promise;
             }
@@ -318,11 +295,6 @@ define(function (require, exports) {
                 $icon.addClass("error").attr("title", errText);
                 throw err;
             }).done();
-
-            // Try to get Bash version, if succeeds then Bash is available
-            gitControl.bashVersion().then(function () {
-                initBashIcon();
-            });
 
             // add command to project menu
             var projectCmenu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
@@ -346,10 +318,12 @@ define(function (require, exports) {
             panelCmenu.addMenuItem(cmdName + "2");
         });
     }
-    
+
     // API
     exports.$icon = $icon;
     exports.getProjectRoot = getProjectRoot;
+    exports.isProjectRootEmpty = isProjectRootEmpty;
     exports.isProjectRootWritable = isProjectRootWritable;
+    exports.refreshProjectFiles = refreshProjectFiles;
     exports.init = init;
 });

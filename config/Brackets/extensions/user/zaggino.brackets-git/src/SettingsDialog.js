@@ -6,58 +6,80 @@ define(function (require, exports) {
 
     var CommandManager             = brackets.getModule("command/CommandManager"),
         Dialogs                    = brackets.getModule("widgets/Dialogs"),
-        DefaultPreferences         = require("../DefaultPreferences"),
+        Preferences                = require("./Preferences"),
         ChangelogDialog            = require("../src/ChangelogDialog"),
         Strings                    = require("../strings"),
         settingsDialogTemplate     = require("text!htmlContent/git-settings-dialog.html");
 
     var dialog,
-        preferences;
+        $dialog;
 
     function setValues(values) {
-        $("#git-settings-stripWhitespaceFromCommits").prop("checked", values.stripWhitespaceFromCommits);
-        $("#git-settings-addEndlineToTheEndOfFile").prop("checked", values.addEndlineToTheEndOfFile);
-        $("#git-settings-useGitGutter").prop("checked", values.useGitGutter);
-        $("#git-settings-panelShortcut").val(values.panelShortcut);
-        $("#git-settings-gitIsInSystemPath").prop("checked", values.gitIsInSystemPath);
-        $("#git-settings-gitPath")
-            .val(values.gitPath)
-            .prop("disabled", values.gitIsInSystemPath);
-        $("#git-settings-msysgitPath")
-            .val(values.msysgitPath)
-            .prop("disabled", brackets.platform !== "win");
+        $("*[settingsProperty]", $dialog).each(function () {
+            var $this = $(this),
+                type = $this.attr("type"),
+                property = $this.attr("settingsProperty");
+            if (type === "checkbox") {
+                $this.prop("checked", values[property]);
+            } else {
+                $this.val(values[property]);
+            }
+        });
+        $("#git-settings-gitPath", $dialog).prop("disabled", values.gitIsInSystemPath);
+        $("#git-settings-msysgitPath", $dialog).prop("disabled", brackets.platform !== "win");
+        $("#git-settings-terminalCommand", $dialog).prop("disabled", brackets.platform === "win");
     }
 
-    function restorePlatformDefaults() {
-        setValues(DefaultPreferences);
+    function collectValues() {
+        $("*[settingsProperty]", $dialog).each(function () {
+            var $this = $(this),
+                type = $this.attr("type"),
+                property = $this.attr("settingsProperty");
+            if (type === "checkbox") {
+                Preferences.set(property, $this.prop("checked"));
+            } else {
+                Preferences.set(property, $this.val().trim() || null);
+            }
+        });
+
+        // We need trailing slash for folders.
+        var msysgitPath = Preferences.get("msysgitPath");
+        if (msysgitPath && msysgitPath[msysgitPath.length - 1] !== "\\") {
+            Preferences.set("msysgitPath", msysgitPath + "\\");
+        }
+
+        Preferences.save();
     }
 
     function assignActions() {
-        $("#git-settings-gitIsInSystemPath").on("click", function () {
-            $("#git-settings-gitPath").prop("disabled", $(this).is(":checked"));
+        $("#git-settings-gitIsInSystemPath", $dialog).on("click", function () {
+            $("#git-settings-gitPath", $dialog).prop("disabled", $(this).is(":checked"));
         });
-        $("#git-settings-stripWhitespaceFromCommits").on("change", function () {
+        $("#git-settings-stripWhitespaceFromCommits", $dialog).on("change", function () {
             var on = $(this).is(":checked");
-            $("#git-settings-addEndlineToTheEndOfFile").prop("checked", on);
-            $("#git-settings-addEndlineToTheEndOfFile").prop("disabled", !on);
+            $("#git-settings-addEndlineToTheEndOfFile", $dialog)
+                .prop("checked", on)
+                .prop("disabled", !on);
         });
-        $("button[data-button-id='defaults']").on("click", function (e) {
+        $("button[data-button-id='defaults']", $dialog).on("click", function (e) {
             e.stopPropagation();
-            restorePlatformDefaults();
+            setValues(Preferences.getDefaults());
         });
-        $("button[data-button-id='changelog']").on("click", function (e) {
+        $("button[data-button-id='changelog']", $dialog).on("click", function (e) {
             e.stopPropagation();
-            ChangelogDialog.show(preferences);
+            ChangelogDialog.show();
         });
     }
 
     function init() {
-        setValues(preferences.getAllValues());
+        setValues(Preferences.getAll());
         assignActions();
-
-        if (brackets.platform !== "win") {
-            $(".windows_only").hide();
-        }
+        $(".windows-only", $dialog).toggle(brackets.platform === "win");
+        $(".non-windows-only", $dialog).toggle(brackets.platform !== "win");
+        $("#git-settings-tabs a", $dialog).click(function (e) {
+            e.preventDefault();
+            $(this).tab("show");
+        });
     }
 
     function showRestartDialog() {
@@ -74,29 +96,18 @@ define(function (require, exports) {
         });
     }
 
-    exports.show = function (prefs) {
+    exports.show = function () {
         var compiledTemplate = Mustache.render(settingsDialogTemplate, Strings);
 
         dialog = Dialogs.showModalDialogUsingTemplate(compiledTemplate);
-        preferences = prefs;
+        $dialog = dialog.getElement();
 
         init();
 
         dialog.done(function (buttonId) {
             if (buttonId === "ok") {
-                var $dialog = dialog.getElement();
-                preferences.setValue("stripWhitespaceFromCommits", $("#git-settings-stripWhitespaceFromCommits", $dialog).prop("checked"));
-                preferences.setValue("addEndlineToTheEndOfFile", $("#git-settings-addEndlineToTheEndOfFile", $dialog).prop("checked"));
-                preferences.setValue("useGitGutter", $("#git-settings-useGitGutter", $dialog).prop("checked"));
-                preferences.setValue("panelShortcut", $("#git-settings-panelShortcut", $dialog).val().trim());
-                preferences.setValue("gitIsInSystemPath", $("#git-settings-gitIsInSystemPath", $dialog).prop("checked"));
-                preferences.setValue("gitPath", $("#git-settings-gitPath", $dialog).val());
-                // We need trailing slash for folders.
-                var msysgitPath = $("#git-settings-msysgitPath", $dialog).val();
-                if (msysgitPath[msysgitPath.length - 1] !== "\\") {
-                    msysgitPath = msysgitPath + "\\";
-                }
-                preferences.setValue("msysgitPath", msysgitPath);
+                // Save everything to preferences
+                collectValues();
                 // Restart brackets to reload changes.
                 showRestartDialog();
             }
