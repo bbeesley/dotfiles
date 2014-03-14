@@ -5,3 +5,8 @@ Host github.com
 Host craftx.biz
   Hostname my.craftx.biz
   Port 443
+
+Host billbeesley.com
+  Hostname 54.84.55.198
+  IdentityFile ~/.ssh/billbeesleycom.pem
+  User ubuntu
