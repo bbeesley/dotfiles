@@ -1,12 +1,12 @@
 /* jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/* global define, brackets, $ */
+/* global define, brackets, $, require, Mustache */
 
 /*
     HTML Skeleton
     Created 2014 Triangle717
     <http://Triangle717.WordPress.com/>
 
-    Licensed under The MIT Licenses
+    Licensed under The MIT License
 */
 
 
@@ -17,22 +17,27 @@ define(function (require, exports, module) {
     "use strict";
 
     // Import the required Brackets modules
-    var AppInit = brackets.getModule("utils/AppInit"),
-        CommandManager = brackets.getModule("command/CommandManager"),
-        Dialogs = brackets.getModule("widgets/Dialogs"),
-        Document = brackets.getModule("document/Document"),
-        EditorManager = brackets.getModule("editor/EditorManager"),
-        ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
-        Menus = brackets.getModule("command/Menus"),
+    var AppInit         = brackets.getModule("utils/AppInit"),
+        CommandManager  = brackets.getModule("command/CommandManager"),
+        Dialogs         = brackets.getModule("widgets/Dialogs"),
+        Document        = brackets.getModule("document/Document"),
+        EditorManager   = brackets.getModule("editor/EditorManager"),
+        ExtensionUtils  = brackets.getModule("utils/ExtensionUtils"),
+        ImageViewer     = brackets.getModule("editor/ImageViewer"),
+        Menus           = brackets.getModule("command/Menus"),
+        ProjectManager  = brackets.getModule("project/ProjectManager"),
 
-        // Pull in the entire dialog
-        skellyDialogHtml = require("text!htmlContent/mainDialog.html"),
+        // Import dialog localization
+        Strings         = require("strings"),
 
-        // Grab our logo to display in the dialog
-        skellyLogo = require.toUrl("img/HTML-Skeleton.svg"),
+        // Pull in the extension dialog
+        skellyDialogHtml    = require("text!htmlContent/mainDialog.html"),
+
+        // Grab the logo to display in the dialog
+        skellyLogo      = require.toUrl("img/HTML-Skeleton.svg"),
 
         // The extension ID
-        EXTENSION_ID = "le717.html-skeleton";
+        EXTENSION_ID    = "le717.html-skeleton";
 
 
     /* ------- End Module Importing ------- */
@@ -50,7 +55,7 @@ define(function (require, exports, module) {
     var skellyBones = [
             // Only the head and body tags + title and meta
             '<!DOCTYPE html>\n<html lang="">\n<head>\n' + fourSpaceIndent +
-                '<meta charset="utf-8">\n' + fourSpaceIndent + '<title></title>\n' +
+                '<meta charset="UTF-8">\n' + fourSpaceIndent + '<title></title>\n' +
                 '\n</head>\n\n<body>\n' + fourSpaceIndent + '\n</body>\n</html>\n',
 
             // External stylesheet
@@ -67,13 +72,13 @@ define(function (require, exports, module) {
 
             // Full HTML skeleton
             '<!DOCTYPE html>\n<html lang="">\n<head>\n' + fourSpaceIndent +
-                '<meta charset="utf-8">\n' + fourSpaceIndent + '<title></title>\n' +
+                '<meta charset="UTF-8">\n' + fourSpaceIndent + '<title></title>\n' +
                 fourSpaceIndent + '<link rel="stylesheet" type="text/css" href="">' + '\n</head>\n\n<body>\n' +
                 fourSpaceIndent + '<script src=""></script>\n</body>\n</html>\n'
         ];
 
     // Picture/Image
-    var imageCode = '<img width="0" height="0" src="" />';
+    var imageCode = '<img width="size-x" height="size-y" src="" />';
 
 
     /* ------- End Available HTML Elements ------- */
@@ -112,8 +117,9 @@ define(function (require, exports, module) {
     function _getOptions() {
         /* Get element choices */
 
-        // Stores the elements to be added
-        var finalElements = [],
+        var imageCodeNew,
+            // Stores the elements to be added
+            finalElements = [],
 
             // Store all the option IDs for easier access
             optionIDs = ["#head-body", "#extern-style-tag", "#inline-style-tag",
@@ -134,9 +140,15 @@ define(function (require, exports, module) {
 
         // The picture/image box is checked
         if ($("#img-tag:checked").val() === "on") {
+
+            // Set values to zero in case either field is not filled out
+            $imgWidth = 0;
+            $imgHeight = 0;
+
             // The width box was filled out, use that value
             if ($imgWidthID.val()) {
                 $imgWidth = $imgWidthID.val();
+
             } else {
                 // The width box was empty, reset to 0
                 $imgWidth = 0;
@@ -145,23 +157,17 @@ define(function (require, exports, module) {
             // The height box was filled out, use that value
             if ($imgHeightID.val()) {
                 $imgHeight = $imgHeightID.val();
+
             } else {
                 // The height box was empty, reset to 0
                 $imgHeight = 0;
             }
 
             // Add the image tag to `finalElements` for addition in document,
-            // replacing the default size with the the new values
-            finalElements.push(
-                imageCode.replace('<img width="0" height="0"',
-                                      '<img width="' + $imgWidth +
-                                      '" height="' + $imgHeight + '"')
-            );
-
-        } else {
-            // The box was not checked, reset sizes
-            $imgWidth = 0;
-            $imgHeight = 0;
+            // replacing the invalid values with valid ones
+            imageCodeNew = imageCode.replace(/size-x/, $imgWidth);
+            imageCodeNew = imageCodeNew.replace(/size-y/, $imgHeight);
+            finalElements.push(imageCodeNew);
         }
 
         // Finally, run process to add the selected elements
@@ -178,14 +184,19 @@ define(function (require, exports, module) {
     function _showSkellyDialog() {
         /* Display the HTML Skeleton box */
 
-        var skellyDialog = Dialogs.showModalDialogUsingTemplate(skellyDialogHtml),
+        var localized = Mustache.render(skellyDialogHtml, Strings);
+        var skellyDialog = Dialogs.showModalDialogUsingTemplate(localized),
             $doneButton = skellyDialog.getElement().find('.dialog-button[data-button-id="ok"]');
+
+        // Display logo using Bracket's viewer
+        ImageViewer.render(skellyLogo, $(".html-skeleton-image"));
+
+        // Hide image stats
+        $("#img-tip").remove();
+        $("#img-scale").remove();
 
         // Upon closing the dialog, run function to gather and apply choices
         $doneButton.on("click", _getOptions);
-
-        // Display the logo
-        $("#html-skeleton-figure").attr("src", skellyLogo);
 
         /* FUTURE Disabled unless persistent values are a good thing to have */
         // If the width and height boxes are not the default size (0), reuse the previous value.
@@ -208,11 +219,11 @@ define(function (require, exports, module) {
     AppInit.appReady(function () {
         /* Load the extension after Brackets itself has finished loading */
 
-        // Load any required CSS
+        // Load extension CSS
         ExtensionUtils.loadStyleSheet(module, "css/style.css");
 
         // Assign a keyboard shortcut and item in Edit menu
-        CommandManager.register("Insert HTML elements\u2026", EXTENSION_ID, _showSkellyDialog);
+        CommandManager.register(Strings.INSERT_HTML_ELEMENTS, EXTENSION_ID, _showSkellyDialog);
         var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
         menu.addMenuItem(EXTENSION_ID, "Ctrl-Shift-N");
     });

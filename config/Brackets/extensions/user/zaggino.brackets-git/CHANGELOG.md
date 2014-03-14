@@ -1,5 +1,71 @@
 # Changelog
 
+## 0.10.7
+* Fixed an issue when commiting large files failed to open commit dialog.
+* Updated Simplified Chinese translation by [Zhi](https://github.com/yfwz100)
+
+## 0.10.6
+* Fixes an issue with timeout error while launching terminal in Linux.
+* Automatically does chmod +x when there's permission denied on terminal script.
+* Fixed issue when ignored directories were not marked as ignored without trailing slash.
+* Last selected remote is now saved for the project when you reopen Brackets.
+
+## 0.10.5
+* Escape special characters in username and password by [Zhi](https://github.com/yfwz100)
+* Implemented infinite history scrolling by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* Fixed commit message escaping issues in Linux
+* Git commands added into own top menu by [Matt Hayward](https://github.com/matthaywardwebdesign)
+
+## 0.10.4
+* Fixed multiple issues with pushing into remote repository.
+* Fixed an issue where history was not working for large repositories.
+* Fixed an issue with displaying some commits in the history.
+
+## 0.10.3
+* Fixed ambiguous argument error when viewing history.
+* Tweaks to commit history by [Fez Vrasta](https://github.com/FezVrasta) & [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+
+## 0.10.2
+* xfce4-terminal support by [Ben Keith](https://github.com/benlk)
+* Fixed an issue with pull command.
+
+## 0.10.1
+* Fixed a push bug that was introduced in 0.10.0
+
+## 0.10.0
+* Feature to browse commit history by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* Feature to clone a repository when in an empty folder by [Fez Vrasta](https://github.com/FezVrasta)
+* Feature to use pull & push with multiple remotes by [Fez Vrasta](https://github.com/FezVrasta)
+* Tabs have been added to settings dialog, a lot of new shorcuts to configure added.
+* You can now navigate between modifications inside a file.
+* Bash/Terminal button and Report Bug button can be hidden from panel in the settings.
+* Shortcut for Push is now configurable in the settings by [Matt Hayward](https://github.com/matthaywardwebdesign)
+* Bug when pushing failed in case of a password containing a quote fixed by [Matt Hayward](https://github.com/matthaywardwebdesign)
+* Improved function for escaping shell arguments on Windows, commits can now contain doublequotes.
+
+## 0.9.3
+* Disable commit button when there are no files to commit selected by [Fez Vrasta](https://github.com/FezVrasta)
+* Fixed an issue when doubleclicking on a checkbox triggered opening a file.
+
+## 0.9.2
+* Fix password hiding regExp from 0.9.1
+
+## 0.9.1
+* Added option to disable code inspection in commit dialog.
+* You must now agree to store passwords in plain text on your computer.
+
+## 0.9.0
+* Pushing to http(s) password protected repositories should work - extension will ask for username & password.
+* Bash icon now launches terminal window in other OS than Windows, thanks to [Jimmy Brian Anamaria Torres](https://github.com/Azakur4) & [Benjamin Pick](https://github.com/benjaminpick)
+* Modified files are now marked in a project tree too for those who have panel closed.
+* New shorcuts for commiting current file and commiting all files configurable in settings.
+* Panel icons and other visual tweaks by [Fez Vrasta](https://github.com/FezVrasta)
+* Refresh button on panel now refreshes current branch too in case it has been switched from outside of Brackets.
+* Gutters now expand when clicking on line numbers too.
+* Added Italian translation by [Fez Vrasta](https://github.com/FezVrasta)
+* Updated German translation by [Marcel Gerber](https://github.com/SAPlayer)
+* Updated Brazilian Portuguese translation by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+
 ## 0.8.10
 * Restyle of the interface by [Fez Vrasta](https://github.com/FezVrasta)
 

@@ -8,32 +8,27 @@
 define(function (require, exports, module) {
     'use strict';
 
-    var Timer = require("timer");
+    var spromise = require("libs/js/spromise");
     require('string');
 
     var pending, lastRequest, id = 1;
 
 
-    function reporter() {
+    function Reporter() {
         var _self = this;
         _self.marks = {};
     }
 
 
     /**
-    * Routine that goes through all the jshint messages and generates data
-    * that can be consumed by codemirror (cm).
+    * Routine that goes through all the jshint messages and adds all the gutter
+    * symbols and the underlines.
     *
     * @param messages {Array} jshint messages
     * @param cm {CodeMirror} codemirror instance
-    * @param settings {Object} jshint settings to further refine what does and doesn't
-    *                       get reported
     */
-    reporter.prototype.report = function(cm, messages) {
+    Reporter.prototype.report = function(cm, messages) {
         var _self = this;
-        if ( lastRequest && lastRequest.state() === "pending" ) {
-            return this;
-        }
 
         pending = {
             id: id,
@@ -41,7 +36,11 @@ define(function (require, exports, module) {
             messages: messages
         };
 
-        lastRequest = run( _self, pending ).done(function( done ) {
+        if ( lastRequest && lastRequest.state() === "pending" ) {
+            return this;
+        }
+
+        lastRequest = runReport( _self, pending ).done(function( done ) {
             lastRequest = null;
             if ( pending.id !== done.id ) {
                 console.log( "run pending", pending );
@@ -52,36 +51,6 @@ define(function (require, exports, module) {
         id++;
         return this;
     };
-
-
-    function run( _self, report ) {
-        var deferred = $.Deferred();
-        var cm = report.cm,
-            messages = report.messages;
-
-        setTimeout(function() {
-            _self.clearMarks();
-            if (messages) {
-                _self.checkFatal(messages);
-                _self.cm = cm;
-                _self.messages = messages;
-
-                $.each(messages.slice(0), function (index, message) {
-                    if (!message) {
-                        return;
-                    }
-
-                    if (message.token){
-                        // Add marks to gutter and line
-                        _self.addGutterMarks(message, message.token);
-                    }
-                });
-            }
-            deferred.resolve(report);
-        }, 1);
-
-        return deferred.promise();
-    }
 
 
     /**
@@ -97,7 +66,7 @@ define(function (require, exports, module) {
     * Token is a CodeMirror token that specifies start/end information for
     * the string in CodeMirror's document
     */
-    reporter.prototype.addGutterMarks = function(message, token) {
+    Reporter.prototype.addGutterMarks = function(message, token) {
         var _self = this, mark;
 
         //
@@ -122,19 +91,13 @@ define(function (require, exports, module) {
         // Add marks to the line that is reporting messages
         mark = _self.marks[token.start.line];
 
-        // Add line marks
-        mark.lineMarks.push({
-            line: _self.cm.markText(token.start, token.end, {className: "interactive-linter-" + message.type}),
-            message: message
-        });
-
         // Increment errors/warnings count
         if ( mark[message.type + "s"] ) {
             mark[message.type + "s"].push(message);
         }
 
         // If we have errors in this line, then we will add a class to the gutter to
-        //highlight this fact.  Further more, I make sure I add this class only once...
+        // highlight this fact.  Furthermore, I make sure I add this class only once...
         if ( message.type === "error" && mark.errors.length === 1 ) {
             mark.gutterMark.element.addClass('interactive-linter-gutter-errors');
         }
@@ -142,9 +105,24 @@ define(function (require, exports, module) {
 
 
     /**
+    * Routine to add the underlines in the source
+    */
+    Reporter.prototype.addLineMarks = function (message, token) {
+        var _self = this,
+            mark  = _self.marks[token.start.line];
+
+        // Add line marks
+        mark.lineMarks.push({
+            line: _self.cm.markText(token.start, token.end, {className: "interactive-linter-" + message.type}),
+            message: message
+        });
+    };
+
+
+    /**
     * Clears all warning/errors from codemirror's document
     */
-    reporter.prototype.clearMarks = function() {
+    Reporter.prototype.clearMarks = function() {
         var _self = this;
 
         if (!_self.cm ){
@@ -173,7 +151,7 @@ define(function (require, exports, module) {
     };
 
 
-    reporter.prototype.showLineDetails = function(cm, lineIndex) {
+    Reporter.prototype.showLineDetails = function(cm, lineIndex) {
         var mark = this.marks[lineIndex];
 
         // We don't have mark on this line, so we don't do anything...
@@ -225,7 +203,7 @@ define(function (require, exports, module) {
     /**
     * Checks messages to figure out if JSHint report a fatal failue.
     */
-    reporter.prototype.checkFatal = function(messages) {
+    Reporter.prototype.checkFatal = function(messages) {
         // If the last message created by jshint is null, that means
         // that we have encoutered a fatal error...
         //
@@ -237,6 +215,7 @@ define(function (require, exports, module) {
             // Get the last real error...
             var message = messages[messages.length - 2];
             console.log("Fatal failure", message);
+            messages.pop();
             return true;
         }
 
@@ -244,8 +223,43 @@ define(function (require, exports, module) {
     };
 
 
+    function runReport( _self, report ) {
+        var deferred = spromise.defer(),
+            cm       = report.cm,
+            messages = report.messages;
+
+        setTimeout(function() {
+            // Run as operation for best performance
+            cm.operation(function() {
+                _self.clearMarks();
+
+                if (messages) {
+                    _self.checkFatal(messages);
+                    _self.cm       = cm;
+                    _self.messages = messages;
+
+                    $.each(messages, function (index, message) {
+                        if (!message) {
+                            return;
+                        }
+
+                        if ( message.token ) {
+                            _self.addGutterMarks(message, message.token);
+                            _self.addLineMarks(message, message.token);
+                        }
+                    });
+                }
+
+                deferred.resolve(report);
+            });
+        }, 0);
+
+        return deferred.promise;
+    }
+
+
     var linterReporter = (function () {
-        var _reporter = new reporter();
+        var _reporter = new Reporter();
 
         function report(cm, messages) {
             return _reporter.report(cm, messages);
