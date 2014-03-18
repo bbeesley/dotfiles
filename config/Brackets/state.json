@@ -2118,22 +2118,18 @@
             "project.files": [
                 {
                     "file": "/home/bill/src/billbeesleycom/pushbullet.js",
-                    "active": false,
+                    "active": true,
                     "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 119,
-                                    "ch": 41
-                                },
-                                "end": {
-                                    "line": 119,
-                                    "ch": 41
-                                },
-                                "reversed": false,
-                                "primary": true
+                        "selection": {
+                            "start": {
+                                "line": 36,
+                                "ch": 7
+                            },
+                            "end": {
+                                "line": 36,
+                                "ch": 7
                             }
-                        ],
+                        },
                         "scrollPos": {
                             "x": 0,
                             "y": 0
@@ -2166,22 +2162,18 @@
                 },
                 {
                     "file": "/home/bill/src/billbeesleycom/requestHandlers.js",
-                    "active": true,
+                    "active": false,
                     "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 23,
-                                    "ch": 28
-                                },
-                                "end": {
-                                    "line": 23,
-                                    "ch": 28
-                                },
-                                "reversed": false,
-                                "primary": true
+                        "selection": {
+                            "start": {
+                                "line": 0,
+                                "ch": 0
+                            },
+                            "end": {
+                                "line": 0,
+                                "ch": 0
                             }
-                        ],
+                        },
                         "scrollPos": {
                             "x": 0,
                             "y": 0
@@ -2192,20 +2184,16 @@
                     "file": "/home/bill/src/billbeesleycom/server.js",
                     "active": false,
                     "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 0,
-                                    "ch": 0
-                                },
-                                "end": {
-                                    "line": 0,
-                                    "ch": 0
-                                },
-                                "reversed": false,
-                                "primary": true
+                        "selection": {
+                            "start": {
+                                "line": 0,
+                                "ch": 0
+                            },
+                            "end": {
+                                "line": 0,
+                                "ch": 0
                             }
-                        ],
+                        },
                         "scrollPos": {
                             "x": 0,
                             "y": 0
@@ -2240,23 +2228,19 @@
                     "file": "/home/bill/src/billbeesleycom/simpleApi.js",
                     "active": false,
                     "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 16,
-                                    "ch": 0
-                                },
-                                "end": {
-                                    "line": 16,
-                                    "ch": 0
-                                },
-                                "reversed": false,
-                                "primary": true
+                        "selection": {
+                            "start": {
+                                "line": 61,
+                                "ch": 12
+                            },
+                            "end": {
+                                "line": 61,
+                                "ch": 12
                             }
-                        ],
+                        },
                         "scrollPos": {
                             "x": 0,
-                            "y": 0
+                            "y": 233
                         }
                     }
                 },
