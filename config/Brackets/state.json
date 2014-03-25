@@ -9,7 +9,7 @@
         "visible": true
     },
     "git-panel": {
-        "visible": true
+        "visible": false
     },
     "canalyzerPanel": {
         "visible": false
@@ -2118,7 +2118,7 @@
             "project.files": [
                 {
                     "file": "/home/bill/src/billbeesleycom/pushbullet.js",
-                    "active": true,
+                    "active": false,
                     "viewState": {
                         "selection": {
                             "start": {
@@ -2248,23 +2248,39 @@
                     "file": "/home/bill/src/billbeesleycom/css/default.css",
                     "active": false,
                     "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 18,
-                                    "ch": 1
-                                },
-                                "end": {
-                                    "line": 18,
-                                    "ch": 1
-                                },
-                                "reversed": false,
-                                "primary": true
+                        "selection": {
+                            "start": {
+                                "line": 5,
+                                "ch": 34
+                            },
+                            "end": {
+                                "line": 5,
+                                "ch": 34
                             }
-                        ],
+                        },
                         "scrollPos": {
                             "x": 0,
                             "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/billbeesleycom/css/carrie.js",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 76,
+                                "ch": 0
+                            },
+                            "end": {
+                                "line": 86,
+                                "ch": 3
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 766
                         }
                     }
                 }
@@ -2304,15 +2320,106 @@
                     }
                 }
             ]
+        },
+        "/home/bill/src/bbGhost/": {
+            "project.treeState": [],
+            "project.files": [
+                {
+                    "file": "/home/bill/src/bbGhost/config.js",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 0,
+                                "ch": 0
+                            },
+                            "end": {
+                                "line": 158,
+                                "ch": 0
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 578
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/src/JavaScript/node/bbGhost/": {
+            "project.treeState": [
+                [
+                    "/home/bill/src/JavaScript/node/bbGhost/content/"
+                ],
+                [
+                    "/home/bill/src/JavaScript/node/bbGhost/content/themes/"
+                ],
+                [
+                    "/home/bill/src/JavaScript/node/bbGhost/content/themes/drauger/"
+                ],
+                [
+                    "/home/bill/src/JavaScript/node/bbGhost/content/themes/drauger/partials/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/src/JavaScript/node/bbGhost/content/themes/drauger/partials/links.hbs",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 8,
+                                "ch": 6
+                            },
+                            "end": {
+                                "line": 8,
+                                "ch": 6
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/JavaScript/node/bbGhost/content/themes/drauger/partials/footer.hbs",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 1,
+                                "ch": 92
+                            },
+                            "end": {
+                                "line": 1,
+                                "ch": 92
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/src/JavaScript/node/node-testrail/": {
+            "project.treeState": [
+                [
+                    "/home/bill/src/JavaScript/node/node-testrail/libs/"
+                ]
+            ]
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/src/billbeesleycom/",
+    "projectPath": "/home/bill/src/JavaScript/node/node-testrail/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
-        "/opt/brackets/dev/samples/root/Getting Started"
+        "/opt/brackets/dev/samples/root/Getting Started",
+        "/opt/brackets/samples/root/Getting Started"
     ],
     "fontSizeStyle": "12px",
     "livedev.highlight": true,
@@ -2321,8 +2428,11 @@
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
+        "/home/bill/src/JavaScript/node/node-testrail",
+        "/home/bill/src/JavaScript/node/bbGhost",
+        "/home/bill/src/bbGhost",
+        "/opt/brackets/samples/root/Getting Started",
         "/home/bill/src/billbeesleycom",
-        "/opt/brackets/dev/samples/root/Getting Started",
         "/home/bill/src/JavaScript/node/pandamania",
         "/home/bill/src/JavaScript/node/useragent_NodeJs",
         "/home/bill/src/JavaScript/node/oxi",
@@ -2337,9 +2447,6 @@
         "/home/bill/src/JavaScript/node/oxi/lib",
         "/home/bill/src/stubs-services/trunk/gaming-tools/node-deploy",
         "/opt/brackets/samples/root/Getting Started",
-        "/home/bill/src/JavaScript/node/oxiAddCustomer",
-        "/home/bill/src/JavaScript/node/harnesses/OUEN",
-        "/home/bill/src/stubs-services/trunk/reel-gen",
-        "/home/bill/Dropbox/node"
+        "/home/bill/src/JavaScript/node/oxiAddCustomer"
     ]
 }

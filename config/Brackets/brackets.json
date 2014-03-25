@@ -11,7 +11,7 @@
     "quickview.enabled": true,
     "brackets-git.extensionDirectory": "/home/bill/.config/Brackets/extensions/user/zaggino.brackets-git/",
     "brackets-git.lastVersion": "0.10.7",
-    "brackets-git.panelEnabled": true,
+    "brackets-git.panelEnabled": false,
     "brackets-git.stripWhitespaceFromCommits": true,
     "brackets-git.addEndlineToTheEndOfFile": true,
     "brackets-git.useGitGutter": true,
@@ -37,5 +37,8 @@
     "brackets-git.defaultRemotes./home/bill/src/reel-gen/": "origin",
     "brackets-git.defaultRemotes./home/bill/src/billbeesleycom/": "origin",
     "brackets-git.defaultRemotes./home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started/": "origin",
-    "brackets-git.defaultRemotes./opt/brackets/dev/samples/root/Getting Started/": "origin"
+    "brackets-git.defaultRemotes./opt/brackets/dev/samples/root/Getting Started/": "origin",
+    "brackets-git.defaultRemotes./home/bill/src/bbGhost/": "origin",
+    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/bbGhost/": "origin",
+    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/node-testrail/": "origin"
 }
