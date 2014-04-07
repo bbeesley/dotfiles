@@ -6,15 +6,6 @@ Host craftx.biz
   Hostname my.craftx.biz
   Port 443
 
-<<<<<<< HEAD
 Host billbeesley.com
   Hostname billbeesley.com
   IdentityFile ~/.ssh/billbeesleycom.pem
-=======
-Host billbeesleycom
-  Hostname 54.85.130.78
-  IdentityFile ~/.ssh/billbeesleycom.pem
-  User ubuntu
-  Port 443
-  LocalCommand sudo su bill && cd
->>>>>>> 23e57b40d6df81697317e2ff80d085312a9c462d
