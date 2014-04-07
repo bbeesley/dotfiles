@@ -12,9 +12,6 @@ fi
 export SVN_EDITOR=/usr/bin/vi
 source ~/.git-completion.bash
 alias fp="ps -Af | grep"
-<<<<<<< HEAD
 alias behat="php ~/lib/behat.phar"
-=======
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
->>>>>>> 23e57b40d6df81697317e2ff80d085312a9c462d
