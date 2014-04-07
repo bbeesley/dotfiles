@@ -2,12 +2,10 @@ Host github.com
   Hostname ssh.github.com
   Port 443
 
-Host intelbox
-  Hostname intelbox.billbeesley.com
+Host craftx.biz
+  Hostname my.craftx.biz
   Port 443
 
 Host billbeesley.com
   Hostname billbeesley.com
-  Port 443
   IdentityFile ~/.ssh/billbeesleycom.pem
-  User bill
