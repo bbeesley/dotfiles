@@ -7,6 +7,5 @@ Host craftx.biz
   Port 443
 
 Host billbeesley.com
-  Hostname 54.84.55.198
+  Hostname billbeesley.com
   IdentityFile ~/.ssh/billbeesleycom.pem
-  User ubuntu
