@@ -5,22 +5,25 @@ define(function (require, exports) {
     "use strict";
 
     var q                  = require("../thirdparty/q"),
+        moment             = require("moment"),
         _                  = brackets.getModule("thirdparty/lodash"),
         CodeInspection     = brackets.getModule("language/CodeInspection"),
         CommandManager     = brackets.getModule("command/CommandManager"),
         Commands           = brackets.getModule("command/Commands"),
-        DefaultDialogs     = brackets.getModule("widgets/DefaultDialogs"),
         Dialogs            = brackets.getModule("widgets/Dialogs"),
         DocumentManager    = brackets.getModule("document/DocumentManager"),
         EditorManager      = brackets.getModule("editor/EditorManager"),
         FileUtils          = brackets.getModule("file/FileUtils"),
         FileViewController = brackets.getModule("project/FileViewController"),
+        KeyBindingManager  = brackets.getModule("command/KeyBindingManager"),
         LanguageManager    = brackets.getModule("language/LanguageManager"),
         FileSystem         = brackets.getModule("filesystem/FileSystem"),
         Menus              = brackets.getModule("command/Menus"),
         PanelManager       = brackets.getModule("view/PanelManager"),
         ProjectManager     = brackets.getModule("project/ProjectManager"),
         StringUtils        = brackets.getModule("utils/StringUtils"),
+        Events             = require("./Events"),
+        EventEmitter       = require("./EventEmitter"),
         Preferences        = require("./Preferences"),
         ErrorHandler       = require("./ErrorHandler"),
         ExpectedError      = require("./ExpectedError"),
@@ -30,17 +33,20 @@ define(function (require, exports) {
         GitControl         = require("./GitControl"),
         Strings            = require("../strings"),
         Utils              = require("./Utils"),
+        SettingsDialog     = require("./SettingsDialog"),
         PANEL_COMMAND_ID   = "brackets-git.panel";
 
-    var gitPanelTemplate            = require("text!htmlContent/git-panel.html"),
-        gitPanelResultsTemplate     = require("text!htmlContent/git-panel-results.html"),
-        gitPanelHistoryTemplate     = require("text!htmlContent/git-panel-history.html"),
-        gitCommitDialogTemplate     = require("text!htmlContent/git-commit-dialog.html"),
-        gitDiffDialogTemplate       = require("text!htmlContent/git-diff-dialog.html"),
-        gitCommitDiffDialogTemplate = require("text!htmlContent/git-commit-diff-dialog.html"),
-        questionDialogTemplate      = require("text!htmlContent/git-question-dialog.html");
+    var gitignoreTemplate           = require("text!templates/default-gitignore"),
+        gitPanelTemplate            = require("text!templates/git-panel.html"),
+        gitPanelResultsTemplate     = require("text!templates/git-panel-results.html"),
+        gitPanelHistoryTemplate     = require("text!templates/git-panel-history.html"),
+        gitAuthorsDialogTemplate    = require("text!templates/authors-dialog.html"),
+        gitCommitDialogTemplate     = require("text!templates/git-commit-dialog.html"),
+        gitDiffDialogTemplate       = require("text!templates/git-diff-dialog.html"),
+        gitCommitDiffDialogTemplate = require("text!templates/git-commit-diff-dialog.html"),
+        questionDialogTemplate      = require("text!templates/git-question-dialog.html");
 
-    var showFileWhiteList = /^.gitignore$/;
+    var showFileWhiteList = /^\.gitignore$/;
 
     var gitPanel = null,
         gitPanelDisabled = null,
@@ -94,79 +100,13 @@ define(function (require, exports) {
         return { width: desiredWidth, height: desiredHeight };
     }
 
-    function _showDiffDialog(file, diff) {
-        var compiledTemplate = Mustache.render(gitDiffDialogTemplate, { file: file, Strings: Strings }),
-            dialog           = Dialogs.showModalDialogUsingTemplate(compiledTemplate),
-            $dialog          = dialog.getElement();
-
-        _makeDialogBig($dialog);
-        $dialog.find(".commit-diff").append(Utils.formatDiff(diff));
-    }
-
     function handleGitReset() {
         return Main.gitControl.gitReset().then(function () {
-            Branch.refresh();
-            return refresh();
+            // Branch.refresh will refresh also Panel
+            return Branch.refresh();
         }).fail(function (err) {
             // reset is executed too often so just log this error, but do not display a dialog
             ErrorHandler.logError(err);
-        });
-    }
-
-    function _getDefaultRemote() {
-        // refactor later when Preferences are fixed
-        var key = ["defaultRemotes", Main.getProjectRoot()].join(".");
-        var defaultRemote = Preferences.get(key);
-        return defaultRemote || "origin";
-    }
-
-    function _setDefaultRemote(remoteName) {
-        // refactor later when Preferences are fixed
-        var key = ["defaultRemotes", Main.getProjectRoot()].join(".");
-        Preferences.persist(key, remoteName);
-    }
-
-    function handleRemotePick(e, $a) {
-        var $selected = e ? $(e.target) : $a;
-
-        var remoteName = $selected.attr("data-remote-name");
-        _setDefaultRemote(remoteName);
-
-        gitPanel.$panel.find(".git-remotes-field")
-            .text($selected.text().trim())
-            .attr({
-                "data-remote-name": remoteName
-            });
-    }
-
-    function prepareRemotesPicker() {
-        Main.gitControl.getRemotes()
-        .then(function (remotes) {
-            var defaultRemoteName = _getDefaultRemote(),
-                $defaultRemote,
-                $remotesDropdown = gitPanel.$panel.find(".git-remotes-dropdown").empty();
-
-            remotes.forEach(function (remoteInfo) {
-                var remoteName = remoteInfo[0];
-                var $a = $("<a/>").attr({
-                    "href": "#",
-                    "data-remote-name": remoteName
-                }).text(remoteInfo[0]).appendTo($("<li/>").appendTo($remotesDropdown));
-
-                if (remoteName === defaultRemoteName) {
-                    $defaultRemote = $a;
-                }
-            });
-
-            if ($defaultRemote) {
-                handleRemotePick(null, $defaultRemote);
-            }
-        })
-        .fail(function (err) {
-            ErrorHandler.logError(err);
-            gitPanel.$panel.find(".git-remotes-dropdown").empty();
-            gitPanel.$panel.find("git-remotes").attr("title", err);
-            gitPanel.$panel.find(".git-remotes-field").text("error");
         });
     }
 
@@ -234,7 +174,10 @@ define(function (require, exports) {
 
         // commit message handling
         function switchCommitMessageElement() {
-            $dialog.find("[name='commit-message']").toggle();
+            var findStr = "[name='commit-message']",
+                currentValue = $dialog.find(findStr + ":visible").val();
+            $dialog.find(findStr).toggle();
+            $dialog.find(findStr + ":visible").val(currentValue);
             recalculateMessageLength();
         }
 
@@ -300,9 +243,87 @@ define(function (require, exports) {
         });
     }
 
+    function _showAuthors(file, blame, fromLine, toLine) {
+        var linesTotal = blame.length;
+        var blameStats = blame.reduce(function (stats, lineInfo) {
+            var name = lineInfo.author + " " + lineInfo["author-mail"];
+            if (stats[name]) {
+                stats[name] += 1;
+            } else {
+                stats[name] = 1;
+            }
+            return stats;
+        }, {});
+        blameStats = _.reduce(blameStats, function (arr, val, key) {
+            arr.push({
+                authorName: key,
+                lines: val,
+                percentage: Math.round(val / (linesTotal / 100))
+            });
+            return arr;
+        }, []);
+        blameStats = _.sortBy(blameStats, "lines").reverse();
+
+        if (fromLine || toLine) {
+            file += " (" + Strings.LINES + " " + fromLine + "-" + toLine + ")";
+        }
+
+        var compiledTemplate = Mustache.render(gitAuthorsDialogTemplate, {
+                file: file,
+                blameStats: blameStats,
+                Strings: Strings
+            });
+        Dialogs.showModalDialogUsingTemplate(compiledTemplate);
+    }
+
+    function _getCurrentFilePath(editor) {
+        var projectRoot = Main.getProjectRoot(),
+            document = editor ? editor.document : DocumentManager.getCurrentDocument(),
+            filePath = document.file.fullPath;
+        if (filePath.indexOf(projectRoot) === 0) {
+            filePath = filePath.substring(projectRoot.length);
+        }
+        return filePath;
+    }
+
+    function handleAuthorsSelection() {
+        var editor = EditorManager.getActiveEditor(),
+            filePath = _getCurrentFilePath(editor),
+            currentSelection = editor.getSelection(),
+            fromLine = currentSelection.start.line + 1,
+            toLine = currentSelection.end.line + 1;
+
+        var isSomethingSelected = currentSelection.start.line !== currentSelection.end.line ||
+                                  currentSelection.start.ch !== currentSelection.end.ch;
+        if (!isSomethingSelected) {
+            ErrorHandler.showError(new ExpectedError("Nothing is selected!"));
+            return;
+        }
+
+        Main.gitControl.getBlame(filePath, fromLine, toLine).then(function (blame) {
+            return _showAuthors(filePath, blame, fromLine, toLine);
+        }).fail(function (err) {
+            ErrorHandler.showError(err, "Git Blame failed");
+        });
+    }
+
+    function handleAuthorsFile() {
+        var filePath = _getCurrentFilePath();
+        Main.gitControl.getBlame(filePath).then(function (blame) {
+            return _showAuthors(filePath, blame);
+        }).fail(function (err) {
+            ErrorHandler.showError(err, "Git Blame failed");
+        });
+    }
+
     function handleGitDiff(file) {
         Main.gitControl.gitDiffSingle(file).then(function (diff) {
-            _showDiffDialog(file, diff);
+            // show the dialog with the diff
+            var compiledTemplate = Mustache.render(gitDiffDialogTemplate, { file: file, Strings: Strings }),
+                dialog           = Dialogs.showModalDialogUsingTemplate(compiledTemplate),
+                $dialog          = dialog.getElement();
+            _makeDialogBig($dialog);
+            $dialog.find(".commit-diff").append(Utils.formatDiff(diff));
         }).fail(function (err) {
             ErrorHandler.showError(err, "Git Diff failed");
         });
@@ -311,7 +332,7 @@ define(function (require, exports) {
     function handleGitUndo(file) {
         var compiledTemplate = Mustache.render(questionDialogTemplate, {
             title: Strings.UNDO_CHANGES,
-            question: StringUtils.format(Strings.Q_UNDO_CHANGES, file),
+            question: StringUtils.format(Strings.Q_UNDO_CHANGES, _.escape(file)),
             Strings: Strings
         });
         Dialogs.showModalDialogUsingTemplate(compiledTemplate).done(function (buttonId) {
@@ -334,7 +355,7 @@ define(function (require, exports) {
     function handleGitDelete(file) {
         var compiledTemplate = Mustache.render(questionDialogTemplate, {
             title: Strings.DELETE_FILE,
-            question: StringUtils.format(Strings.Q_DELETE_FILE, file),
+            question: StringUtils.format(Strings.Q_DELETE_FILE, _.escape(file)),
             Strings: Strings
         });
         Dialogs.showModalDialogUsingTemplate(compiledTemplate).done(function (buttonId) {
@@ -438,6 +459,8 @@ define(function (require, exports) {
         var stripWhitespace = Preferences.get("stripWhitespaceFromCommits");
         // Get checked files
         var $checked = gitPanel.$panel.find(".check-one:checked");
+        // Disable button (it will be enabled when selecting files after reset)
+        gitPanel.$panel.find(".git-commit").prop("disabled", true).addClass("btn-loading");
         // TODO: probably some user friendly message that no files are checked for commit.
         if ($checked.length === 0) { return; }
 
@@ -482,7 +505,7 @@ define(function (require, exports) {
                 if (stripWhitespace && updateIndex === false) {
                     // strip whitespace only for recognized languages so binary files won't get corrupted
                     var langId = LanguageManager.getLanguageForPath(fileObj.filename).getId();
-                    if (["unknown", "binary", "image"].indexOf(langId) === -1) {
+                    if (["unknown", "binary", "image", "markdown"].indexOf(langId) === -1) {
                         queue = queue.then(function () {
                             var clearWholeFile = fileObj.status.indexOf(GitControl.FILE_STATUS.UNTRACKED) !== -1;
                             return stripWhitespaceFromFile(fileObj.filename, clearWholeFile);
@@ -512,211 +535,19 @@ define(function (require, exports) {
             });
             return q.all(promises).then(function () {
                 // All files are in the index now, get the diff and show dialog.
+                gitPanel.$panel.find(".git-commit").removeClass("btn-loading");
                 return Main.gitControl.gitDiffStaged().then(function (diff) {
-                    if (diff) {
-                        _showCommitDialog(diff, lintResults);
-                    } else {
-                        handleGitReset();
+                    if (!diff) {
+                        return Main.gitControl.gitDiffStagedFiles().then(function (filesList) {
+                            diff = Strings.DIFF_FAILED_SEE_FILES + "\n\n" + filesList;
+                            return _showCommitDialog(diff, lintResults);
+                        });
                     }
+                    return _showCommitDialog(diff, lintResults);
                 });
             });
         }).fail(function (err) {
             ErrorHandler.showError(err, "Preparing commit dialog failed");
-        });
-    }
-
-    function askQuestion(title, question, booleanResponse) {
-        var response = q.defer();
-        var compiledTemplate = Mustache.render(questionDialogTemplate, {
-            title: title,
-            question: question,
-            stringInput: !booleanResponse,
-            Strings: Strings
-        });
-        var dialog  = Dialogs.showModalDialogUsingTemplate(compiledTemplate);
-        if (!booleanResponse) {
-            dialog.getElement().find("input").focus();
-        }
-        dialog.done(function (buttonId) {
-            if (booleanResponse) {
-                response.resolve(buttonId === "ok");
-                return;
-            }
-            if (buttonId === "ok") {
-                response.resolve(dialog.getElement().find("input").val().trim());
-            } else {
-                response.reject("User aborted!");
-            }
-        });
-        return response.promise;
-    }
-
-    function handleGitPushWithPassword(originalPushError) {
-        return Main.gitControl.getBranchName().then(function (branchName) {
-            return Main.gitControl.getGitConfig("branch." + branchName + ".remote").then(function (remoteName) {
-                if (!remoteName) {
-                    throw ErrorHandler.rewrapError(originalPushError, new Error("git config branch." + branchName + ".remote is empty!"));
-                }
-                return Main.gitControl.getGitConfig("remote." + remoteName + ".url").then(function (remoteUrl) {
-                    if (!remoteUrl) {
-                        throw ErrorHandler.rewrapError(originalPushError, new Error("git config remote." + remoteName + ".url is empty!"));
-                    }
-
-                    var isHttp = remoteUrl.indexOf("http") === 0;
-                    if (!isHttp) {
-                        throw ErrorHandler.rewrapError(originalPushError,
-                                                       new Error("Asking for username/password aborted because remote is not HTTP(S)"));
-                    }
-
-                    var username,
-                        password,
-                        hasUsername,
-                        hasPassword,
-                        shouldSave = false;
-
-                    var m = remoteUrl.match(/https?:\/\/([^@]+)@/);
-                    if (!m) {
-                        hasUsername = false;
-                        hasPassword = false;
-                    } else if (m[1].split(":").length === 1) {
-                        hasUsername = true;
-                        hasPassword = false;
-                    } else {
-                        hasUsername = true;
-                        hasPassword = true;
-                    }
-
-                    if (hasUsername && hasPassword) {
-                        throw ErrorHandler.rewrapError(originalPushError, new Error("Username/password is already present in the URL"));
-                    }
-
-                    var p = q();
-                    if (!hasUsername) {
-                        p = p.then(function () {
-                            return askQuestion(Strings.TOOLTIP_PUSH, Strings.ENTER_USERNAME).then(function (str) {
-                                username = encodeURIComponent(str);
-                            });
-                        });
-                    }
-                    if (!hasPassword) {
-                        p = p.then(function () {
-                            return askQuestion(Strings.TOOLTIP_PUSH, Strings.ENTER_PASSWORD).then(function (str) {
-                                password = encodeURIComponent(str);
-                            });
-                        });
-                    }
-                    if (Preferences.get("storePlainTextPasswords")) {
-                        p = p.then(function () {
-                            return askQuestion(Strings.TOOLTIP_PUSH, Strings.SAVE_PASSWORD_QUESTION, true).then(function (bool) {
-                                shouldSave = bool;
-                            });
-                        });
-                    }
-                    return p.then(function () {
-                        if (!hasUsername) {
-                            remoteUrl = remoteUrl.replace(/(https?:\/\/)/, function (a, protocol) { return protocol + username + "@"; });
-                        }
-                        if (!hasPassword) {
-                            var io = remoteUrl.indexOf("@");
-                            remoteUrl = remoteUrl.substring(0, io) + ":" + password + remoteUrl.substring(io);
-                        }
-                        return Main.gitControl.gitPush(remoteUrl, branchName).then(function (stdout) {
-                            if (shouldSave) {
-                                return Main.gitControl.setGitConfig("remote." + remoteName + ".url", remoteUrl).then(function () {
-                                    return stdout;
-                                });
-                            } else {
-                                return stdout;
-                            }
-                        });
-                    });
-                });
-            });
-        });
-    }
-
-    function handleGitPush() {
-        var $btn = gitPanel.$panel.find(".git-push").prop("disabled", true),
-            remoteName = gitPanel.$panel.find(".git-remotes-field").attr("data-remote-name");
-        Main.gitControl.gitPush(remoteName).fail(function (err) {
-
-            if (!ErrorHandler.contains(err, "git remote add <name> <url>")) {
-                throw err;
-            }
-            // this will ask user to enter an origin url for pushing
-            // it's pretty dumb because if he enters invalid url, he has to go to console again
-            // but our users are very wise so that definitely won't happen :)))
-            var defer = q.defer();
-            var compiledTemplate = Mustache.render(questionDialogTemplate, {
-                title: Strings.SET_ORIGIN_URL,
-                question: Strings.URL,
-                stringInput: true,
-                Strings: Strings
-            });
-            var dialog  = Dialogs.showModalDialogUsingTemplate(compiledTemplate);
-            dialog.getElement().find("input").focus();
-            dialog.done(function (buttonId) {
-                if (buttonId === "ok") {
-                    var url = dialog.getElement().find("input").val().trim();
-                    Main.gitControl.remoteAdd("origin", url)
-                        .then(function () {
-                            return Main.gitControl.gitPush("origin");
-                        })
-                        .then(defer.resolve)
-                        .fail(defer.reject);
-                }
-            });
-            return defer.promise;
-
-        }).fail(function (err) {
-
-            if (typeof err !== "string") { throw err; }
-            var m = err.match(/git push --set-upstream ([-0-9a-zA-Z]+) ([-0-9a-zA-Z]+)/);
-            if (!m) { throw err; }
-            return Main.gitControl.gitPushSetUpstream(m[1], m[2]);
-
-        }).fail(function (err) {
-
-            var validFail = false;
-            if (ErrorHandler.contains(err, "rejected because")) {
-                validFail = true;
-            }
-            if (validFail) {
-                throw err;
-            } else {
-                console.warn("Traditional push failed: " + err);
-                return handleGitPushWithPassword(err);
-            }
-
-        }).then(function (result) {
-            Dialogs.showModalDialog(
-                DefaultDialogs.DIALOG_ID_INFO,
-                Strings.GIT_PUSH_RESPONSE, // title
-                result // message
-            );
-        }).fail(function (err) {
-            console.warn("Pushing to remote repositories with username / password is not supported! See github page/issues for details.");
-            ErrorHandler.showError(err, "Pushing to remote repository failed.");
-        }).fin(function () {
-            $btn.prop("disabled", false);
-            refresh();
-        });
-    }
-
-    function handleGitPull() {
-        var $btn = gitPanel.$panel.find(".git-pull").prop("disabled", true),
-            remoteName = gitPanel.$panel.find(".git-remotes-field").attr("data-remote-name");
-        Main.gitControl.gitPull(remoteName).then(function (result) {
-            Dialogs.showModalDialog(
-                DefaultDialogs.DIALOG_ID_INFO,
-                Strings.GIT_PULL_RESPONSE, // title
-                result // message
-            );
-        }).fail(function (err) {
-            ErrorHandler.showError(err, "Pulling from remote repository failed.");
-        }).fin(function () {
-            $btn.prop("disabled", false);
-            refresh();
         });
     }
 
@@ -744,9 +575,6 @@ define(function (require, exports) {
     function refresh() {
         // set the history panel to false and remove the class that show the button history active when refresh
         gitPanel.$panel.find(".git-history").removeClass("btn-active").attr("title", Strings.TOOLTIP_SHOW_HISTORY);
-
-        // re-attach the table handlers
-        attachDefaultTableHandlers();
 
         if (gitPanelMode === "not-repo") {
             $tableContainer.empty();
@@ -840,23 +668,6 @@ define(function (require, exports) {
         }
     }
 
-    function handleCloseNotModified() {
-        Main.gitControl.getGitStatus().then(function (modifiedFiles) {
-            var openFiles = DocumentManager.getWorkingSet(),
-                projectRoot = Main.getProjectRoot();
-            openFiles.forEach(function (openFile) {
-                var removeOpenFile = true;
-                modifiedFiles.forEach(function (modifiedFile) {
-                    if (projectRoot + modifiedFile.file === openFile.fullPath) { removeOpenFile = false; }
-                });
-                if (removeOpenFile) {
-                    DocumentManager.closeFullEditor(openFile);
-                }
-            });
-            EditorManager.focus();
-        });
-    }
-
     function handleToggleUntracked() {
         showingUntracked = !showingUntracked;
 
@@ -886,11 +697,13 @@ define(function (require, exports) {
         }
 
         $dialog.find(".commit-files a").on("click", function () {
+            $(".commit-files a.active").attr("scrollPos", $(".commit-diff").scrollTop());
             var self = $(this);
             Main.gitControl.getDiffOfFileFromCommit(hashCommit, $(this).text().trim()).then(function (diff) {
                 $dialog.find(".commit-files a").removeClass("active");
                 self.addClass("active");
                 $dialog.find(".commit-diff").html(Utils.formatDiff(diff));
+                $(".commit-diff").scrollTop(self.attr("scrollPos") || 0);
             });
         });
     }
@@ -915,9 +728,16 @@ define(function (require, exports) {
         return Main.gitControl.getBranchName().then(function (branchName) {
             // Get the history commit of the current branch
             return Main.gitControl.gitHistory(branchName).then(function (commits) {
-                $tableContainer.append(Mustache.render(gitPanelHistoryTemplate, {
-                    files: commits,
-                    Strings: Strings
+                commits = convertCommitDates(commits);
+
+                var template = "<table class='git-history-list bottom-panel-table table table-striped table-condensed row-highlight'>";
+                template += "<tbody>";
+                template += gitPanelHistoryTemplate;
+                template += "</tbody>";
+                template += "</table>";
+
+                $tableContainer.append(Mustache.render(template, {
+                    commits: commits
                 }));
             });
         }).fail(function (err) {
@@ -934,17 +754,9 @@ define(function (require, exports) {
                         if (commits.length === 0) {
                             return;
                         }
+                        commits = convertCommitDates(commits);
 
-                        var template = "{{#.}}";
-                        template += "<tr class=\"history-commit\" data-hash=\"{{hash}}\">";
-                        template += "<td>{{hashShort}}</td>";
-                        template += "<td>{{message}}</td>";
-                        template += "<td>{{author}}</td>";
-                        template += "<td>{{date}}</td>";
-                        template += "</tr>";
-                        template += "{{/.}}";
-
-                        $tableContainer.find(".git-history-list > tbody").append(Mustache.render(template, commits));
+                        $tableContainer.find(".git-history-list > tbody").append(Mustache.render(gitPanelHistoryTemplate, {commits: commits}));
                     })
                     .fail(function (err) {
                         ErrorHandler.showError(err, "Failed to load more history rows");
@@ -955,6 +767,57 @@ define(function (require, exports) {
                 });
             }
         }
+    }
+    
+    function convertCommitDates(commits) {
+        var mode        = Preferences.get("dateMode"),
+            format      = Strings.DATE_FORMAT,
+            now         = moment(),
+            yesterday   = moment().subtract("d", 1).startOf("d"),
+            ownFormat   = Preferences.get("dateFormat") || Strings.DATE_FORMAT;
+
+        _.forEach(commits, function (commit) {
+            if (mode === 4) {
+                // mode 4: Original Git date
+                commit.date = {
+                    shown: commit.date
+                };
+                return;
+            }
+
+            var date = moment(commit.date);
+            commit.date = {
+                title: ""
+            };
+            switch (mode) {
+                // mode 0 (default): formatted with Strings.DATE_FORMAT
+                default:
+                case 0:
+                    commit.date.shown = date.format(format);
+                    break;
+                // mode 1: always relative
+                case 1:
+                    commit.date.shown = date.fromNow();
+                    commit.date.title = date.format(format);
+                    break;
+                // mode 2: intelligent relative/formatted
+                case 2:
+                    if (date.diff(yesterday) > 0) {
+                        commit.date.shown = moment.duration(Math.max(date.diff(now), -24 * 60 * 60 * 1000), "ms").humanize(true);
+                        commit.date.title = date.format(format);
+                    } else {
+                        commit.date.shown = date.format(format);
+                    }
+                    break;
+                // mode 3: formatted with own format (as pref)
+                case 3:
+                    commit.date.shown = date.format(ownFormat);
+                    commit.date.title = date.format(format);
+                    break;
+                /* mode 4 (Original Git date) is handled above */
+            }
+        });
+        return commits;
     }
 
     // Show or hide the history list on click of .history button
@@ -985,7 +848,7 @@ define(function (require, exports) {
             }
             return Main.gitControl.gitInit();
         }).then(function () {
-            return q.when(FileUtils.writeText(FileSystem.getFileForPath(Main.getProjectRoot() + ".gitignore"), ""));
+            return q.when(FileUtils.writeText(FileSystem.getFileForPath(Main.getProjectRoot() + ".gitignore"), gitignoreTemplate));
         }).then(function () {
             return Main.gitControl.gitAdd(".gitignore");
         }).then(function () {
@@ -1001,7 +864,7 @@ define(function (require, exports) {
         Main.isProjectRootEmpty()
         .then(function (isEmpty) {
             if (isEmpty) {
-                return askQuestion(Strings.CLONE_REPOSITORY, Strings.ENTER_REMOTE_GIT_URL).then(function (remoteGitUrl) {
+                return Utils.askQuestion(Strings.CLONE_REPOSITORY, Strings.ENTER_REMOTE_GIT_URL).then(function (remoteGitUrl) {
                     gitPanel.$panel.find(".git-clone").prop("disabled", true);
                     return Main.gitControl.gitClone(remoteGitUrl, ".")
                     .then(function () {
@@ -1046,29 +909,19 @@ define(function (require, exports) {
     }
 
     function openBashConsole(event) {
-        if (brackets.platform === "win") {
-            Main.gitControl.bashOpen(Main.getProjectRoot()).fail(function (err) {
-                throw ErrorHandler.showError(err);
-            });
-        } else {
-            var customTerminal = Preferences.get("terminalCommand");
-            Main.gitControl.terminalOpen(Main.getProjectRoot(), customTerminal).fail(function (err) {
-                if (event !== "retry" && ErrorHandler.contains(err, "Permission denied")) {
-                    Main.gitControl.chmodTerminalScript().fail(function (err) {
-                        throw ErrorHandler.showError(err);
-                    }).then(function () {
-                        openBashConsole("retry");
-                    });
-                    return;
-                }
-                if (ErrorHandler.isTimeout(err)) {
-                    // process is running after 1 second timeout so terminal is open
-                    return;
-                } else {
+        var customTerminal = Preferences.get("terminalCommand"),
+            customTerminalArgs = Preferences.get("terminalCommandArgs");
+        Main.gitControl.terminalOpen(Main.getProjectRoot(), customTerminal, customTerminalArgs).fail(function (err) {
+            if (event !== "retry" && ErrorHandler.contains(err, "Permission denied")) {
+                Main.gitControl.chmodTerminalScript().fail(function (err) {
                     throw ErrorHandler.showError(err);
-                }
-            });
-        }
+                }).then(function () {
+                    openBashConsole("retry");
+                });
+                return;
+            }
+            throw ErrorHandler.showError(err);
+        });
     }
 
     // Disable "commit" button if there aren't selected files and vice versa
@@ -1077,6 +930,11 @@ define(function (require, exports) {
             enableButton = gitPanel.$panel.find(".check-one:checked").length > 0;
         }
         gitPanel.$panel.find(".git-commit").prop("disabled", !enableButton);
+    }
+
+    function undoLastLocalCommit() {
+        Main.gitControl.undoLastLocalCommit().fail(function (err) { ErrorHandler.showError(err, "Impossible undo last commit");  });
+        refresh();
     }
 
     function attachDefaultTableHandlers() {
@@ -1125,14 +983,85 @@ define(function (require, exports) {
             });
     }
 
+    function changeUserName() {
+        return Main.gitControl.getGitConfig("user.name")
+        .then(function (currentUserName) {
+            return Utils.askQuestion(Strings.CHANGE_USER_NAME, Strings.ENTER_NEW_USER_NAME, {defaultValue: currentUserName})
+                .then(function (userName) {
+                    if (!userName.length) { userName = currentUserName; }
+                    return Main.gitControl.setUserName(userName).fail(function (err) {
+                        ErrorHandler.showError(err, "Impossible change username");
+                    }).then(function () {
+                        EventEmitter.emit(Events.GIT_USERNAME_CHANGED, userName);
+                    });
+                });
+        });
+    }
+
+    function changeUserEmail() {
+        return Main.gitControl.getGitConfig("user.email")
+        .then(function (currentUserEmail) {
+            return Utils.askQuestion(Strings.CHANGE_USER_EMAIL, Strings.ENTER_NEW_USER_EMAIL, {defaultValue: currentUserEmail})
+                .then(function (userEmail) {
+                    if (!userEmail.length) { userEmail = currentUserEmail; }
+                    return Main.gitControl.setUserEmail(userEmail).fail(function (err) {
+                        ErrorHandler.showError(err, "Impossible change user email");
+                    }).then(function () {
+                        EventEmitter.emit(Events.GIT_EMAIL_CHANGED, userEmail);
+                    });
+                });
+        });
+    }
+
+    EventEmitter.on(Events.GIT_USERNAME_CHANGED, function (userName) {
+        gitPanel.$panel.find(".git-user-name").text(userName);
+    });
+
+    EventEmitter.on(Events.GIT_EMAIL_CHANGED, function (email) {
+        gitPanel.$panel.find(".git-user-email").text(email);
+    });
+
+    EventEmitter.on(Events.GIT_REMOTE_AVAILABLE, function () {
+        gitPanel.$panel.find(".git-pull").prop("disabled", false);
+        gitPanel.$panel.find(".git-push").prop("disabled", false);
+    });
+
+    EventEmitter.on(Events.GIT_REMOTE_NOT_AVAILABLE, function () {
+        gitPanel.$panel.find(".git-pull").prop("disabled", true);
+        gitPanel.$panel.find(".git-push").prop("disabled", true);
+    });
+
+    EventEmitter.on(Events.PULL_STARTED, function () {
+        gitPanel.$panel.find(".git-pull").prop("disabled", true).addClass("btn-loading");
+    });
+
+    EventEmitter.on(Events.PULL_FINISHED, function () {
+        gitPanel.$panel.find(".git-pull").prop("disabled", false).removeClass("btn-loading");
+        refresh();
+    });
+
+    EventEmitter.on(Events.PUSH_STARTED, function () {
+        gitPanel.$panel.find(".git-push").prop("disabled", true).addClass("btn-loading");
+    });
+
+    EventEmitter.on(Events.PUSH_FINISHED, function () {
+        gitPanel.$panel.find(".git-push").prop("disabled", false).removeClass("btn-loading");
+        refresh();
+    });
+
     function init() {
         // Add panel
-        prepareRemotesPicker();
         var panelHtml = Mustache.render(gitPanelTemplate, Strings);
         var $panelHtml = $(panelHtml);
         $panelHtml.find(".git-available").hide();
-        $panelHtml.find(".git-bash").toggle(Preferences.get("showBashButton"));
-        $panelHtml.find(".git-bug").toggle(Preferences.get("showReportBugButton"));
+
+        if (!Preferences.get("showBashButton")) {
+            $panelHtml.find(".git-bash").remove();
+        }
+
+        if (!Preferences.get("showReportBugButton")) {
+            $panelHtml.find(".git-bug").remove();
+        }
 
         gitPanel = PanelManager.createBottomPanel("brackets-git.panel", $panelHtml, 100);
 
@@ -1148,75 +1077,86 @@ define(function (require, exports) {
             .on("click", ".git-commit", handleGitCommit)
             .on("click", ".git-prev-gutter", GutterManager.goToPrev)
             .on("click", ".git-next-gutter", GutterManager.goToNext)
-            .on("click", ".git-close-notmodified", handleCloseNotModified)
             .on("click", ".git-toggle-untracked", handleToggleUntracked)
+            .on("click", ".authors-selection", handleAuthorsSelection)
+            .on("click", ".authors-file", handleAuthorsFile)
             .on("click", ".git-history", handleToggleHistory)
-            .on("click", ".git-push", handleGitPush)
-            .on("click", ".git-pull", handleGitPull)
+            .on("click", ".git-push", EventEmitter.emitFactory(Events.HANDLE_PUSH))
+            .on("click", ".git-pull", EventEmitter.emitFactory(Events.HANDLE_PULL))
             .on("click", ".git-bug", ErrorHandler.reportBug)
             .on("click", ".git-init", handleGitInit)
             .on("click", ".git-clone", handleGitClone)
-            .on("click", ".git-remotes-dropdown a", handleRemotePick)
+            .on("click", ".change-remote", EventEmitter.emitFactory(Events.HANDLE_REMOTE_PICK))
+            .on("click", ".remove-remote", EventEmitter.emitFactory(Events.HANDLE_REMOTE_DELETE))
+            .on("click", ".git-remote-new", EventEmitter.emitFactory(Events.HANDLE_REMOTE_CREATE))
+            .on("click", ".git-settings", SettingsDialog.show)
             .on("contextmenu", "tr", function (e) {
-                $(this).click();
+                var $this = $(this);
+                if ($this.hasClass("history-commit")) { return; }
+
+                $this.click();
                 setTimeout(function () {
                     Menus.getContextMenu("git-panel-context-menu").open(e);
                 }, 1);
-            });
+            })
+            .on("click", ".change-user-name", changeUserName)
+            .on("click", ".change-user-email", changeUserEmail)
+            .on("click", ".undo-last-commit", undoLastLocalCommit)
+            .on("click", ".git-bash", openBashConsole);
 
         // Attaching table handlers
         attachDefaultTableHandlers();
 
-        // Try to get Bash version, if succeeds then Bash is available, hide otherwise
-        if (brackets.platform === "win") {
-            Main.gitControl.bashVersion().fail(function (e) {
-                gitPanel.$panel.find(".git-bash").prop("disabled", true).attr("title", Strings.BASH_NOT_AVAILABLE);
-                ErrorHandler.logError(e);
-            }).then(function () {
-                gitPanel.$panel.find(".git-bash").on("click", openBashConsole);
-            });
-        } else {
-            gitPanel.$panel.find(".git-bash").on("click", openBashConsole);
-        }
-
-        // Register command for opening bottom panel.
-        CommandManager.register(Strings.PANEL_COMMAND, PANEL_COMMAND_ID, toggle);
-
-
         // Commit current and all shortcuts
-        var GIT_MENU           = "brackets-git.gitMenu",
-            COMMIT_CURRENT_CMD = "brackets-git.commitCurrent",
+        var COMMIT_CURRENT_CMD = "brackets-git.commitCurrent",
             COMMIT_ALL_CMD     = "brackets-git.commitAll",
             BASH_CMD           = "brackets-git.launchBash",
             PUSH_CMD           = "brackets-git.push",
             PULL_CMD           = "brackets-git.pull",
             GOTO_PREV_CHANGE   = "brackets-git.gotoPrevChange",
             GOTO_NEXT_CHANGE   = "brackets-git.gotoNextChange";
-        
-         // Add command to menu.
-        var menu = Menus.getMenu(GIT_MENU);
 
-        menu.addMenuDivider();
-        menu.addMenuItem(PANEL_COMMAND_ID, Preferences.get("panelShortcut"));
+        // Add command to menu.
+        // Register command for opening bottom panel.
+        CommandManager.register(Strings.PANEL_COMMAND, PANEL_COMMAND_ID, toggle);
+        KeyBindingManager.addBinding(PANEL_COMMAND_ID, Preferences.get("panelShortcut"));
 
-        menu.addMenuDivider();
         CommandManager.register(Strings.COMMIT_CURRENT_SHORTCUT, COMMIT_CURRENT_CMD, commitCurrentFile);
-        menu.addMenuItem(COMMIT_CURRENT_CMD, Preferences.get("commitCurrentShortcut"));
+        KeyBindingManager.addBinding(COMMIT_CURRENT_CMD, Preferences.get("commitCurrentShortcut"));
+
         CommandManager.register(Strings.COMMIT_ALL_SHORTCUT, COMMIT_ALL_CMD, commitAllFiles);
-        menu.addMenuItem(COMMIT_ALL_CMD, Preferences.get("commitAllShortcut"));
+        KeyBindingManager.addBinding(COMMIT_ALL_CMD, Preferences.get("commitAllShortcut"));
+
         CommandManager.register(Strings.LAUNCH_BASH_SHORTCUT, BASH_CMD, openBashConsole);
-        menu.addMenuItem(BASH_CMD, Preferences.get("bashShortcut"));
-        CommandManager.register(Strings.PUSH_SHORTCUT, PUSH_CMD, handleGitPush);
-        menu.addMenuItem(PUSH_CMD, Preferences.get("pushShortcut"));
-        CommandManager.register(Strings.PULL_SHORTCUT, PULL_CMD, handleGitPull);
-        menu.addMenuItem(PULL_CMD, Preferences.get("pullShortcut"));
+        KeyBindingManager.addBinding(BASH_CMD, Preferences.get("bashShortcut"));
+
+        CommandManager.register(Strings.PUSH_SHORTCUT, PUSH_CMD, EventEmitter.emitFactory(Events.HANDLE_PUSH));
+        KeyBindingManager.addBinding(PUSH_CMD, Preferences.get("pushShortcut"));
+
+        CommandManager.register(Strings.PULL_SHORTCUT, PULL_CMD, EventEmitter.emitFactory(Events.HANDLE_PULL));
+        KeyBindingManager.addBinding(PULL_CMD, Preferences.get("pullShortcut"));
+
         CommandManager.register(Strings.GOTO_PREVIOUS_GIT_CHANGE, GOTO_PREV_CHANGE, GutterManager.goToPrev);
-        menu.addMenuItem(GOTO_PREV_CHANGE, Preferences.get("gotoPrevChangeShortcut"));
+        KeyBindingManager.addBinding(GOTO_PREV_CHANGE, Preferences.get("gotoPrevChangeShortcut"));
+
         CommandManager.register(Strings.GOTO_NEXT_GIT_CHANGE, GOTO_NEXT_CHANGE, GutterManager.goToNext);
-        menu.addMenuItem(GOTO_NEXT_CHANGE, Preferences.get("gotoNextChangeShortcut"));
+        KeyBindingManager.addBinding(GOTO_NEXT_CHANGE, Preferences.get("gotoNextChangeShortcut"));
+
+        // Add info from Git to panel
+        Main.gitControl.getGitConfig("user.name").then(function (currentUserName) {
+            EventEmitter.emit(Events.GIT_USERNAME_CHANGED, currentUserName);
+        });
+        Main.gitControl.getGitConfig("user.email").then(function (currentEmail) {
+            EventEmitter.emit(Events.GIT_EMAIL_CHANGED, currentEmail);
+        });
+        
+        // Init moment - use the correct language
+        moment.lang(brackets.getLocale());
     }
 
     function enable() {
+        EventEmitter.emit(Events.GIT_ENABLED);
+        // this function is called after every Branch.refresh
         gitPanelMode = null;
         //
         gitPanel.$panel.find(".git-available").show();
@@ -1229,8 +1169,9 @@ define(function (require, exports) {
     }
 
     function disable(cause) {
+        EventEmitter.emit(Events.GIT_DISABLED, cause);
         gitPanelMode = cause;
-        // causes: not-repo, not-root
+        // causes: not-repo
         if (gitPanelMode === "not-repo") {
             gitPanel.$panel.find(".git-available").hide();
             gitPanel.$panel.find(".git-not-available").show();
@@ -1252,6 +1193,5 @@ define(function (require, exports) {
     exports.enable = enable;
     exports.disable = disable;
     exports.refreshCurrentFile = refreshCurrentFile;
-    exports.prepareRemotesPicker = prepareRemotesPicker;
     exports.getPanel = getPanel;
 });

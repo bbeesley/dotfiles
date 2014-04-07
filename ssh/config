@@ -2,13 +2,12 @@ Host github.com
   Hostname ssh.github.com
   Port 443
 
-Host craftx.biz
-  Hostname my.craftx.biz
+Host intelbox
+  Hostname intelbox.billbeesley.com
   Port 443
 
-Host billbeesleycom
-  Hostname 54.85.130.78
-  IdentityFile ~/.ssh/billbeesleycom.pem
-  User ubuntu
+Host billbeesley.com
+  Hostname billbeesley.com
   Port 443
-  LocalCommand sudo su bill && cd
+  IdentityFile ~/.ssh/billbeesleycom.pem
+  User bill

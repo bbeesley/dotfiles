@@ -14,7 +14,10 @@ define(function (require, exports, module) {
         "useGitGutter": {                   "type": "boolean",           "value": true          },
         "markModifiedInTree": {             "type": "boolean",           "value": true          },
         "useCodeInspection": {              "type": "boolean",           "value": true          },
+        "useGitFtp": {                      "type": "boolean",           "value": false         },
         "showBashButton": {                 "type": "boolean",           "value": true          },
+        "dateMode": {                       "type": "number",            "value": 1             },
+        "dateFormat": {                     "type": "string",            "value": null          },
         "showReportBugButton": {            "type": "boolean",           "value": true          },
         "storePlainTextPasswords": {        "type": "boolean",           "value": false         },
         // shortcuts
@@ -31,7 +34,6 @@ define(function (require, exports, module) {
         "lastVersion": {                    "type": "string",            "value": null          },
         "panelEnabled": {                   "type": "boolean",           "value": true          },
         "TIMEOUT_VALUE": {                  "type": "number",            "value": 30000         },
-        "terminalCommand": {                "type": "string",            "value": null          },
         "extensionDirectory": {             "type": "string",            "value": undefined     },
         "gitIsInSystemPath": {              "type": "boolean",           "value": false         },
         "defaultRemotes": {                 "type": "object",            "value": {}            },
@@ -44,10 +46,18 @@ define(function (require, exports, module) {
                 "linux":    { "value": "/usr/bin/git" }
             }
         },
-        "msysgitPath": {
+        "terminalCommand": {
             "type": "string",
             "os": {
-                "win":      { "value": "C:\\Program Files (x86)\\Git\\" },
+                "win":      { "value": "C:\\Program Files (x86)\\Git\\Git Bash.vbs" },
+                "mac":      { "value": null },
+                "linux":    { "value": null }
+            }
+        },
+        "terminalCommandArgs": {
+            "type": "string",
+            "os": {
+                "win":      { "value": "$1" },
                 "mac":      { "value": null },
                 "linux":    { "value": null }
             }
@@ -83,6 +93,14 @@ define(function (require, exports, module) {
             obj[key] = defaultValue;
         }, this);
         return obj;
+    };
+
+    prefs.getType = function (key) {
+        return defaultPreferences[key].type;
+    };
+
+    prefs.getGlobal = function (key) {
+        return PreferencesManager.get(key);
     };
 
     prefs.persist = function (key, value) {

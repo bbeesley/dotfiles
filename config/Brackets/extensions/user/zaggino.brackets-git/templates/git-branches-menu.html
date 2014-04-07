@@ -11,8 +11,12 @@
 
     {{#branchList}}
     <li>
-        <a class="git-branch-link" data-branch="{{.}}">
-            <span>{{.}}</span>
+        <a class="git-branch-link" data-branch="{{name}}">
+            {{#canDelete}}
+            <span class="trash-icon">&times;</span>
+            {{/canDelete}}
+            <span class="merge-branch"><i title="{{Strings.MERGE_BRANCH}}" class="octicon octicon-git-merge"></i></span>
+            <span class="switch-branch">{{name}}</span>
         </a>
     </li>
     {{/branchList}}

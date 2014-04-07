@@ -9,7 +9,7 @@
         "visible": true
     },
     "git-panel": {
-        "visible": false
+        "visible": true
     },
     "canalyzerPanel": {
         "visible": false
@@ -1769,7 +1769,7 @@
                 },
                 {
                     "file": "/home/bill/src/JavaScript/node/gaming-tools/customerCreation.js",
-                    "active": false,
+                    "active": true,
                     "viewState": {
                         "selection": {
                             "start": {
@@ -1849,7 +1849,7 @@
                 },
                 {
                     "file": "/home/bill/src/JavaScript/node/gaming-tools/balanceTools.js",
-                    "active": true,
+                    "active": false,
                     "viewState": {
                         "selection": {
                             "start": {
@@ -2405,16 +2405,317 @@
             ]
         },
         "/home/bill/src/JavaScript/node/node-testrail/": {
+            "project.treeState": [],
+            "project.files": [
+                {
+                    "file": "/home/bill/src/JavaScript/node/node-testrail/package.json",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 19,
+                                "ch": 14
+                            },
+                            "end": {
+                                "line": 23,
+                                "ch": 5
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/src/games/Inspired/WhiteKnight/": {
             "project.treeState": [
                 [
-                    "/home/bill/src/JavaScript/node/node-testrail/libs/"
+                    "/home/bill/src/games/Inspired/WhiteKnight/Engine/"
+                ],
+                [
+                    "/home/bill/src/games/Inspired/WhiteKnight/Engine/Libs/",
+                    "/home/bill/src/games/Inspired/WhiteKnight/Engine/logic/"
+                ],
+                [
+                    "/home/bill/src/games/Inspired/WhiteKnight/Engine/Libs/server/"
+                ],
+                [
+                    "/home/bill/src/games/Inspired/WhiteKnight/Engine/Libs/server/platform/"
                 ]
+            ],
+            "project.files": []
+        },
+        "/home/bill/games/WKEN/harness/": {
+            "project.treeState": [
+                [
+                    "/home/bill/games/WKEN/harness/client-webserver/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/games/WKEN/harness/autorun.js",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 259,
+                                "ch": 103
+                            },
+                            "end": {
+                                "line": 259,
+                                "ch": 103
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 2086
+                        }
+                    }
+                }
             ]
+        },
+        "/home/bill/games/": {
+            "project.treeState": [
+                [
+                    "/home/bill/games/BUEN/"
+                ],
+                [
+                    "/home/bill/games/BUEN/harness2/"
+                ],
+                [
+                    "/home/bill/games/BUEN/harness2/client-webserver/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/games/BUEN/harness2/client-webserver/client-webserver.js",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 111,
+                                "ch": 2
+                            },
+                            "end": {
+                                "line": 111,
+                                "ch": 2
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 1345
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/games/BUEN/harness2/client-webserver/host.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 18,
+                                "ch": 2
+                            },
+                            "end": {
+                                "line": 18,
+                                "ch": 2
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/src/wh-harness/": {
+            "project.treeState": [
+                [
+                    "/home/bill/src/wh-harness/lib/"
+                ],
+                [
+                    "/home/bill/src/wh-harness/lib/config/",
+                    "/home/bill/src/wh-harness/lib/logic/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/src/wh-harness/index.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 34,
+                                "ch": 11
+                            },
+                            "end": {
+                                "line": 34,
+                                "ch": 11
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/threadControl.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 2,
+                                "ch": 10
+                            },
+                            "end": {
+                                "line": 2,
+                                "ch": 10
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/lib/config/BUEN.json",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 20,
+                                "ch": 47
+                            },
+                            "end": {
+                                "line": 20,
+                                "ch": 47
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/lib/logic/BUEN.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 0,
+                                "ch": 22
+                            },
+                            "end": {
+                                "line": 0,
+                                "ch": 22
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/playGame.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 22,
+                                "ch": 8
+                            },
+                            "end": {
+                                "line": 22,
+                                "ch": 8
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/validation.json",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 8,
+                                "ch": 23
+                            },
+                            "end": {
+                                "line": 8,
+                                "ch": 23
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/src/wh-harness/helpers.js",
+                    "active": false,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 28,
+                                "ch": 25
+                            },
+                            "end": {
+                                "line": 28,
+                                "ch": 25
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/src/JavaScript/node/node-bullet/": {
+            "project.treeState": [],
+            "project.files": [
+                {
+                    "file": "/home/bill/src/JavaScript/node/node-bullet/package.json",
+                    "active": true,
+                    "viewState": {
+                        "selection": {
+                            "start": {
+                                "line": 0,
+                                "ch": 0
+                            },
+                            "end": {
+                                "line": 0,
+                                "ch": 0
+                            }
+                        },
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/code/wh-harness/": {
+            "project.treeState": []
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/src/JavaScript/node/node-testrail/",
+    "projectPath": "/home/bill/code/wh-harness/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
@@ -2428,7 +2729,14 @@
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
+        "/home/bill/code/wh-harness",
+        "/home/bill/src/wh-harness",
+        "/home/bill/src/JavaScript/node/gaming-tools",
+        "/home/bill/src/JavaScript/node/node-bullet",
         "/home/bill/src/JavaScript/node/node-testrail",
+        "/home/bill/games",
+        "/home/bill/games/WKEN/harness",
+        "/home/bill/src/games/Inspired/WhiteKnight",
         "/home/bill/src/JavaScript/node/bbGhost",
         "/home/bill/src/bbGhost",
         "/opt/brackets/samples/root/Getting Started",
@@ -2436,17 +2744,10 @@
         "/home/bill/src/JavaScript/node/pandamania",
         "/home/bill/src/JavaScript/node/useragent_NodeJs",
         "/home/bill/src/JavaScript/node/oxi",
-        "/home/bill/src/JavaScript/node/gaming-tools",
         "/home/bill/src/JavaScript/node/harnesses/PDEN",
         "/home/bill/src/reel-gen",
         "/home/bill/src/qa-stubs/reel-gen",
         "/home/bill/src/fairness-tools/node/parser-launcher",
-        "/home/bill/src/qa-stubs/gaming-tools/node-deploy",
-        "/home/bill/src/qa-stubs/gaming-tools",
-        "/home/bill/src/JavaScript/node/gaming-tools/node_modules",
-        "/home/bill/src/JavaScript/node/oxi/lib",
-        "/home/bill/src/stubs-services/trunk/gaming-tools/node-deploy",
-        "/opt/brackets/samples/root/Getting Started",
-        "/home/bill/src/JavaScript/node/oxiAddCustomer"
+        "/home/bill/src/qa-stubs/gaming-tools/node-deploy"
     ]
 }

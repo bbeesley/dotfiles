@@ -15,26 +15,29 @@ define(function (require, exports, module) {
     var q                          = require("./thirdparty/q"),
         AppInit                    = brackets.getModule("utils/AppInit"),
         CommandManager             = brackets.getModule("command/CommandManager"),
+        Commands                   = brackets.getModule("command/Commands"),
         ExtensionUtils             = brackets.getModule("utils/ExtensionUtils"),
         Menus                      = brackets.getModule("command/Menus"),
         NodeConnection             = brackets.getModule("utils/NodeConnection"),
-        moduleDirectory            = ExtensionUtils.getModulePath(module),
-        ExtInfo                    = require("./ExtInfo");
+        moduleDirectory            = ExtensionUtils.getModulePath(module);
 
-    // This should be set before loading any more files that may depend on this
-    ExtInfo.init(moduleDirectory);
-
-    var Preferences                = require("./src/Preferences"),
-        ExtensionMain              = require("./src/Main"),
-        Strings                    = require("./strings"),
-        ChangelogDialog            = require("./src/ChangelogDialog"),
-        ErrorHandler               = require("./src/ErrorHandler"),
-        ExpectedError              = require("./src/ExpectedError"),
-        SettingsDialog             = require("./src/SettingsDialog"),
-        TOP_MENU_ID                = "brackets-git.gitMenu",
-        SETTINGS_COMMAND_ID        = "brackets-git.settings",
-        domainModulePath           = moduleDirectory + "domain",
+    var ExtensionInfo              = require("src/ExtensionInfo"),
+        Preferences                = require("src/Preferences"),
+        ExtensionMain              = require("src/Main"),
+        ChangelogDialog            = require("src/ChangelogDialog"),
+        ErrorHandler               = require("src/ErrorHandler"),
+        ExpectedError              = require("src/ExpectedError"),
+        SettingsDialog             = require("src/SettingsDialog"),
+        Strings                    = require("strings"),
+        domainModulePath           = moduleDirectory + "src/Domains/cli",
         nodeConnection             = new NodeConnection();
+
+    // Load extension modules that are not included by core
+    var modules = ["src/Remotes"];
+    if (Preferences.get("useGitFtp")) {
+        modules.push("src/Ftp/Ftp");
+    }
+    require(modules);
 
     // Seems just too buggy right now
     q.stopUnhandledRejectionTracking();
@@ -52,7 +55,7 @@ define(function (require, exports, module) {
     }
 
     // Display settings panel on first start / changelog dialog on version change
-    ExtInfo.get(function (packageJson) {
+    ExtensionInfo.get().then(function (packageJson) {
         var lastVersion    = Preferences.get("lastVersion"),
             currentVersion = packageJson.version;
 
@@ -66,10 +69,9 @@ define(function (require, exports, module) {
     });
 
     // Register command and add it to the menu.
-	CommandManager.register(Strings.GIT_SETTINGS, SETTINGS_COMMAND_ID, openSettingsPanel);
-	Menus
-        .addMenu("Git", TOP_MENU_ID)
-        .addMenuItem(SETTINGS_COMMAND_ID);
+    var SETTINGS_COMMAND_ID = "brackets-git.settings";
+    CommandManager.register(Strings.GIT_SETTINGS, SETTINGS_COMMAND_ID, openSettingsPanel);
+    Menus.getMenu(Menus.AppMenuBar.FILE_MENU).addMenuItem(SETTINGS_COMMAND_ID, "", Menus.AFTER, Commands.FILE_PROJECT_SETTINGS);
 
     AppInit.appReady(function () {
         // Connects to Node

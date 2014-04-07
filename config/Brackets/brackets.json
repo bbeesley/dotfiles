@@ -10,8 +10,8 @@
     "linting.collapsed": false,
     "quickview.enabled": true,
     "brackets-git.extensionDirectory": "/home/bill/.config/Brackets/extensions/user/zaggino.brackets-git/",
-    "brackets-git.lastVersion": "0.10.7",
-    "brackets-git.panelEnabled": false,
+    "brackets-git.lastVersion": "0.12.2",
+    "brackets-git.panelEnabled": true,
     "brackets-git.stripWhitespaceFromCommits": true,
     "brackets-git.addEndlineToTheEndOfFile": true,
     "brackets-git.useGitGutter": true,
@@ -40,5 +40,10 @@
     "brackets-git.defaultRemotes./opt/brackets/dev/samples/root/Getting Started/": "origin",
     "brackets-git.defaultRemotes./home/bill/src/bbGhost/": "origin",
     "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/bbGhost/": "origin",
-    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/node-testrail/": "origin"
+    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/node-testrail/": "origin",
+    "brackets-git.defaultRemotes./home/bill/games/WKEN/harness/": "origin",
+    "brackets-git.defaultRemotes./home/bill/games/": "origin",
+    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/node-bullet/": "origin",
+    "brackets-git.defaultRemotes./home/bill/src/JavaScript/node/gaming-tools/": "origin",
+    "brackets-git.defaultRemotes./home/bill/code/wh-harness/": "origin"
 }

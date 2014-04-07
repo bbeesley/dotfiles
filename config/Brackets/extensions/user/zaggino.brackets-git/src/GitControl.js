@@ -4,10 +4,13 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var q               = require("../thirdparty/q"),
+    var _               = brackets.getModule("thirdparty/lodash"),
         FileSystem      = brackets.getModule("filesystem/FileSystem"),
         FileUtils       = brackets.getModule("file/FileUtils"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
+        ErrorHandler    = require("./ErrorHandler"),
+        q               = require("../thirdparty/q"),
+        ExpectedError   = require("./ExpectedError"),
         Preferences     = require("./Preferences");
 
     var FILE_STATUS = {
@@ -16,7 +19,8 @@ define(function (require, exports, module) {
         MODIFIED: "FILE_MODIFIED",
         DELETED: "FILE_DELETED",
         RENAMED: "FILE_RENAMED",
-        UNTRACKED: "FILE_UNTRACKED"
+        UNTRACKED: "FILE_UNTRACKED",
+        UNMERGED: "FILE_UNMERGED"
     };
 
     function uniqSorted(arr) {
@@ -51,6 +55,11 @@ define(function (require, exports, module) {
         }
     }
 
+    // Converts UNC (Samba) urls from `//server/` to `\\server\`
+    function normalizeUncUrls(url) {
+        return (url.substring(0, 1) === "//" && brackets.platform === "win") ? url.replace("/", "\\") : url;
+    }
+
     function GitControl(options) {
         this._isHandlerRunning = false;
         this._queue = [];
@@ -59,7 +68,7 @@ define(function (require, exports, module) {
         if (Preferences.get("gitIsInSystemPath")) {
             this._git = "git";
         } else {
-            this._git = "\"" + Preferences.get("gitPath") + "\"";
+            this._git = Preferences.get("gitPath");
         }
     }
 
@@ -111,25 +120,6 @@ define(function (require, exports, module) {
             return this._pushToQueue("spawn", cmd, args, opts);
         },
 
-        bashVersion: function () {
-            if (brackets.platform === "win") {
-                var cmd = "\"" + Preferences.get("msysgitPath") + "bin\\sh.exe" + "\"";
-                return this.executeCommand(cmd + " --version");
-            } else {
-                return q().thenReject();
-            }
-        },
-
-        bashOpen: function (folder) {
-            if (brackets.platform === "win") {
-                var cmd = "\"" + Preferences.get("msysgitPath") + "Git Bash.vbs" + "\"";
-                var arg = " \"" + folder + "\"";
-                return this.executeCommand(cmd + arg);
-            } else {
-                return q().thenReject();
-            }
-        },
-
         chmodTerminalScript: function () {
             var file = Preferences.get("extensionDirectory") + "shell/" +
                     (brackets.platform === "mac" ? "terminal.osa" : "terminal.sh");
@@ -139,18 +129,37 @@ define(function (require, exports, module) {
             ]);
         },
 
-        terminalOpen: function (folder, customCmd) {
-            var cmd;
-            if (customCmd) {
-                cmd = customCmd.replace("$1", escapeShellArg(folder));
-            } else {
-                cmd = Preferences.get("extensionDirectory") + "shell/" +
-                    (brackets.platform === "mac" ? "terminal.osa" : "terminal.sh");
-                cmd = escapeShellArg(cmd) + " " + escapeShellArg(folder);
-            }
-            return this.executeCommand(cmd, null, {
-                timeout: 1,
+        terminalOpen: function (folder, customCmd, customArgs) {
+            var cmd,
+                args,
+                opts = {
+                timeout: 1, // 1 second
                 timeoutExpected: true
+            };
+            if (customCmd) {
+                cmd = customCmd;
+                args = customArgs.split(" ").map(function (arg) {
+                    return arg.replace("$1", escapeShellArg(normalizeUncUrls(folder)));
+                });
+            } else {
+                if (brackets.platform === "win") {
+                    var msysgitFolder = Preferences.get("gitPath").split("\\");
+                    msysgitFolder.splice(-2, 2, "Git Bash.vbs");
+                    cmd = msysgitFolder.join("\\");
+                } else if (brackets.platform === "mac") {
+                    cmd = Preferences.get("extensionDirectory") + "shell/terminal.osa";
+                } else {
+                    cmd = Preferences.get("extensionDirectory") + "shell/terminal.sh";
+                }
+                args = [escapeShellArg(folder)];
+            }
+            return this.executeCommand(cmd, args, opts).fail(function (err) {
+                if (ErrorHandler.isTimeout(err)) {
+                    // process is running after 1 second timeout so terminal is opened
+                    return;
+                }
+                var pathExecuted = [cmd].concat(args).join(" ");
+                throw new Error(err + ": " + pathExecuted);
             });
         },
 
@@ -161,67 +170,87 @@ define(function (require, exports, module) {
             });
         },
 
-        getRepositoryRoot: function () {
-            var self = this;
-            return this.executeCommand(this._git + " rev-parse --show-toplevel").then(function (output) {
-                // Git returns directory name without trailing slash
-                if (output.length > 0) { output = output.trim() + "/"; }
-                // Check if it's a cygwin installation.
-                if (brackets.platform === "win" && output[0] === "/") {
-                    // Convert to Windows path with cygpath.
-                    return self.executeCommand("\"" + Preferences.get("msysgitPath") +
-                                               "\\bin\\cygpath" + "\" -m \"" + output + "\"").then(function (output) {
-                        return output;
-                    });
-                }
-                return output;
-            });
-        },
-
         getCommitsAhead: function () {
-            return this.executeCommand(this._git + " rev-list HEAD --not --remotes").then(function (stdout) {
+            var args = [
+                "rev-list",
+                "HEAD",
+                "--not",
+                "--remotes"
+            ];
+            return this.executeCommand(this._git, args).then(function (stdout) {
                 return !stdout ? [] : stdout.split("\n");
             });
         },
 
         getLastCommitMessage: function () {
-            return this.executeCommand(this._git + " log -1 --pretty=%B").then(function (output) {
+            var args = [
+                "log",
+                "-1",
+                "--pretty=%B"
+            ];
+            return this.executeCommand(this._git, args).then(function (output) {
                 return output.trim();
             });
         },
 
         getBranchName: function () {
-            return this.executeCommand(this._git + " rev-parse --abbrev-ref HEAD");
+            var args = [
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD"
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         getGitConfig: function (str) {
-            return this.executeCommand(this._git + " config " + str.replace(/\s/g, ""));
+            var args = [
+                "config",
+                str.replace(/\s/g, "")
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         setGitConfig: function (str, val) {
-            return this.executeCommand(this._git + " config " + str.replace(/\s/g, "") + " " + escapeShellArg(val));
+            var args = [
+                "config",
+                str.replace(/\s/g, ""),
+                escapeShellArg(val)
+            ];
+            return this.executeCommand(this._git, args);
         },
 
-        getBranches: function () {
-            return this.executeCommand(this._git + " branch").then(function (stdout) {
-                return stdout.split("\n").map(function (l) {
-                    return l.trim();
-                });
-            });
+        mergeBranch: function (branchName) {
+            var args = ["merge", branchName];
+            return this.spawnCommand(this._git, args);
         },
 
         checkoutBranch: function (branchName) {
-            return this.executeCommand(this._git + " checkout " + branchName);
+            var args = ["checkout", branchName];
+            return this.executeCommand(this._git, args);
         },
 
-        createBranch: function (branchName) {
-            return this.executeCommand(this._git + " checkout -b " + branchName);
+        createBranch: function (branchName, originBranch, trackOrigin) {
+            var args = ["checkout", "-b", branchName];
+
+            if (originBranch) {
+                if (trackOrigin) {
+                    args.push("--track");
+                }
+                args.push(originBranch);
+            }
+
+            return this.executeCommand(this._git, args);
         },
 
         getRemotes: function () {
-            return this.executeCommand(this._git + " remote -v").then(function (stdout) {
-                return $.unique(stdout.replace(/\((push|fetch)\)/g, "").split("\n")).map(function (l) {
-                    return l.trim().split("\t");
+            var args = ["remote", "-v"];
+            return this.executeCommand(this._git, args).then(function (stdout) {
+                return !stdout ? [] : _.uniq(stdout.replace(/\((push|fetch)\)/g, "").split("\n")).map(function (l) {
+                    var s = l.trim().split("\t");
+                    return {
+                        name: s[0],
+                        url: s[1]
+                    };
                 });
             });
         },
@@ -234,7 +263,8 @@ define(function (require, exports, module) {
                 return str;
             }
 
-            return this.executeCommand(this._git + " status -u --porcelain").then(function (stdout) {
+            var args = ["status", "-u", "--porcelain"];
+            return this.spawnCommand(this._git, args).then(function (stdout) {
                 if (!stdout) {
                     return [];
                 }
@@ -265,6 +295,9 @@ define(function (require, exports, module) {
                     case "R":
                         status.push(FILE_STATUS.STAGED, FILE_STATUS.RENAMED);
                         break;
+                    case "U":
+                        status.push(FILE_STATUS.UNMERGED);
+                        break;
                     default:
                         throw new Error("Unexpected status: " + statusStaged);
                     }
@@ -280,6 +313,9 @@ define(function (require, exports, module) {
                         break;
                     case "M":
                         status.push(FILE_STATUS.MODIFIED);
+                        break;
+                    case "U":
+                        status.push(FILE_STATUS.UNMERGED);
                         break;
                     default:
                         throw new Error("Unexpected status: " + statusStaged);
@@ -304,33 +340,39 @@ define(function (require, exports, module) {
         },
 
         gitAdd: function (file, updateIndex) {
-            var cmd = this._git + " add ";
-            if (updateIndex) {
-                cmd += "-u ";
-            }
-            cmd += "\"" + file + "\"";
-            return this.executeCommand(cmd);
+            var args = ["add"];
+            if (updateIndex) { args.push("-u"); }
+            args.push(escapeShellArg(file));
+            return this.executeCommand(this._git, args);
         },
 
         gitUndoFile: function (file) {
-            return this.executeCommand(this._git + " checkout \"" + file + "\"");
+            var args = [
+                "checkout",
+                escapeShellArg(file)
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         gitCommit: function (message, amend) {
             var self = this,
                 lines = message.split("\n");
 
-            var cmd = self._git + " commit";
-            if (amend) { cmd += " --amend --reset-author"; }
+            var args = ["commit"];
+            if (amend) {
+                args.push("--amend", "--reset-author");
+            }
 
             if (lines.length === 1) {
-                return self.executeCommand(cmd + " -m " + escapeShellArg(message));
+                args.push("-m", escapeShellArg(message));
+                return self.executeCommand(self._git, args);
             } else {
                 // TODO: maybe use git commit --file=-
                 var result = q.defer(),
                     fileEntry = FileSystem.getFileForPath(ProjectManager.getProjectRoot().fullPath + ".bracketsGitTemp");
                 q.when(FileUtils.writeText(fileEntry, message)).then(function () {
-                    return self.executeCommand(cmd + " -F .bracketsGitTemp");
+                    args.push("-F", ".bracketsGitTemp");
+                    return self.executeCommand(self._git, args);
                 }).then(function (res) {
                     fileEntry.unlink(function () {
                         result.resolve(res);
@@ -345,56 +387,58 @@ define(function (require, exports, module) {
         },
 
         gitReset: function () {
-            return this.executeCommand(this._git + " reset");
+            return this.executeCommand(this._git, ["reset"]);
         },
 
         gitDiff: function (file) {
-            return this.executeCommand(this._git + " diff --no-color -U0 \"" + file + "\"");
+            var args = [
+                "diff",
+                "--no-color",
+                "-U0",
+                escapeShellArg(file)
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         gitDiffSingle: function (file) {
-            return this.executeCommand(this._git + " diff --no-color \"" + file + "\"");
+            var args = [
+                "diff",
+                "--no-color",
+                escapeShellArg(file)
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         gitDiffStaged: function () {
-            return this.executeCommand(this._git + " diff --no-color --staged");
+            var args = [
+                "diff",
+                "--no-color",
+                "--staged"
+            ];
+            return this.executeCommand(this._git, args);
         },
 
-        gitPush: function (remote, branch, options) {
-            remote = remote || "";
-            branch = branch || "";
-
-            var cmd = [this._git, "push", "--porcelain"];
-
-            if (Array.isArray(options)) {
-                cmd = cmd.concat(options);
-            }
-
-            if (remote) {
-                cmd.push(escapeShellArg(remote));
-                if (branch) {
-                    cmd.push(escapeShellArg(branch));
-                }
-            }
-
-            return this.executeCommand(cmd.join(" "));
-        },
-
-        gitPushSetUpstream: function (remote, branch) {
-            return this.gitPush(remote, branch, ["--set-upstream"]);
-        },
-
-        gitPull: function (remote) {
-            remote = remote || "";
-            return this.executeCommand(this._git + " pull --ff-only " + escapeShellArg(remote));
+        gitDiffStagedFiles: function () {
+            var args = [
+                "diff",
+                "--no-color",
+                "--staged",
+                "--name-only"
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         gitInit: function () {
-            return this.executeCommand(this._git + " init");
+            return this.executeCommand(this._git, ["init"]);
         },
 
         gitClone: function (remoteGitUrl, destinationFolder) {
-            return this.executeCommand(this._git + " clone " + escapeShellArg(remoteGitUrl) + " " + escapeShellArg(destinationFolder));
+            var args = [
+                "clone",
+                escapeShellArg(remoteGitUrl),
+                escapeShellArg(destinationFolder)
+            ];
+            return this.executeCommand(this._git, args);
         },
 
         gitHistory: function (branch, skipCommits) {
@@ -402,16 +446,12 @@ define(function (require, exports, module) {
                 items  = ["hashShort", "hash", "author", "date", "message"],
                 format = ["%h",        "%H",   "%an",    "%ai",  "%s"     ].join(separator);
 
-            var cmd = [
-                this._git,
-                "log",
-                "-100",
-                skipCommits ? "--skip=" + skipCommits : "",
-                "--format=" + escapeShellArg(format),
-                escapeShellArg(branch)
-            ];
+            var args = ["log", "-100"];
+            if (skipCommits) { args.push("--skip=" + skipCommits); }
+            args.push("--format=" + escapeShellArg(format));
+            args.push(escapeShellArg(branch));
 
-            return this.executeCommand(cmd.join(" ")).then(function (stdout) {
+            return this.executeCommand(this._git, args).then(function (stdout) {
                 return !stdout ? [] : stdout.split("\n").map(function (line) {
                     var result = {},
                         data = line.split(separator);
@@ -424,20 +464,81 @@ define(function (require, exports, module) {
         },
 
         getFilesFromCommit: function (hash) {
-            return this.executeCommand(this._git + " diff --name-only " + escapeShellArg(hash + "^!")).then(function (stdout) {
+            var args = [
+                "diff",
+                "--name-only",
+                escapeShellArg(hash + "^!")
+            ];
+            return this.executeCommand(this._git, args).then(function (stdout) {
                 return !stdout ? [] : stdout.split("\n");
             });
         },
 
         getDiffOfFileFromCommit: function (hash, file) {
-            return this.executeCommand(this._git + " diff --no-color " + escapeShellArg(hash + "^!") + " -- " + escapeShellArg(file));
+            var args = ["diff", "--no-color", escapeShellArg(hash + "^!"), "--", escapeShellArg(file)];
+            return this.executeCommand(this._git, args);
         },
 
-        remoteAdd: function (remote, url) {
-            return this.executeCommand(this._git + " remote add " + escapeShellArg(remote) + " " + escapeShellArg(url));
+        getBlame: function (file, from, to) {
+            var args = ["blame", "-w", "--line-porcelain"];
+            if (from || to) { args.push("-L" + from + "," + to); }
+            args.push(file); // spawnCommand doesn't need arguments escaped
+            return this.spawnCommand(this._git, args).then(function (stdout) {
+                if (!stdout) { return []; }
+
+                var sep  = "-@-BREAK-HERE-@-",
+                    sep2 = "$$#-#$BREAK$$-$#";
+                stdout = stdout.replace(sep, sep2)
+                               .replace(/^\t(.*)$/gm, function (a, b) { return b + sep; });
+
+                return stdout.split(sep).reduce(function (arr, lineInfo) {
+                    lineInfo = lineInfo.replace(sep2, sep).trimLeft();
+                    if (!lineInfo) { return arr; }
+
+                    var obj = {},
+                        lines = lineInfo.split("\n"),
+                        firstLine = _.first(lines).split(" ");
+
+                    obj.hash = firstLine[0];
+                    obj.num = firstLine[2];
+                    obj.content = _.last(lines);
+
+                    // process all but first and last lines
+                    for (var i = 1, l = lines.length - 1; i < l; i++) {
+                        var line = lines[i],
+                            io = line.indexOf(" "),
+                            key = line.substring(0, io),
+                            val = line.substring(io + 1);
+                        obj[key] = val;
+                    }
+
+                    arr.push(obj);
+                    return arr;
+                }, []);
+            }).fail(function (stderr) {
+                var m = stderr.match(/no such path (\S+)/);
+                if (m) {
+                    throw new ExpectedError("File is not tracked by Git: " + m[1]);
+                }
+                throw stderr;
+            });
+        },
+
+        setUserName: function (userName) {
+            return this.setGitConfig("user.name", userName);
+        },
+
+        setUserEmail: function (userEmail) {
+            return this.setGitConfig("user.email", userEmail);
+        },
+
+        undoLastLocalCommit: function () {
+            var args = ["reset", "--soft", "HEAD~1"];
+            return this.executeCommand(this._git, args);
         }
 
     };
 
     module.exports = GitControl;
 });
+

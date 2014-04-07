@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.12.2
+* Top menu has been removed - you can access settings through panel or File > Git settings...
+* Branch deletion handling has been improved and now you can delete also not fully merged branches.
+* README has been updated after a long time (thanks [Fez Vrasta](https://github.com/FezVrasta))
+* [Fez Vrasta](https://github.com/FezVrasta) started to add support for [Git-FTP](https://github.com/git-ftp/git-ftp)
+* Updated translations by [Marcel Gerber](https://github.com/SAPlayer)
+
+## 0.12.1
+* Fixed a bug that extension won't even start on some machines.
+* Fixed some issues with pushing to remote repositories.
+* Improvements to the commit history by [Marcel Gerber](https://github.com/SAPlayer)
+
+## 0.12.0
+* Bash command is now customizable for Windows - you may need to do some adjustements (even Mac/Linux users) in the settings (you can use restore defaults command if you have any problems).
+* You can now specify origin branch when creating new one.
+* You can now merge local branches into the current branch.
+* Many UI tweaks by [Larz](https://github.com/larz0)
+* Some more UI tweaks by [Fez Vrasta](https://github.com/FezVrasta)
+* Fixed custom terminal not working in Linux/Mac.
+* Better .gitignore parsing by [Marcel Gerber](https://github.com/SAPlayer)
+* Updated translations by [Marcel Gerber](https://github.com/SAPlayer) & [Pietro Albini](https://github.com/pietroalbini)
+
+## 0.11.0
+* Added features to change current username and email by [Fez Vrasta](https://github.com/FezVrasta)
+* Added feature to delete local branches by [Fez Vrasta](https://github.com/FezVrasta)
+* Added feature to add and remove remotes by [Fez Vrasta](https://github.com/FezVrasta)
+* Added feature to revert last commit by [Fez Vrasta](https://github.com/FezVrasta)
+* Changelog is now shown in nice html by [Marcel Gerber](https://github.com/SAPlayer)
+* Updated Italian translation by [Pietro Albini](https://github.com/pietroalbini)
+* Updated German translation by [Marcel Gerber](https://github.com/SAPlayer)
+* Fixed issue when right-clicking on history entries.
+* Fixed an issue with "View authors" not working for some people.
+* When toggling "Extended" commit, message is copied from the input.
+* Close not modified icon has been moved to the Working Files section by [Fez Vrasta](https://github.com/FezVrasta)
+
+## 0.10.12
+* Added features to view authors of a file or current selection.
+* Push dialog shows masked password.
+* Tabs are now properly displayed in the diffs respecting Brackets "tabSize" preference.
+
+## 0.10.11
+* Fixed an issue when commit dialog won't show on a large number of files.
+* Fixed Bash button when working with UNC paths on Windows by [Fez Vrasta](https://github.com/FezVrasta)
+
+## 0.10.10
+* Fixed extension not working on Mac & Linux platforms.
+
+## 0.10.9
+* Fixed critical bug in 0.10.8 when not working in a git repo.
+
+## 0.10.8
+* Unmerged file state is now properly recognized.
+* Should now recognize git root even in soft links.
+* Fixed bugs when handling various .gitignore entries.
+* Pull and Push are now disabled when there are no remotes to work with.
+
 ## 0.10.7
 * Fixed an issue when commiting large files failed to open commit dialog.
 * Updated Simplified Chinese translation by [Zhi](https://github.com/yfwz100)
@@ -12,7 +68,7 @@
 
 ## 0.10.5
 * Escape special characters in username and password by [Zhi](https://github.com/yfwz100)
-* Implemented infinite history scrolling by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* Implemented infinite history scrolling by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4) & [Fez Vrasta](https://github.com/FezVrasta)
 * Fixed commit message escaping issues in Linux
 * Git commands added into own top menu by [Matt Hayward](https://github.com/matthaywardwebdesign)
 

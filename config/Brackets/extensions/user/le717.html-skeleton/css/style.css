@@ -1,40 +1,43 @@
 /*
-    HTML Skeleton
-    Created 2014 Triangle717
-    <http://Triangle717.WordPress.com/>
+  HTML Skeleton
+  Created 2014 Triangle717
+  <http://Triangle717.WordPress.com/>
 
-    Licensed under The MIT License
+  Licensed under The MIT License
+  <http://opensource.org/licenses/MIT/>
 */
 
 /* Prevent the dialog from having a horizontal scrollbar */
 .html-skeleton-modal-body { overflow-x: hidden; }
 
 /* Hide loaded image details and path */
-#img-header, #img-path { display: none; }
+#img-header,
+#img-path { display: none; }
 
 /* Position the image on the right */
 #img-preview {
-    width: 270px;
-    height: 270px;
-    float: right;
-    -webkit-transform: translate(40px, -20px);
-    transform: translate(40px, -20px);
+  position: relative;
+  right: -60px;
+  bottom: 30px;
+  width: 270px;
+  height: 270px;
+  float: right;
 }
 
-/* Shift the dialog content (excluding image) up */
+/* Shift the dialog content (excluding the image) up */
 .html-skeleton-content {
-    -webkit-transform: translateY(-20px);
-    transform: translateY(-20px);
+  position: relative;
+  bottom: 20px;
 }
 
 /* Space the check boxes apart a bit */
 .html-skeleton > input {
-    margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 /* Reduce the amount of blank space underneath the number fields */
 .html-skeleton > input[type="number"] {
-    margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 /* Do not place the labels on a new line */
@@ -42,14 +45,14 @@
 
 /* Accommodate the "Full HTML skeleton" description */
 #full-skelly-description {
-    font-size: 12px;
-    display: inline-block;
-    position: relative;
-    bottom: 5px;
+  position: relative;
+  bottom: 5px;
+  display: inline-block;
+  font-size: 12px;
 }
 
 /* Enlarge the "x" between image dimensions */
 .html-skeleton #img-size-x {
-    font-weight: 900;
-    font-size: 17px;
+  font-weight: 900;
+  font-size: 17px;
 }

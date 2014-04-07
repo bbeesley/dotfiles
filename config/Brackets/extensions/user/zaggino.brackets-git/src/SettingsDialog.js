@@ -4,12 +4,13 @@
 define(function (require, exports) {
     "use strict";
 
-    var CommandManager             = brackets.getModule("command/CommandManager"),
-        Dialogs                    = brackets.getModule("widgets/Dialogs"),
-        Preferences                = require("./Preferences"),
-        ChangelogDialog            = require("../src/ChangelogDialog"),
-        Strings                    = require("../strings"),
-        settingsDialogTemplate     = require("text!htmlContent/git-settings-dialog.html");
+    var _                       = brackets.getModule("thirdparty/lodash"),
+        CommandManager          = brackets.getModule("command/CommandManager"),
+        Dialogs                 = brackets.getModule("widgets/Dialogs"),
+        Preferences             = require("./Preferences"),
+        ChangelogDialog         = require("../src/ChangelogDialog"),
+        Strings                 = require("../strings"),
+        settingsDialogTemplate  = require("text!templates/git-settings-dialog.html");
 
     var dialog,
         $dialog;
@@ -18,36 +19,34 @@ define(function (require, exports) {
         $("*[settingsProperty]", $dialog).each(function () {
             var $this = $(this),
                 type = $this.attr("type"),
+                tag = $this.prop("tagName").toLowerCase(),
                 property = $this.attr("settingsProperty");
             if (type === "checkbox") {
                 $this.prop("checked", values[property]);
+            } else if (tag === "select") {
+                $("option[value=" + values[property] + "]", $this).prop("selected", true);
             } else {
                 $this.val(values[property]);
             }
         });
         $("#git-settings-gitPath", $dialog).prop("disabled", values.gitIsInSystemPath);
-        $("#git-settings-msysgitPath", $dialog).prop("disabled", brackets.platform !== "win");
-        $("#git-settings-terminalCommand", $dialog).prop("disabled", brackets.platform === "win");
+        $("#git-settings-dateFormat-container", $dialog).toggle(values.dateMode === 3);
     }
 
     function collectValues() {
         $("*[settingsProperty]", $dialog).each(function () {
             var $this = $(this),
                 type = $this.attr("type"),
-                property = $this.attr("settingsProperty");
+                property = $this.attr("settingsProperty"),
+                prefType = Preferences.getType(property);
             if (type === "checkbox") {
                 Preferences.set(property, $this.prop("checked"));
+            } else if (prefType === "number") {
+                Preferences.set(property, parseInt($this.val().trim(), 10));
             } else {
                 Preferences.set(property, $this.val().trim() || null);
             }
         });
-
-        // We need trailing slash for folders.
-        var msysgitPath = Preferences.get("msysgitPath");
-        if (msysgitPath && msysgitPath[msysgitPath.length - 1] !== "\\") {
-            Preferences.set("msysgitPath", msysgitPath + "\\");
-        }
-
         Preferences.save();
     }
 
@@ -60,6 +59,9 @@ define(function (require, exports) {
             $("#git-settings-addEndlineToTheEndOfFile", $dialog)
                 .prop("checked", on)
                 .prop("disabled", !on);
+        });
+        $("#git-settings-dateMode", $dialog).on("change", function () {
+            $("#git-settings-dateFormat-container", $dialog).toggle($("option:selected", this).prop("value") === "3");
         });
         $("button[data-button-id='defaults']", $dialog).on("click", function (e) {
             e.stopPropagation();
@@ -74,8 +76,6 @@ define(function (require, exports) {
     function init() {
         setValues(Preferences.getAll());
         assignActions();
-        $(".windows-only", $dialog).toggle(brackets.platform === "win");
-        $(".non-windows-only", $dialog).toggle(brackets.platform !== "win");
         $("#git-settings-tabs a", $dialog).click(function (e) {
             e.preventDefault();
             $(this).tab("show");
@@ -83,10 +83,10 @@ define(function (require, exports) {
     }
 
     function showRestartDialog() {
-        var questionDialogTemplate = require("text!htmlContent/git-question-dialog.html");
+        var questionDialogTemplate = require("text!templates/git-question-dialog.html");
         var compiledTemplate = Mustache.render(questionDialogTemplate, {
             title: Strings.RESTART,
-            question: Strings.Q_RESTART_BRACKETS,
+            question: _.escape(Strings.Q_RESTART_BRACKETS),
             Strings: Strings
         });
         Dialogs.showModalDialogUsingTemplate(compiledTemplate).done(function (buttonId) {

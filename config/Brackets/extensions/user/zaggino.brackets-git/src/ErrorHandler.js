@@ -8,17 +8,17 @@ define(function (require, exports) {
         Dialogs                    = brackets.getModule("widgets/Dialogs"),
         NativeApp                  = brackets.getModule("utils/NativeApp"),
         ExpectedError              = require("./ExpectedError"),
-        ExtInfo                    = require("../ExtInfo"),
+        ExtensionInfo              = require("./ExtensionInfo"),
         Strings                    = require("../strings"),
-        markdownReportTemplate     = require("text!htmlContent/error-report.md"),
-        errorDialogTemplate        = require("text!htmlContent/git-error-dialog.html");
+        markdownReportTemplate     = require("text!templates/error-report.md"),
+        errorDialogTemplate        = require("text!templates/git-error-dialog.html");
 
     var errorQueue = [];
 
     function getMdReport(params) {
         return Mustache.render(markdownReportTemplate, _.defaults(params || {}, {
             brackets: [brackets.metadata.name, brackets.metadata.version, "(" + brackets.platform + ")"].join(" "),
-            bracketsGit: "Brackets-Git " + ExtInfo.getSync().version,
+            bracketsGit: "Brackets-Git " + ExtensionInfo.getSync().version,
             git: Strings.GIT_VERSION
         })).trim();
     }
@@ -43,14 +43,24 @@ define(function (require, exports) {
         return errNew;
     };
 
+    function _reportBug(params) {
+        ExtensionInfo.hasLatestVersion(function (hasLatestVersion, currentVersion, latestVersion) {
+            if (hasLatestVersion) {
+                NativeApp.openURLInDefaultBrowser(params);
+            } else {
+                var err = new ExpectedError("Latest version of extension is " + latestVersion + ", yours is " + currentVersion);
+                exports.showError(err, "Outdated extension version!");
+            }
+        });
+    }
+
     exports.reportBug = function () {
         var mdReport = getMdReport({
             errorStack: errorQueue.map(function (err, index) {
                 return "#" + (index + 1) + ". " + err.toString();
             }).join("\n")
         });
-        NativeApp.openURLInDefaultBrowser(ExtInfo.getSync().homepage + "/issues/new?body=" +
-                                          encodeURIComponent(mdReport));
+        _reportBug(ExtensionInfo.getSync().homepage + "/issues/new?body=" + encodeURIComponent(mdReport));
     };
 
     exports.isTimeout = function (err) {
@@ -58,6 +68,10 @@ define(function (require, exports) {
             err.message.indexOf("cmd-execute-timeout") === 0 ||
             err.message.indexOf("cmd-spawn-timeout") === 0
         );
+    };
+
+    exports.equals = function (err, what) {
+        return err.toString().toLowerCase() === what.toLowerCase();
     };
 
     exports.contains = function (err, what) {
@@ -108,10 +122,10 @@ define(function (require, exports) {
                     errorBody: errorBody,
                     errorStack: errorStack
                 });
-                NativeApp.openURLInDefaultBrowser(ExtInfo.getSync().homepage + "/issues/new?title=" +
-                                                  encodeURIComponent(title) +
-                                                  "&body=" +
-                                                  encodeURIComponent(mdReport));
+                _reportBug(ExtensionInfo.getSync().homepage + "/issues/new?title=" +
+                           encodeURIComponent(title) +
+                           "&body=" +
+                           encodeURIComponent(mdReport));
             }
         });
 

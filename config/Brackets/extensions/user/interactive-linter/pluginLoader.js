@@ -7,9 +7,6 @@
 
 define(function(require, exports, module){
 
-    var Timer = require("timer");
-    var spromise = require("libs/js/spromise");
-
     function pluginLoader(manager, pluginsMeta) {
         var msgId = 1,
             plugins, pending, lastRequest;
@@ -48,7 +45,7 @@ define(function(require, exports, module){
 
             //var timer = new Timer(true);
             lastRequest = $.Deferred();
-            data.msgId = msgId;
+            data.msgId  = msgId;
             worker.postMessage(data);
             msgId++;
 

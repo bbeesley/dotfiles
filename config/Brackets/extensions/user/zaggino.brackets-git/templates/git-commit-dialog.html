@@ -1,6 +1,6 @@
 <div id="git-commit-dialog" class="modal">
     <div class="modal-header">
-        <button class="extendedCommit btn pull-right">EXTENDED</button>
+        <button class="extendedCommit btn pull-right">{{Strings.EXTENDED_COMMIT_MESSAGE}}</button>
         <label class="checkbox pull-right" style="line-height: 28px; margin-right: 50px;">
             <input class="amend-commit" type="checkbox" style="margin-top: 10px;" /> {{Strings.AMEND_COMMIT}}
         </label>
@@ -9,7 +9,7 @@
     <div class="modal-body table-striped tab-content">
         {{#hasLintProblems}}
         <div class="lint-errors">
-            <b>Code inspection problems:</b>
+            <b>{{Strings.CODE_INSPECTION_PROBLEMS}}</b>
             <ul>
                 {{#lintResults}}
                 {{#hasErrors}}
@@ -34,7 +34,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button data-button-id="ok"     class="dialog-button btn primary left"  >{{Strings.BUTTON_OK}}</button>
-        <button data-button-id="cancel" class="dialog-button btn cancel"        >{{Strings.BUTTON_CANCEL}}</button>
+        <button data-button-id="cancel" class="dialog-button btn cancel btn-80" >{{Strings.BUTTON_CANCEL}}</button>
+        <button data-button-id="ok"     class="dialog-button btn primary btn-80">{{Strings.BUTTON_OK}}</button>
     </div>
 </div>
