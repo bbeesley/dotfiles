@@ -5,7 +5,7 @@
     "description": "Integration of Git into Brackets UI",
     "keywords": ["git"],
     "categories": ["general", "external"],
-    "version": "0.8.10",
+    "version": "0.10.7",
 
     "license": "MIT",
     "homepage": "https://github.com/zaggino/brackets-git",
@@ -30,6 +30,8 @@
         
     },
     "devDependencies": {
-        "q": "0.9.7"
+        "q": "0.9.7",
+        "grunt": "latest",
+        "grunt-contrib-jshint": "latest"
     }
 }

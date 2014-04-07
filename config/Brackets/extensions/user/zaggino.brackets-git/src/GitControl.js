@@ -7,7 +7,8 @@ define(function (require, exports, module) {
     var q               = require("../thirdparty/q"),
         FileSystem      = brackets.getModule("filesystem/FileSystem"),
         FileUtils       = brackets.getModule("file/FileUtils"),
-        ProjectManager  = brackets.getModule("project/ProjectManager");
+        ProjectManager  = brackets.getModule("project/ProjectManager"),
+        Preferences     = require("./Preferences");
 
     var FILE_STATUS = {
         STAGED: "FILE_STAGED",
@@ -28,15 +29,37 @@ define(function (require, exports, module) {
         return rv.sort();
     }
 
+    function escapeShellArg(str) {
+        if (typeof str !== "string") {
+            throw new Error("escapeShellArg argument is not a string: " + typeof str);
+        }
+        if (str.length === 0) {
+            return str;
+        }
+        if (brackets.platform !== "win") {
+            // http://steve-parker.org/sh/escape.shtml
+            str = str.replace(/["$`\\]/g, function (m) {
+                return "\\" + m;
+            });
+            return "\"" + str + "\"";
+        } else {
+            // http://stackoverflow.com/questions/7760545/cmd-escape-double-quotes-in-parameter
+            str = str.replace(/"/g, function () {
+                return "\"\"\"";
+            });
+            return "\"" + str + "\"";
+        }
+    }
+
     function GitControl(options) {
         this._isHandlerRunning = false;
         this._queue = [];
         this.options = options;
 
-        if (this.options.preferences.getValue("gitIsInSystemPath")) {
+        if (Preferences.get("gitIsInSystemPath")) {
             this._git = "git";
         } else {
-            this._git = "\"" + this.options.preferences.getValue("gitPath") + "\"";
+            this._git = "\"" + Preferences.get("gitPath") + "\"";
         }
     }
 
@@ -90,7 +113,7 @@ define(function (require, exports, module) {
 
         bashVersion: function () {
             if (brackets.platform === "win") {
-                var cmd = "\"" + this.options.preferences.getValue("msysgitPath") + "bin\\sh.exe" + "\"";
+                var cmd = "\"" + Preferences.get("msysgitPath") + "bin\\sh.exe" + "\"";
                 return this.executeCommand(cmd + " --version");
             } else {
                 return q().thenReject();
@@ -99,12 +122,36 @@ define(function (require, exports, module) {
 
         bashOpen: function (folder) {
             if (brackets.platform === "win") {
-                var cmd = "\"" + this.options.preferences.getValue("msysgitPath") + "Git Bash.vbs" + "\"";
+                var cmd = "\"" + Preferences.get("msysgitPath") + "Git Bash.vbs" + "\"";
                 var arg = " \"" + folder + "\"";
                 return this.executeCommand(cmd + arg);
             } else {
                 return q().thenReject();
             }
+        },
+
+        chmodTerminalScript: function () {
+            var file = Preferences.get("extensionDirectory") + "shell/" +
+                    (brackets.platform === "mac" ? "terminal.osa" : "terminal.sh");
+            return this.executeCommand("chmod", [
+                "+x",
+                escapeShellArg(file)
+            ]);
+        },
+
+        terminalOpen: function (folder, customCmd) {
+            var cmd;
+            if (customCmd) {
+                cmd = customCmd.replace("$1", escapeShellArg(folder));
+            } else {
+                cmd = Preferences.get("extensionDirectory") + "shell/" +
+                    (brackets.platform === "mac" ? "terminal.osa" : "terminal.sh");
+                cmd = escapeShellArg(cmd) + " " + escapeShellArg(folder);
+            }
+            return this.executeCommand(cmd, null, {
+                timeout: 1,
+                timeoutExpected: true
+            });
         },
 
         getVersion: function () {
@@ -122,7 +169,7 @@ define(function (require, exports, module) {
                 // Check if it's a cygwin installation.
                 if (brackets.platform === "win" && output[0] === "/") {
                     // Convert to Windows path with cygpath.
-                    return self.executeCommand("\"" + self.options.preferences.getValue("msysgitPath") +
+                    return self.executeCommand("\"" + Preferences.get("msysgitPath") +
                                                "\\bin\\cygpath" + "\" -m \"" + output + "\"").then(function (output) {
                         return output;
                     });
@@ -132,12 +179,8 @@ define(function (require, exports, module) {
         },
 
         getCommitsAhead: function () {
-            return this.executeCommand(this._git + " rev-list HEAD --not --remotes").then(function (output) {
-                if (output.trim().length === 0) {
-                    return [];
-                } else {
-                    return output.split("\n");
-                }
+            return this.executeCommand(this._git + " rev-list HEAD --not --remotes").then(function (stdout) {
+                return !stdout ? [] : stdout.split("\n");
             });
         },
 
@@ -149,6 +192,14 @@ define(function (require, exports, module) {
 
         getBranchName: function () {
             return this.executeCommand(this._git + " rev-parse --abbrev-ref HEAD");
+        },
+
+        getGitConfig: function (str) {
+            return this.executeCommand(this._git + " config " + str.replace(/\s/g, ""));
+        },
+
+        setGitConfig: function (str, val) {
+            return this.executeCommand(this._git + " config " + str.replace(/\s/g, "") + " " + escapeShellArg(val));
         },
 
         getBranches: function () {
@@ -167,6 +218,14 @@ define(function (require, exports, module) {
             return this.executeCommand(this._git + " checkout -b " + branchName);
         },
 
+        getRemotes: function () {
+            return this.executeCommand(this._git + " remote -v").then(function (stdout) {
+                return $.unique(stdout.replace(/\((push|fetch)\)/g, "").split("\n")).map(function (l) {
+                    return l.trim().split("\t");
+                });
+            });
+        },
+
         getGitStatus: function () {
             function unquote(str) {
                 if (str[0] === "\"" && str[str.length - 1] === "\"") {
@@ -176,7 +235,7 @@ define(function (require, exports, module) {
             }
 
             return this.executeCommand(this._git + " status -u --porcelain").then(function (stdout) {
-                if (stdout.length === 0) {
+                if (!stdout) {
                     return [];
                 }
 
@@ -265,7 +324,7 @@ define(function (require, exports, module) {
             if (amend) { cmd += " --amend --reset-author"; }
 
             if (lines.length === 1) {
-                return self.executeCommand(cmd + " -m \"" + message + "\"");
+                return self.executeCommand(cmd + " -m " + escapeShellArg(message));
             } else {
                 // TODO: maybe use git commit --file=-
                 var result = q.defer(),
@@ -301,25 +360,81 @@ define(function (require, exports, module) {
             return this.executeCommand(this._git + " diff --no-color --staged");
         },
 
-        gitPush: function (remote) {
+        gitPush: function (remote, branch, options) {
             remote = remote || "";
-            return this.executeCommand(this._git + " push " + remote + " --porcelain");
+            branch = branch || "";
+
+            var cmd = [this._git, "push", "--porcelain"];
+
+            if (Array.isArray(options)) {
+                cmd = cmd.concat(options);
+            }
+
+            if (remote) {
+                cmd.push(escapeShellArg(remote));
+                if (branch) {
+                    cmd.push(escapeShellArg(branch));
+                }
+            }
+
+            return this.executeCommand(cmd.join(" "));
         },
 
-        gitPushUpstream: function (upstream, branch) {
-            return this.executeCommand(this._git + " push --porcelain --set-upstream " + upstream + " " + branch);
+        gitPushSetUpstream: function (remote, branch) {
+            return this.gitPush(remote, branch, ["--set-upstream"]);
         },
 
-        gitPull: function () {
-            return this.executeCommand(this._git + " pull --ff-only");
+        gitPull: function (remote) {
+            remote = remote || "";
+            return this.executeCommand(this._git + " pull --ff-only " + escapeShellArg(remote));
         },
 
         gitInit: function () {
             return this.executeCommand(this._git + " init");
         },
 
+        gitClone: function (remoteGitUrl, destinationFolder) {
+            return this.executeCommand(this._git + " clone " + escapeShellArg(remoteGitUrl) + " " + escapeShellArg(destinationFolder));
+        },
+
+        gitHistory: function (branch, skipCommits) {
+            var separator = "_._",
+                items  = ["hashShort", "hash", "author", "date", "message"],
+                format = ["%h",        "%H",   "%an",    "%ai",  "%s"     ].join(separator);
+
+            var cmd = [
+                this._git,
+                "log",
+                "-100",
+                skipCommits ? "--skip=" + skipCommits : "",
+                "--format=" + escapeShellArg(format),
+                escapeShellArg(branch)
+            ];
+
+            return this.executeCommand(cmd.join(" ")).then(function (stdout) {
+                return !stdout ? [] : stdout.split("\n").map(function (line) {
+                    var result = {},
+                        data = line.split(separator);
+                    items.forEach(function (name, i) {
+                        result[name] = data[i];
+                    });
+                    return result;
+                });
+            });
+        },
+
+        getFilesFromCommit: function (hash) {
+            return this.executeCommand(this._git + " diff --name-only " + escapeShellArg(hash + "^!")).then(function (stdout) {
+                return !stdout ? [] : stdout.split("\n");
+            });
+        },
+
+        getDiffOfFileFromCommit: function (hash, file) {
+            return this.executeCommand(this._git + " diff --no-color " + escapeShellArg(hash + "^!") + " -- " + escapeShellArg(file));
+        },
+
         remoteAdd: function (remote, url) {
-            return this.executeCommand(this._git + " remote add " + remote + " " + url);
+            return this.executeCommand(this._git + " remote add " + escapeShellArg(remote) + " " + escapeShellArg(url));
         }
 
     };

@@ -8,19 +8,18 @@
 define(function (require, exports, module) {
     'use strict';
 
-    var linterSettings = require("linterSettings");
-    var linterReporter  = require("linterReporter");
-    var ProjectFiles    = require('ProjectFiles');
+    var CodeInspection = brackets.getModule("language/CodeInspection"),
+        linterSettings = require("linterSettings"),
+        linterReporter = require("linterReporter"),
+        languages      = {},
+        linters        = {};
 
-    var languages = {};
-    var linters = {};
-    var currentProject;
 
     var linterManager = (function() {
-        var _cm = null,
-            _timer = null,
-            _mode = '';
-
+        var _cm       = null,
+            _timer    = null,
+            _mode     = "",
+            _fullPath = "";
 
         function lint( ) {
             if ( !_cm || !languages[_mode] ) {
@@ -34,8 +33,10 @@ define(function (require, exports, module) {
 
             _timer = setTimeout(function () {
                 _timer = null;
-                languages[_mode].lint(_cm.getDoc().getValue(), languages[_mode].settings).done(function(result) {
-                    linterReporter.report(_cm, result);
+                linterSettings.loadSettings(languages[_mode].settingsFile, _fullPath, linterManager).always(function(settings) {
+                    languages[_mode].lint(_cm.getDoc().getValue(), settings || languages[_mode].defaultSettings || {}).done(function(result) {
+                        linterReporter.report(_cm, result);
+                    });
                 });
             }, 1000);
         }
@@ -56,10 +57,11 @@ define(function (require, exports, module) {
         /**
         * We will only handle one document at a time
         */
-        function setDocument(cm) {
+        function setDocument(cm, fullpath) {
             var gutters, index;
-            var mode = cm && cm.getDoc().getMode();
-            _mode = mode && (mode.helperType || mode.name);
+            var mode  = cm && cm.getDoc().getMode();
+            _mode     = mode && (mode.helperType || mode.name);
+            _fullPath = fullpath;
 
             if (_cm) {
                 CodeMirror.off(_cm.getDoc(), "change", lint);
@@ -87,20 +89,22 @@ define(function (require, exports, module) {
         }
 
 
-        $(ProjectFiles).on("projectOpen", function(evt, project) {
-            currentProject = project;
-        });
-
-
         function register( linter ) {
             languages[linter.language] = linter;
             linters[linter.name] = linter;
-            linterSettings.register(linter);
+
+            //
+            // Make sure we override the default linters because doing double processing
+            // is extremely expensive
+            //
+            CodeInspection.register(linter.language, {
+                name: linter.language,
+                scanFile: $.noop
+            });
         }
 
 
         return {
-            // Functions
             lint: lint,
             register: register,
             setDocument: setDocument
