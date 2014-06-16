@@ -9,7 +9,8 @@ define(function (require, exports, module) {
         ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
         NodeConnection = brackets.getModule("utils/NodeConnection"),
         Dialogs = brackets.getModule("widgets/Dialogs"),
-        ansi = require("ansi"),
+        ansi = require("./ansi"),
+        prefs = require("./preferences"),
         nodeConnection = new NodeConnection(),
         NodeMenuID = "node-menu",
         NodeMenu = Menus.addMenu("Node.js", NodeMenuID),
@@ -17,23 +18,8 @@ define(function (require, exports, module) {
         NODE_SETTINGS_DIALOG_ID = "node-settings-dialog",
         NODE_INSTALL_DIALOG_ID = "node-install-dialog",
         NODE_EXEC_DIALOG_ID = "node-exec-dialog",
-        LS_PREFIX = "node-";
-
-
-    /**
-     * Shortcuts for localstorage with prefix
-     */
-    function get(name) {
-        return localStorage.getItem(LS_PREFIX + name);
-    }
-
-    function set(name, value) {
-        return localStorage.setItem(LS_PREFIX + name, value);
-    }
-
-    function rm(name) {
-        return localStorage.removeItem(LS_PREFIX + name);
-    }
+        LS_PREFIX = "node-",
+        API_VERSION = 1;
 
     /**
      * Load the configuration
@@ -80,15 +66,18 @@ define(function (require, exports, module) {
 
             if (source && source.close) source.close();
             
-            // Current document
-            var doc = DocumentManager.getCurrentDocument();
-            if(!doc.file.isFile) return;
-            
             // Build url
             var url = "http://" + config.host + ":" + config.port + "/?command=" + encodeURIComponent(command);
             var dir = null;
+            
             if(useCurrentCwd) {
-                dir = doc.file.parentPath;
+                // Use cwd, so get the currentDocument and set that as directory.
+                var doc = DocumentManager.getCurrentDocument();
+                
+                // If document is not valid, then leave dir null (don't set it).
+                if(doc !== null && doc.file.isFile) {
+                    dir = doc.file.parentPath;
+                }
             } else if(cwd) {
                 dir = cwd;
             }
@@ -96,7 +85,10 @@ define(function (require, exports, module) {
             if(dir !== null) {
                 url += "&cwd=" + encodeURIComponent(dir);
             }
-            
+
+            // Add api version
+            url += "&apiversion=" + API_VERSION;
+
             // Store the last command and cwd
             this.last.command = command;
             this.last.cwd = dir;
@@ -118,8 +110,8 @@ define(function (require, exports, module) {
         
         newNpm: function (command) {
             
-            var npmBin = get("npm");
-            if(!npmBin) {
+            var npmBin = prefs.get("npm-bin");
+            if(npmBin === "") {
                 npmBin = "npm";
             } else {
                 // Add quotation because windows paths can contain spaces
@@ -132,8 +124,8 @@ define(function (require, exports, module) {
         
         newNode: function () {
             
-            var nodeBin = get("node");
-            if(!nodeBin) {
+            var nodeBin = prefs.get("node-bin");
+            if(nodeBin === "") {
                 nodeBin = "node";
             } else {
                 // Add quotation because windows paths can contain spaces
@@ -142,7 +134,7 @@ define(function (require, exports, module) {
             
             // Current document
             var doc = DocumentManager.getCurrentDocument();
-            if(!doc.file.isFile) return;
+            if(doc === null || !doc.file.isFile) return;
             
             this.new(nodeBin + ' "' + doc.file.fullPath + '"', true);
             
@@ -205,7 +197,17 @@ define(function (require, exports, module) {
         write: function (str) {
             var e = document.createElement("div");
             e.innerHTML = ansi(str.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+            
+            var scroll = false;
+            if (this.pre.parentNode.scrollTop === 0 || this.pre.parentNode.scrollTop === this.pre.parentNode.scrollHeight || this.pre.parentNode.scrollHeight - this.pre.parentNode.scrollTop === this.pre.parentNode.clientHeight) {
+                scroll = true;   
+            }
+            
             this.pre.appendChild(e);
+            
+            if (scroll) {
+                this.pre.parentNode.scrollTop = this.pre.parentNode.scrollHeight;
+            }
         },
 
         /**
@@ -294,20 +296,18 @@ define(function (require, exports, module) {
 
                     var node = nodeInput.value,
                         npm = npmInput.value;
-                    console.log(node, npm);
-                    if (node && node !== "") set("node", node);
-                    else rm("node");
 
-                    if (npm && npm !== "") set("npm", npm)
-                    else rm("npm");
+                    prefs.set("node-bin", node.trim());
+                    prefs.set("npm-bin", npm.trim());
+                    prefs.save();
 
                 });
 
                 // It's important to get the elements after the modal is rendered but before the done event
                 var nodeInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .node"),
                     npmInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .npm");
-                nodeInput.value = get("node");
-                npmInput.value = get("npm");
+                nodeInput.value = prefs.get("node-bin");
+                npmInput.value = prefs.get("npm-bin");
 
             }
         },
@@ -346,7 +346,7 @@ define(function (require, exports, module) {
                     if (id !== "ok") return;
 
                     // Module name musn't be empty
-                    if (name.value == "") {
+                    if (name.value.trim() == "") {
                         Dialogs.showModalDialog(Dialogs.DIALOG_ID_ERROR, "Error", "Please enter a module name");
                         return;
                     }
@@ -400,7 +400,7 @@ define(function (require, exports, module) {
                     if (id !== "ok") return;
 
                     // Command musn't be empty
-                    if (command.value == "") {
+                    if (command.value.trim() == "") {
                         Dialogs.showModalDialog(Dialogs.DIALOG_ID_ERROR, "Error", "Please enter a command");
                         return;
                     }

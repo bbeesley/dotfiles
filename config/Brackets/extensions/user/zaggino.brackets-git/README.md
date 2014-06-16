@@ -1,6 +1,6 @@
 # Brackets-Git
 
-Brackets-Git is an extension for [Brackets](http://brackets.io/) editor - it provides Git integration for Brackets.  
+Brackets-Git is an extension for [Brackets](http://brackets.io/) editor - it provides Git integration for Brackets.
 It's tested and works on any platform supported by Brackets (Windows, Mac OSx, GNU/Linux).
 
 ## Installation
@@ -8,40 +8,50 @@ It's tested and works on any platform supported by Brackets (Windows, Mac OSx, G
 #### Dependencies:
 To make **Brackets-Git** work you'll need Git installed in your system:
 
-- **Windows**: [MsysGit](https://code.google.com/p/msysgit/) is reccomended with these ([settings](https://raw.github.com/zaggino/brackets-git/master/screenshots/gitInstall.png))
-- **Mac OS X**: [Git for OS X](https://code.google.com/p/git-osx-installer/) is reccomended.
-- **GNU/Linux**: Install the package `git`:  
-   \- Debian/Ubuntu: `sudo apt-get install git`  
-   \- RedHat/CentOS/Fedora: `sudo yum install git`
+- **Windows**: [Git for Windows](http://msysgit.github.io/) is recommended with these [settings](https://raw.github.com/zaggino/brackets-git/master/screenshots/gitInstall.png).
+- **Mac OS X**: [Git for Mac](http://git-scm.com/download/mac) is recommended.
+- **GNU/Linux**: Install the package `git`:
+   - [Debian/Ubuntu](https://launchpad.net/~git-core/+archive/ppa) using [this guide](http://askmetutorials.blogspot.com.au/2014/03/install-git-191-on-ubuntu-linuxmint.html):
+
+   ```
+   sudo add-apt-repository ppa:git-core/ppa
+   sudo apt-get update
+   sudo apt-get install git
+   ```
+
+   - RedHat/CentOS/Fedora: `sudo yum install git`
 
 #### Extension installation:
 To install latest release of **Brackets-Git** use the built-in Brackets Extension Manager which downloads the extension from the [extension registry](https://brackets-registry.aboutweb.com/).
 
 #### Configuration:
-Extension can be configured by opening the Git Panel and clicking the ![settings...][settingsIcon] button.  
-Alternatively you can use "File > Git Settings..." in the Brackets menu.
+Extension can be configured by opening the Git Panel and clicking the ![settings...][settingsIcon] button.
+Alternatively you can use `File > Git Settings...` in the Brackets menu.
 
 ## Features and limitations
+
+You can find some samples of features [here](docs/FEATURES.md).
 
 Currently **Brackets-Git** supports these features (this list may be incomplete as we add new features regularely):
 
 - `init` / `clone` / `push` / `pull`
 - `create` / `delete` / `merge` branches
-- `select` / `define` / `delete` / `select` remotes
+- `select` / `define` / `delete` remotes
+- `checkout` / `reset` commits
 - show commits history
 - manage different Git settings
-- support for [Git-FTP](http://git-ftp.github.io/git-ftp/)
+- support for [Git-FTP](http://git-ftp.github.io/git-ftp/) ([installation instructions](docs/GIT-FTP.md))
 
-A comprehensive list of Brackets-Git features is avaiable reading the [`CHANGELOG.md`](CHANGELOG.md).  
-Most of the features available are configurable and is possible disable or enable them selectively.
+A comprehensive list of Brackets-Git features is available reading the [`CHANGELOG.md`](CHANGELOG.md).
+Most of the features available are configurable and it's possible to enable and disable them selectively.
 
 **Pull/Push to password protected repositories:**
 Push/Pull from and to password protected repositories is partially supported, currently it works only with `http` / `https` repositories.
 
-[Windows Credential Store for Git](http://gitcredentialstore.codeplex.com/) is reccomanded to better manage password protected repositories till **Brackets-Git** will provide a better support for them.  
+[Windows Credential Store for Git](http://gitcredentialstore.codeplex.com/) is recommended to better manage password protected repositories till **Brackets-Git** will provide a better support for them.
 You'll need to push manually for the first time to setup your username/password into credentials helper.
 
-If you won't find the feature you were looking for, feel free to **open issues with your ideas**.
+If you can't find the feature you were looking for, feel free to **open issues with your ideas**.
 
 ## Some screenshots:
 

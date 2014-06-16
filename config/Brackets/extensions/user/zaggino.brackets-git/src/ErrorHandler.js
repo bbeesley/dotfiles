@@ -1,6 +1,3 @@
-/*jslint plusplus: true, vars: true, nomen: true */
-/*global brackets, define, Mustache */
-
 define(function (require, exports) {
     "use strict";
 
@@ -10,6 +7,7 @@ define(function (require, exports) {
         ExpectedError              = require("./ExpectedError"),
         ExtensionInfo              = require("./ExtensionInfo"),
         Strings                    = require("../strings"),
+        Utils                      = require("src/Utils"),
         markdownReportTemplate     = require("text!templates/error-report.md"),
         errorDialogTemplate        = require("text!templates/git-error-dialog.html");
 
@@ -21,6 +19,10 @@ define(function (require, exports) {
             bracketsGit: "Brackets-Git " + ExtensionInfo.getSync().version,
             git: Strings.GIT_VERSION
         })).trim();
+    }
+
+    function errorToString(err) {
+        return Utils.encodeSensitiveInformation(err.toString());
     }
 
     exports.rewrapError = function (err, errNew) {
@@ -57,7 +59,7 @@ define(function (require, exports) {
     exports.reportBug = function () {
         var mdReport = getMdReport({
             errorStack: errorQueue.map(function (err, index) {
-                return "#" + (index + 1) + ". " + err.toString();
+                return "#" + (index + 1) + ". " + errorToString(err);
             }).join("\n")
         });
         _reportBug(ExtensionInfo.getSync().homepage + "/issues/new?body=" + encodeURIComponent(mdReport));
@@ -80,12 +82,14 @@ define(function (require, exports) {
 
     exports.logError = function (err) {
         var msg = err && err.stack ? err.stack : err;
-        console.error("[brackets-git] " + msg);
+        Utils.consoleLog("[brackets-git] " + msg, "error");
         errorQueue.push(err);
         return err;
     };
 
     exports.showError = function (err, title) {
+        if (err.__shown) { return err; }
+
         exports.logError(err);
 
         var dialog,
@@ -96,20 +100,31 @@ define(function (require, exports) {
         if (err instanceof ExpectedError) {
             showReportButton = false;
         }
+        var showDetailsButton = false;
+        if (err.detailsUrl) {
+            showDetailsButton = true;
+        }
 
         if (typeof err === "string") {
             errorBody = err;
         } else if (err instanceof Error) {
-            errorBody = err.toString();
+            errorBody = errorToString(err);
             errorStack = err.stack || "";
-        } else {
-            errorBody = JSON.stringify(err, null, 4);
+        }
+
+        if (!errorBody || errorBody === "[object Object]") {
+            try {
+                errorBody = JSON.stringify(err, null, 4);
+            } catch (e) {
+                errorBody = "Error can't be stringified by JSON.stringify";
+            }
         }
 
         var compiledTemplate = Mustache.render(errorDialogTemplate, {
             title: title,
             body: errorBody,
             showReportButton: showReportButton,
+            showDetailsButton: showDetailsButton,
             Strings: Strings
         });
 
@@ -127,8 +142,24 @@ define(function (require, exports) {
                            "&body=" +
                            encodeURIComponent(mdReport));
             }
+            if (buttonId === "details") {
+                NativeApp.openURLInDefaultBrowser(err.detailsUrl);
+            }
         });
 
+        if (typeof err === "string") { err = new Error(err); }
+        err.__shown = true;
+        return err;
+    };
+
+    exports.toError = function (arg) {
+        // FUTURE: use this everywhere and have a custom error class for this extension
+        if (arg instanceof Error) { return arg; }
+        var err = new Error(arg);
+        // TODO: new class for this?
+        err.match = function () {
+            return arg.match.apply(arg, arguments);
+        };
         return err;
     };
 

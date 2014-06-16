@@ -1,4 +1,5 @@
 define(function (require) {
+    "use strict";
 
     // Brackets modules
     var _               = brackets.getModule("thirdparty/lodash"),
@@ -7,14 +8,17 @@ define(function (require) {
         StringUtils     = brackets.getModule("utils/StringUtils");
 
     // Local modules
-    var ErrorHandler  = require("src/ErrorHandler"),
-        Events        = require("src/Events"),
-        EventEmitter  = require("src/EventEmitter"),
-        Git           = require("src/Git/Git"),
-        Preferences   = require("src/Preferences"),
-        Promise       = require("bluebird"),
-        Strings       = require("strings"),
-        Utils         = require("src/Utils");
+    var ErrorHandler    = require("src/ErrorHandler"),
+        Events          = require("src/Events"),
+        EventEmitter    = require("src/EventEmitter"),
+        Git             = require("src/git/Git"),
+        Preferences     = require("src/Preferences"),
+        ProgressDialog  = require("src/dialogs/Progress"),
+        Promise         = require("bluebird"),
+        PullDialog      = require("src/dialogs/Pull"),
+        PushDialog      = require("src/dialogs/Push"),
+        Strings         = require("strings"),
+        Utils           = require("src/Utils");
 
     // Templates
     var gitRemotesPickerTemplate = require("text!templates/git-remotes-picker.html");
@@ -32,17 +36,27 @@ define(function (require) {
 
     // Implementation
 
-    function getDefaultRemote() {
-        // TODO: refactor after Sprint 38 is published
-        var key = ["defaultRemotes", Utils.getProjectRoot()].join(".");
-        var defaultRemote = Preferences.get(key);
-        return defaultRemote || "origin";
+    function getDefaultRemote(allRemotes) {
+        var defaultRemotes = Preferences.get("defaultRemotes") || {},
+            candidate = defaultRemotes[Utils.getProjectRoot()];
+
+        var exists = _.find(allRemotes, function (remote) {
+            return remote.name === candidate;
+        });
+        if (!exists) {
+            candidate = null;
+            if (allRemotes.length > 0) {
+                candidate = _.first(allRemotes).name;
+            }
+        }
+
+        return candidate;
     }
 
     function setDefaultRemote(remoteName) {
-        // TODO: refactor after Sprint 38 is published
-        var key = ["defaultRemotes", Utils.getProjectRoot()].join(".");
-        Preferences.persist(key, remoteName);
+        var defaultRemotes = Preferences.get("defaultRemotes") || {};
+        defaultRemotes[Utils.getProjectRoot()] = remoteName;
+        Preferences.persist("defaultRemotes", defaultRemotes);
     }
 
     function clearRemotePicker() {
@@ -71,7 +85,7 @@ define(function (require) {
     function refreshRemotesPicker() {
         Git.getRemotes().then(function (remotes) {
             // Set default remote name and cache the remotes dropdown menu
-            var defaultRemoteName    = getDefaultRemote();
+            var defaultRemoteName = getDefaultRemote(remotes);
 
             // Disable Git-push and Git-pull if there are not remotes defined
             $gitPanel
@@ -142,212 +156,151 @@ define(function (require) {
             });
     }
 
-    function pullFromRemote(remoteName) {
-        if (!remoteName) {
-            ErrorHandler.showError("No remote has been selected for pull!");
-            return;
-        }
+    function showPushResult(result) {
+        var template = [
+            "<h3>{{flagDescription}}</h3>",
+            "Info:",
+            "Remote url - {{remoteUrl}}",
+            "Local branch - {{from}}",
+            "Remote branch - {{to}}",
+            "Summary - {{summary}}",
+            "<h4>Status - {{status}}</h4>"
+        ].join("<br>");
 
-        EventEmitter.emit(Events.PULL_STARTED);
-
-        Git.pull(remoteName).then(function (result) {
-            Utils.showOutput(result, Strings.GIT_PULL_RESPONSE);
-        }).catch(function (err) {
-            ErrorHandler.showError(err, "Pulling from remote repository failed.");
-        }).finally(function () {
-            EventEmitter.emit(Events.PULL_FINISHED);
-        });
+        Dialogs.showModalDialog(
+            DefaultDialogs.DIALOG_ID_INFO,
+            Strings.GIT_PUSH_RESPONSE, // title
+            Mustache.render(template, result) // message
+        );
     }
 
-    function decideRemoteBranch(remoteName) {
-        remoteName = remoteName + "/";
-        return Git.getCurrentUpstreamBranch().then(function (upstreamBranch) {
-            return Git.getCurrentBranchName().then(function (currentBranch) {
+    function pushToRemote(remote) {
+        if (!remote) { return ErrorHandler.showError("No remote has been selected for push!"); }
 
-                // if we don't have an upstream branch - remote branch will have the same name
-                if (!upstreamBranch) {
-                    return [currentBranch, true];
-                }
+        var pushConfig = {
+            remote: remote
+        };
 
-                if (upstreamBranch.indexOf(remoteName) === 0) {
-                    // we are pushing to upstream
-                    upstreamBranch = upstreamBranch.substring(remoteName.length);
-                } else {
-                    // we are pushing to different remote than upstream
-                    upstreamBranch = currentBranch;
-                }
-                return [upstreamBranch, false];
-            });
-        });
-    }
+        PushDialog.show(pushConfig)
+            .then(function (pushConfig) {
+                var q = Promise.resolve();
 
-    function pushToRemote(remoteName) {
-        if (!remoteName) {
-            ErrorHandler.showError("No remote has been selected for push!");
-            return;
-        }
-
-        EventEmitter.emit(Events.PUSH_STARTED);
-        decideRemoteBranch(remoteName).spread(function (remoteBranch, newUpstream) {
-            var p;
-            if (newUpstream) {
-                p = Git.pushToNewUpstream(remoteName, remoteBranch);
-            } else {
-                p = Git.push(remoteName, remoteBranch);
-            }
-            return p.catch(function (err) {
-
-                if (!ErrorHandler.contains(err, "git remote add <name> <url>")) {
-                    throw err;
-                }
-
-                // this will ask user to enter an origin url for pushing
-                // it's pretty dumb because if he enters invalid url, he has to go to console again
-                // but our users are very wise so that definitely won't happen :)))
-
-                return new Promise(function (resolve, reject) {
-                    Utils.askQuestion(Strings.SET_ORIGIN_URL, _.escape(Strings.URL)).then(function (url) {
-                        Git.createRemote("origin", url)
-                            .then(function () {
-                                return Git.push("origin");
-                            })
-                            .then(resolve)
-                            .catch(reject);
+                // set a new tracking branch if desired
+                if (pushConfig.branch && pushConfig.setBranchAsTracking) {
+                    q = q.then(function () {
+                        return Git.setUpstreamBranch(pushConfig.remote, pushConfig.branch);
                     });
-                });
-
-            }).catch(function (err) {
-
-                throw err;
-                /* this shouldn't be needed anymore
-                if (typeof err !== "string") { throw err; }
-                var m = err.match(/git push --set-upstream (\S+) (\S+)/);
-                if (!m) { throw err; }
-                return Git.pushToNewUpstream(m[1], m[2]);
-                */
-
-            }).catch(function (err) {
-
-                var validFail = false;
-                if (ErrorHandler.contains(err, "rejected because")) {
-                    validFail = true;
                 }
-                if (validFail) {
-                    throw err;
-                } else {
-                    console.warn("Traditional push failed: " + err);
-                    return handleGitPushWithPassword(err, remoteName);
-                }
-
-            }).then(function (result) {
-
-                var template = [
-                    "<h3>{{flagDescription}}</h3>",
-                    "Info:",
-                    "Remote url - {{remoteUrl}}",
-                    "Local branch - {{from}}",
-                    "Remote branch - {{to}}",
-                    "Summary - {{summary}}",
-                    "<h4>Status - {{status}}</h4>"
-                ].join("<br>");
-
-                Dialogs.showModalDialog(
-                    DefaultDialogs.DIALOG_ID_INFO,
-                    Strings.GIT_PUSH_RESPONSE, // title
-                    Mustache.render(template, result) // message
-                );
-
-            }).catch(function (err) {
-                console.warn("Pushing to remote repositories with username / password is not fully supported! See github page/issues for details.");
-                ErrorHandler.showError(err, "Pushing to remote repository failed.");
-            });
-        }).finally(function () {
-            EventEmitter.emit(Events.PUSH_FINISHED);
-        });
-    }
-
-    function handleGitPushWithPassword(originalPushError, remoteName) {
-        if (!remoteName) {
-            throw ErrorHandler.rewrapError(originalPushError, new Error("handleGitPushWithPassword remote argument is empty!"));
-        }
-        return Git.getCurrentBranchName().then(function (branchName) {
-            return Git.getConfig("remote." + remoteName + ".url").then(function (remoteUrl) {
-                if (!remoteUrl) {
-                    throw ErrorHandler.rewrapError(originalPushError, new Error("git config remote." + remoteName + ".url is empty!"));
-                }
-                return [branchName, remoteUrl];
-            });
-        }).spread(function (branchName, remoteUrl) {
-
-            var isHttp = remoteUrl.indexOf("http") === 0;
-            if (!isHttp) {
-                throw ErrorHandler.rewrapError(originalPushError,
-                                               new Error("Asking for username/password aborted because remote is not HTTP(S)"));
-            }
-
-            var username,
-                password,
-                hasUsername,
-                hasPassword,
-                shouldSave = false;
-
-            var m = remoteUrl.match(/https?:\/\/([^@]+)@/);
-            if (!m) {
-                hasUsername = false;
-                hasPassword = false;
-            } else if (m[1].split(":").length === 1) {
-                hasUsername = true;
-                hasPassword = false;
-            } else {
-                hasUsername = true;
-                hasPassword = true;
-            }
-
-            if (hasUsername && hasPassword) {
-                throw ErrorHandler.rewrapError(originalPushError, new Error("Username/password is already present in the URL"));
-            }
-
-            var p = Promise.resolve();
-            if (!hasUsername) {
-                p = p.then(function () {
-                    return Utils.askQuestion(Strings.TOOLTIP_PUSH, Strings.ENTER_USERNAME).then(function (str) {
-                        username = encodeURIComponent(str);
+                // put username and password into remote url
+                if (pushConfig.remoteUrlNew) {
+                    q = q.then(function () {
+                        return Git.setRemoteUrl(pushConfig.remote, pushConfig.remoteUrlNew);
                     });
-                });
-            }
-            if (!hasPassword) {
-                p = p.then(function () {
-                    return Utils.askQuestion(Strings.TOOLTIP_PUSH, Strings.ENTER_PASSWORD, {password: true}).then(function (str) {
-                        password = encodeURIComponent(str);
-                    });
-                });
-            }
-            if (Preferences.get("storePlainTextPasswords")) {
-                p = p.then(function () {
-                    return Utils.askQuestion(Strings.TOOLTIP_PUSH, Strings.SAVE_PASSWORD_QUESTION, {booleanResponse: true}).then(function (bool) {
-                        shouldSave = bool;
-                    });
-                });
-            }
-            return p.then(function () {
-                if (!hasUsername) {
-                    remoteUrl = remoteUrl.replace(/(https?:\/\/)/, function (a, protocol) { return protocol + username + "@"; });
                 }
-                if (!hasPassword) {
-                    var io = remoteUrl.indexOf("@");
-                    remoteUrl = remoteUrl.substring(0, io) + ":" + password + remoteUrl.substring(io);
-                }
-                return Git.push(remoteUrl, branchName).then(function (pushResponse) {
-                    if (shouldSave) {
-                        return Git.setConfig("remote." + remoteName + ".url", remoteUrl).then(function () {
-                            return pushResponse;
-                        });
-                    } else {
-                        return pushResponse;
+                // do the pull itself (we are not using pull command)
+                q = q.then(function () {
+                    var op;
+
+                    if (pushConfig.pushToNew) {
+                        op = Git.pushToNewUpstream(pushConfig.remote, pushConfig.branch);
+                    } else if (pushConfig.strategy === "DEFAULT") {
+                        op = Git.push(pushConfig.remote, pushConfig.branch);
+                    } else if (pushConfig.strategy === "FORCED") {
+                        op = Git.pushForced(pushConfig.remote, pushConfig.branch);
+                    } else if (pushConfig.strategy === "DELETE_BRANCH") {
+                        op = Git.deleteRemoteBranch(pushConfig.remote, pushConfig.branch);
                     }
+                    return ProgressDialog.show(op)
+                        .then(function (result) {
+                            return ProgressDialog.waitForClose().then(function () {
+                                showPushResult(result);
+                            });
+                        })
+                        .catch(function (err) {
+                            ErrorHandler.showError(err, "Pushing to remote failed");
+                        });
                 });
+                // restore original url if desired
+                if (pushConfig.remoteUrlRestore) {
+                    q = q.finally(function () {
+                        return Git.setRemoteUrl(pushConfig.remote, pushConfig.remoteUrlRestore);
+                    });
+                }
+
+                return q.finally(function () {
+                    EventEmitter.emit(Events.REFRESH_ALL);
+                });
+            })
+            .catch(function (err) {
+                // when dialog is cancelled, there's no error
+                if (err) { ErrorHandler.showError(err, "Pushing operation failed"); }
             });
-        });
+    }
+
+    function pullFromRemote(remote) {
+        if (!remote) { return ErrorHandler.showError("No remote has been selected for pull!"); }
+
+        var pullConfig = {
+            remote: remote
+        };
+
+        PullDialog.show(pullConfig)
+            .then(function (pullConfig) {
+                var q = Promise.resolve();
+
+                // set a new tracking branch if desired
+                if (pullConfig.branch && pullConfig.setBranchAsTracking) {
+                    q = q.then(function () {
+                        return Git.setUpstreamBranch(pullConfig.remote, pullConfig.branch);
+                    });
+                }
+                // put username and password into remote url
+                if (pullConfig.remoteUrlNew) {
+                    q = q.then(function () {
+                        return Git.setRemoteUrl(pullConfig.remote, pullConfig.remoteUrlNew);
+                    });
+                }
+                // do the pull itself (we are not using pull command)
+                q = q.then(function () {
+                    // fetch the remote first
+                    return ProgressDialog.show(Git.fetchRemote(pullConfig.remote))
+                        .then(function () {
+                            if (pullConfig.strategy === "DEFAULT") {
+                                return Git.mergeRemote(pullConfig.remote, pullConfig.branch);
+                            } else if (pullConfig.strategy === "AVOID_MERGING") {
+                                return Git.mergeRemote(pullConfig.remote, pullConfig.branch, true);
+                            } else if (pullConfig.strategy === "MERGE_NOCOMMIT") {
+                                return Git.mergeRemote(pullConfig.remote, pullConfig.branch, false, true);
+                            } else if (pullConfig.strategy === "REBASE") {
+                                return Git.rebaseRemote(pullConfig.remote, pullConfig.branch);
+                            } else if (pullConfig.strategy === "RESET") {
+                                return Git.resetRemote(pullConfig.remote, pullConfig.branch);
+                            }
+                        })
+                        .then(function (result) {
+                            return ProgressDialog.waitForClose().then(function () {
+                                Utils.showOutput(result, Strings.GIT_PULL_RESPONSE);
+                            });
+                        })
+                        .catch(function (err) {
+                            ErrorHandler.showError(err, "Pulling from remote failed");
+                        });
+                });
+                // restore original url if desired
+                if (pullConfig.remoteUrlRestore) {
+                    q = q.finally(function () {
+                        return Git.setRemoteUrl(pullConfig.remote, pullConfig.remoteUrlRestore);
+                    });
+                }
+
+                return q.finally(function () {
+                    EventEmitter.emit(Events.REFRESH_ALL);
+                });
+            })
+            .catch(function (err) {
+                // when dialog is cancelled, there's no error
+                if (err) { ErrorHandler.showError(err, "Pulling operation failed"); }
+            });
     }
 
     // Event subscriptions
@@ -355,28 +308,23 @@ define(function (require) {
         initVariables();
         refreshRemotesPicker();
     });
-
     EventEmitter.on(Events.HANDLE_REMOTE_PICK, function (event) {
         var $remote     = $(event.target).closest(".remote-name"),
             remoteName  = $remote.data("remote-name"),
             type        = $remote.data("type");
         selectRemote(remoteName, type);
     });
-
     EventEmitter.on(Events.HANDLE_REMOTE_CREATE, function () {
         handleRemoteCreation();
     });
-
     EventEmitter.on(Events.HANDLE_REMOTE_DELETE, function (event) {
         var remoteName = $(event.target).closest(".remote-name").data("remote-name");
         deleteRemote(remoteName);
     });
-
     EventEmitter.on(Events.HANDLE_PULL, function () {
         var remoteName = $selectedRemote.data("remote");
         pullFromRemote(remoteName);
     });
-
     EventEmitter.on(Events.HANDLE_PUSH, function () {
         var remoteName = $selectedRemote.data("remote");
         pushToRemote(remoteName);

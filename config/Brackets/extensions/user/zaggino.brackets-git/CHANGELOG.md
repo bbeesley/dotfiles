@@ -1,9 +1,143 @@
 # Changelog
 
+**If you'll get an error right after updating just close all Brackets instances and start again. We are aware of this problem.**
+
+## 0.13.20
+* BUGFIX: Fixed default Git paths for Windows from bin directory to cmd directory by [Leif Gruenwoldt](https://github.com/leif81)
+* BUGFIX: Allow empty commit when in merge stage.
+* BUGFIX: Do not show deleted remote as default.
+* BUGFIX: History viewer is now paged to load at most 25 files in one go.
+
+## 0.13.19
+* Use LESS rather than pre-compiled CSS for the extension.
+* BUGFIX: Refresh panel when a new file is added into the project (directory content has been modified).
+* BUGFIX: Refresh project after commiting a merge commit.
+* BUGFIX: Always clear Brackets fileSystem cache when working with .git files.
+* BUGFIX: Remove panel table margin-bottom by [cheesypoof](https://github.com/cheesypoof)
+* BUGFIX: When closing files not modified by Git, do not close files that have unsaved changes.
+
+## 0.13.18
+* BUGFIX: Fix error when trying to commit non utf-8 code files.
+
+## 0.13.17
+* BUGFIX: Fix hanging when trying to trim whitespace from binary files.
+
+## 0.13.16
+* Added instructions for an easy installation of Git-FTP by [Fez Vrasta](https://github.com/FezVrasta)
+* Updated German translation by [Marcel Gerber](https://github.com/SAPlayer)
+* BUGFIX: Restored default cursor for the commit diff scrollbars by [cheesypoof](https://github.com/cheesypoof)
+* BUGFIX: Diffs over 2000 lines will not be displayed due to poor performance.
+
+## 0.13.15
+* Updated Brazilian Portuguese translation by [Rodrigo Tavares](https://github.com/rodrigost23)
+* BUGFIX: Improved .gitignore parsing by [Marcel Gerber](https://github.com/SAPlayer)
+* BUGFIX: Git Diff failed when the diff is empty is now fixed.
+* BUGFIX: Fixed visual nit with commit hash in history viewer.
+
+## 0.13.14
+* BUGFIX: Fixed errors on files that are inside a directory with a plus sign in its name. Thanks to [llchen223](https://github.com/llchen223)
+* BUGFIX: Add to .gitignore and Remove from .gitignore context menu entries are now removed when Git is not available in current project.
+
+## 0.13.13
+* Added icon to the history viewer which opens the mentioned file for editing.
+* Improved .gitignore parsing by [Marcel Gerber](https://github.com/SAPlayer)
+* BUGFIX: Settings & Changelog dialogs are no longer displayed on startup when running tests.
+* BUGFIX: Focus doesn't remain in the editor any longer when attempting to delete local branch.
+
+## 0.13.12
+* Updated German translation by [Marcel Gerber](https://github.com/SAPlayer)
+* History now remembers last used Expand All/Collapse All.
+* Styled row numbers on diffs by [Fez Vrasta](https://github.com/FezVrasta)
+* BUGFIX: View authors of selection will now ask you to save modified file before launch.
+* BUGFIX: Diffs no logner fail when external diff tool is configured.
+
+## 0.13.11
+* When whitespace cleanup takes too long (over 3 seconds) it will show a progress dialog.
+* BUGFIX: Fixed launching osascripts on Mac (open terminal button).
+
+## 0.13.10
+* Added line numbers to diffs by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* BUGFIX: **Fixed critical bug that caused Brackets to crash when using Find in Files feature.**
+* BUGFIX: Fixed error when opening terminal on Mac.
+* BUGFIX: Fixed issue when opening an empty repostitory without commits.
+
+## 0.13.9
+* BUGFIX: Branch name not showing when switching branches.
+* BUGFIX: Impossible to undo last commit.
+
+## 0.13.8
+* Autodetection of Git installation location has been improved.
+* Little performance upgrade for gutters, especially in large repositories.
+* BUGFIX: Correctly detect current tag or commit when in detached state - history now works when in detached state.
+* BUGFIX: Fixed issue which caused some dropdowns remained open after clicking into the editor area.
+
+## 0.13.7
+* Extension now searches for Git in common install locations and picks the latest version available in case there are more Git versions installed on one computer.
+* Git version 1.7 or lower is now rejected because it doesn't have the commands required by this extension.
+* Diffs now look more like GitHub ones by [Fez Vrasta](https://github.com/FezVrasta)
+* Updated French translation by [Vinz243](https://github.com/Vinz243)
+
+## 0.13.6
+* UI tweaks around history feature by [Larz](https://github.com/larz0)
+
+## 0.13.5
+* Performance optimizations on 'Close not modified files' feature.
+* Fixes in history UI by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* Updated contributing information by [Fez Vrasta](https://github.com/FezVrasta)
+* BUGFIX: Ambiguous argument error fixed when refreshing a gutter.
+
+## 0.13.4
+* New files are marked with green color instead of orange in the project tree.
+* Some history UI tweaks by [Jimmy Brian Anamaria Torres](https://github.com/Azakur4)
+* BUGFIX: Do not launch gutters sometimes, when not in a Git repository.
+* BUGFIX: Invalid Git configuration shouldn't crash file watchers on linux anymore.
+
+## 0.13.3
+* UI tweaks for the History feature by [Larz](https://github.com/larz0)
+* BUGFIX: Fixed an error on Brackets startup when project is not a Git project.
+
+## 0.13.2
+* History viewer now has close button.
+* Added button to expand/collapse every diff in history viewer of the selected commit by [Fez Vrasta](https://github.com/FezVrasta)
+* BUGFIX: Fixed an issue when extension refreshed on an external file change.
+* BUGFIX: Fixed an issue with history when switching projects.
+* BUGFIX: View authors of selection doesn't fail when empty last line is selected.
+
+## 0.13.1
+* Fix broken styles problem on Linux & Mac.
+
+## 0.13.0
+* Long running operations like pull and push now have progress dialog.
+* Rebasing and merging is now possible with this extension.
+* You can fill in a merge message while merging a branch.
+* Improved new branch dialog with ability to fetch remote branches.
+* New push/pull dialog where you can specify different pulling/pushing strategies.
+* Modified files are now also marked in working files list.
+* Whitespace cleanup now removes byte order mark and normalizes line endings to LF (configurable in settings).
+* `Q` library has been completely removed and replaced by `bluebird`
+* History can now also be viewed for a particular file by [Marcel Gerber](https://github.com/SAPlayer)
+* Feature to discard all changes since last commit by [Fez Vrasta](https://github.com/FezVrasta)
+* Feature to checkout a commit in history, or reset to a commit in history by [Zhi](https://github.com/yfwz100)
+* Hover for the expandable gutters has been added by [Miguel Castillo](https://github.com/MiguelCastillo)
+* Improved Git-FTP support by [Fez Vrasta](https://github.com/FezVrasta)
+* Added French translation by [rainje](https://github.com/rainje)
+* Fixed some errors in translations by [Fez Vrasta](https://github.com/FezVrasta)
+* Various UI improvements by [Fez Vrasta](https://github.com/FezVrasta), [Marcel Gerber](https://github.com/SAPlayer) and [Larz](https://github.com/larz0)
+* Redesigned history by [Fez Vrasta](https://github.com/FezVrasta)
+* BUGFIX: Clone won't timeout anymore when cloning large repositories.
+* BUGFIX: Switching between branches will never timeout.
+* BUGFIX: Git processes that timeouted (waiting for password) will no longer stay opened in your OS.
+* BUGFIX: Fixed some console errors when not working in a Git repository.
+* BUGFIX: Fixed a bug when an empty repository is opened (without master branch)
+* BUGFIX: Fixed a bug when ammending multiline commit messages.
+* BUGFIX: Opened files that do not exist in a newly switched branch are now automatically closed by [Fez Vrasta](https://github.com/FezVrasta)
+
+Little stats - 150 commits, 108 files changed, 8673 insertions(+), 6257 deletions(-) since `0.12.2`
+
 ## 0.12.2
 * Top menu has been removed - you can access settings through panel or File > Git settings...
 * Branch deletion handling has been improved and now you can delete also not fully merged branches.
-* README has been updated after a long time (thanks [Fez Vrasta](https://github.com/FezVrasta))
+* README has been updated after a long time by [Fez Vrasta](https://github.com/FezVrasta)
 * [Fez Vrasta](https://github.com/FezVrasta) started to add support for [Git-FTP](https://github.com/git-ftp/git-ftp)
 * Updated translations by [Marcel Gerber](https://github.com/SAPlayer)
 

@@ -1,9 +1,7 @@
-/*jslint plusplus: true, vars: true, nomen: true */
-/*global $, brackets, define, Mustache */
-
 define(function (require, exports) {
     "use strict";
 
+    // Brackets modules
     var _                       = brackets.getModule("thirdparty/lodash"),
         CommandManager          = brackets.getModule("command/CommandManager"),
         Dialogs                 = brackets.getModule("widgets/Dialogs"),
@@ -29,7 +27,6 @@ define(function (require, exports) {
                 $this.val(values[property]);
             }
         });
-        $("#git-settings-gitPath", $dialog).prop("disabled", values.gitIsInSystemPath);
         $("#git-settings-dateFormat-container", $dialog).toggle(values.dateMode === 3);
     }
 
@@ -51,12 +48,9 @@ define(function (require, exports) {
     }
 
     function assignActions() {
-        $("#git-settings-gitIsInSystemPath", $dialog).on("click", function () {
-            $("#git-settings-gitPath", $dialog).prop("disabled", $(this).is(":checked"));
-        });
         $("#git-settings-stripWhitespaceFromCommits", $dialog).on("change", function () {
             var on = $(this).is(":checked");
-            $("#git-settings-addEndlineToTheEndOfFile", $dialog)
+            $("#git-settings-addEndlineToTheEndOfFile,#git-settings-removeByteOrderMark,#git-settings-normalizeLineEndings", $dialog)
                 .prop("checked", on)
                 .prop("disabled", !on);
         });

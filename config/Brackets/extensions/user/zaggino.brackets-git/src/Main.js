@@ -1,121 +1,49 @@
 define(function (require, exports) {
     "use strict";
 
-    var q                 = require("../thirdparty/q"),
-        _                 = brackets.getModule("thirdparty/lodash"),
+    var _                 = brackets.getModule("thirdparty/lodash"),
         AppInit           = brackets.getModule("utils/AppInit"),
         CommandManager    = brackets.getModule("command/CommandManager"),
         Menus             = brackets.getModule("command/Menus"),
-        DocumentManager   = brackets.getModule("document/DocumentManager"),
         FileSystem        = brackets.getModule("filesystem/FileSystem"),
-        FileUtils         = brackets.getModule("file/FileUtils"),
-        ProjectManager    = brackets.getModule("project/ProjectManager"),
+        ProjectManager    = brackets.getModule("project/ProjectManager");
+
+    var ExpectedError     = require("src/ExpectedError"),
+        Events            = require("src/Events"),
+        EventEmitter      = require("src/EventEmitter"),
         Strings           = require("../strings"),
-        Preferences       = require("./Preferences"),
         ErrorHandler      = require("./ErrorHandler"),
-        GitControl        = require("./GitControl"),
-        GutterManager     = require("./GutterManager"),
         Panel             = require("./Panel"),
         Branch            = require("./Branch"),
         CloseNotModified  = require("./CloseNotModified"),
-        Events            = require("src/Events"),
-        EventEmitter      = require("src/EventEmitter"),
-        Cli               = require("src/Cli"),
+        Setup             = require("src/utils/Setup"),
         Utils             = require("src/Utils");
 
-    var $icon                   = $("<a id='git-toolbar-icon' href='#'></a>").attr("title", Strings.LOADING)
-                                    .addClass("loading").appendTo($("#main-toolbar .buttons")),
-        gitControl              = null;
-
-    var getProjectRoot = Utils.getProjectRoot;
-
-    var writeTestResults = {};
-    function isProjectRootWritable() {
-        var folder = getProjectRoot();
-
-        if (writeTestResults[folder]) {
-            return q(writeTestResults[folder]);
-        }
-
-        var result = q.defer(),
-            fileEntry = FileSystem.getFileForPath(folder + ".bracketsGitTemp");
-
-        function finish(bool) {
-            fileEntry.unlink(function () {
-                result.resolve(writeTestResults[folder] = bool);
-            });
-        }
-
-        FileUtils.writeText(fileEntry, "").done(function () {
-            finish(true);
-        }).fail(function () {
-            finish(false);
-        });
-
-        return result.promise;
-    }
-
-    // This checks if the project root is empty (to let Git clone repositories)
-    function isProjectRootEmpty() {
-        var defer = q.defer();
-        ProjectManager.getProjectRoot().getContents(function (err, entries) {
-            if (err) {
-                return defer.reject(err);
-            }
-            defer.resolve(entries.length === 0);
-        });
-        return defer.promise;
-    }
+    var CMD_ADD_TO_IGNORE      = "git.addToIgnore",
+        CMD_REMOVE_FROM_IGNORE = "git.removeFromIgnore",
+        $icon                  = $("<a id='git-toolbar-icon' href='#'></a>")
+                                    .attr("title", Strings.LOADING)
+                                    .addClass("loading")
+                                    .appendTo($("#main-toolbar .buttons"));
 
     // This only launches when Git is available
     function initUi() {
-        Panel.init(gitControl);
-        Branch.init(gitControl);
-        CloseNotModified.init(gitControl);
-        
+        // FUTURE: do we really need to launch init from here?
+        Panel.init();
+        Branch.init();
+        CloseNotModified.init();
         // Attach events
         $icon.on("click", Panel.toggle);
-
-        // Show gitPanel when appropriate
-        if (Preferences.get("panelEnabled")) {
-            Panel.toggle(true);
-        }
-    }
-
-    // Call this only when Git is available
-    function attachEventsToBrackets() {
-        $(ProjectManager).on("projectOpen projectRefresh", function () {
-            // use .fin in case there's no .gitignore file
-            refreshIgnoreEntries().finally(function () {
-                // Branch.refresh will refresh also Panel
-                Branch.refresh();
-            });
-        });
-        $(FileSystem).on("change rename", function () {
-            // Branch.refresh will refresh also Panel
-            Branch.refresh();
-        });
-        $(DocumentManager).on("documentSaved", function () {
-            Panel.refresh();
-            GutterManager.refresh();
-        });
-        $(DocumentManager).on("currentDocumentChange", function () {
-            Panel.refreshCurrentFile();
-            GutterManager.refresh();
-        });
-
-        refreshIgnoreEntries();
-        GutterManager.refresh();
     }
 
     function _addRemoveItemInGitignore(selectedEntry, method) {
-        var projectRoot = getProjectRoot(),
+        var projectRoot = Utils.getProjectRoot(),
             entryPath = "/" + selectedEntry.fullPath.substring(projectRoot.length),
             gitignoreEntry = FileSystem.getFileForPath(projectRoot + ".gitignore");
 
         gitignoreEntry.read(function (err, content) {
             if (err) {
-                console.warn(err);
+                Utils.consoleLog(err, "warn");
                 content = "";
             }
 
@@ -139,7 +67,7 @@ define(function (require, exports) {
                 if (err) {
                     return ErrorHandler.showError(err, "Failed modifying .gitignore");
                 }
-                refreshIgnoreEntries().then(Panel.refresh);
+                Panel.refresh();
             });
         });
     }
@@ -153,148 +81,88 @@ define(function (require, exports) {
     }
 
     function addItemToGitingoreFromPanel() {
-        var filePath = Panel.getPanel().find("tr.selected").data("file"),
-            fileEntry = FileSystem.getFileForPath(getProjectRoot() + filePath);
+        var filePath = Panel.getPanel().find("tr.selected").attr("x-file"),
+            fileEntry = FileSystem.getFileForPath(Utils.getProjectRoot() + filePath);
         return _addRemoveItemInGitignore(fileEntry, "add");
     }
 
     function removeItemFromGitingoreFromPanel() {
-        var filePath = Panel.getPanel().find("tr.selected").data("file"),
-            fileEntry = FileSystem.getFileForPath(getProjectRoot() + filePath);
+        var filePath = Panel.getPanel().find("tr.selected").attr("x-file"),
+            fileEntry = FileSystem.getFileForPath(Utils.getProjectRoot() + filePath);
         return _addRemoveItemInGitignore(fileEntry, "remove");
     }
 
-    var _ignoreEntries = [];
-
-    function refreshProjectFiles(modifiedEntries) {
-        if (!Preferences.get("markModifiedInTree")) {
-            return;
-        }
-
-        function isIgnored(path) {
-            var ignored = false;
-            _.forEach(_ignoreEntries, function (entry) {
-                if (entry.regexp.test(path)) {
-                    ignored = (entry.type === "ignore");
-                }
-            });
-            return ignored;
-        }
-
-        $("#project-files-container").find("li").each(function () {
-            var $li = $(this),
-                fullPath = $li.data("entry").fullPath,
-                isModified = modifiedEntries.indexOf(fullPath) !== -1;
-            $li.toggleClass("git-ignored", isIgnored(fullPath))
-               .toggleClass("git-modified", isModified);
-        });
-    }
-
-    function refreshIgnoreEntries() {
-        if (!Preferences.get("markModifiedInTree")) {
-            return q();
-        }
-
-        var p = q.defer(),
-            projectRoot = getProjectRoot();
-
-        FileSystem.getFileForPath(projectRoot + ".gitignore").read(function (err, content) {
-            if (err) {
-                _ignoreEntries = [];
-                p.reject(err);
-                return;
-            }
-            _ignoreEntries = _.compact(_.map(content.split("\n"), function (line) {
-                line = line.trim();
-                if (!line || line.indexOf("#") === 0) {
-                    return;
-                }
-
-                var path,
-                    type = "ignore";
-                if (line.indexOf("/") === 0) {
-                    line = line.substring(1);
-                    path = projectRoot + line;
-                } else if (line.indexOf("!") === 0) {
-                    type = "include";
-                    line = line.substring(1);
-                    path = projectRoot + line;
-                } else {
-                    path = projectRoot + "(**/)?" + line;
-                }
-                path = path.replace(/\\/, "");
-                path = path.replace(/\./, "\\.");
-
-                path = "^" + path + "/?$";
-
-                path = path.replace(/\*+/g, function (match) {
-                    if (match.length === 2) {
-                        return ".*";
-                    }
-                    if (match.length === 1) {
-                        return "[^/]*";
-                    }
-                });
-
-                return {regexp: new RegExp(path), type: type};
-            }));
-            p.resolve();
-        });
-
-        return p.promise;
-    }
-
-    function init(nodeConnection) {
-        EventEmitter.emit(Events.NODE_CONNECTION_READY, nodeConnection);
-
-        // Creates an GitControl Instance
-        gitControl = exports.gitControl = new GitControl({
-            handler: Cli.cliHandler
-        });
-
+    function init() {
         // Initialize items dependent on HTML DOM
         AppInit.htmlReady(function () {
             $icon.removeClass("loading").removeAttr("title");
 
             // Try to get Git version, if succeeds then Git works
-            gitControl.getVersion().then(function (version) {
+            Setup.findGit().then(function (version) {
                 Strings.GIT_VERSION = version;
                 initUi();
-                attachEventsToBrackets();
-            }).fail(function (err) {
-                var errText = Strings.CHECK_GIT_SETTINGS + ": " + err.toString();
-                $icon.addClass("error").attr("title", errText);
-                throw err;
-            }).done();
+            }).catch(function (err) {
+                $icon.addClass("error").attr("title", Strings.CHECK_GIT_SETTINGS + " - " + err.toString());
 
-            // add command to project menu
-            var projectCmenu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-            var workingCmenu = Menus.getContextMenu(Menus.ContextMenuIds.WORKING_SET_MENU);
+                var expected = new ExpectedError(err);
+                expected.detailsUrl = "https://github.com/zaggino/brackets-git#dependencies";
+                ErrorHandler.showError(expected, Strings.CHECK_GIT_SETTINGS);
+            });
+
+            // register commands for project tree / working files
+            CommandManager.register(Strings.ADD_TO_GITIGNORE, CMD_ADD_TO_IGNORE, addItemToGitingore);
+            CommandManager.register(Strings.REMOVE_FROM_GITIGNORE, CMD_REMOVE_FROM_IGNORE, removeItemFromGitingore);
+
+            // create context menu for git panel
             var panelCmenu = Menus.registerContextMenu("git-panel-context-menu");
-            projectCmenu.addMenuDivider();
-            workingCmenu.addMenuDivider();
-
-            var cmdName = "git.addToIgnore";
-            CommandManager.register(Strings.ADD_TO_GITIGNORE, cmdName, addItemToGitingore);
-            projectCmenu.addMenuItem(cmdName);
-            workingCmenu.addMenuItem(cmdName);
-            CommandManager.register(Strings.ADD_TO_GITIGNORE, cmdName + "2", addItemToGitingoreFromPanel);
-            panelCmenu.addMenuItem(cmdName + "2");
-
-            cmdName = "git.removeFromIgnore";
-            CommandManager.register(Strings.REMOVE_FROM_GITIGNORE, cmdName, removeItemFromGitingore);
-            projectCmenu.addMenuItem(cmdName);
-            workingCmenu.addMenuItem(cmdName);
-            CommandManager.register(Strings.REMOVE_FROM_GITIGNORE, cmdName + "2", removeItemFromGitingoreFromPanel);
-            panelCmenu.addMenuItem(cmdName + "2");
+            CommandManager.register(Strings.ADD_TO_GITIGNORE, CMD_ADD_TO_IGNORE + "2", addItemToGitingoreFromPanel);
+            CommandManager.register(Strings.REMOVE_FROM_GITIGNORE, CMD_REMOVE_FROM_IGNORE + "2", removeItemFromGitingoreFromPanel);
+            panelCmenu.addMenuItem(CMD_ADD_TO_IGNORE + "2");
+            panelCmenu.addMenuItem(CMD_REMOVE_FROM_IGNORE + "2");
         });
     }
 
+    var _toggleMenuEntriesState = false,
+        _divider1 = null,
+        _divider2 = null;
+    function toggleMenuEntries(bool) {
+        if (bool === _toggleMenuEntriesState) {
+            return;
+        }
+        var projectCmenu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
+        var workingCmenu = Menus.getContextMenu(Menus.ContextMenuIds.WORKING_SET_MENU);
+        if (bool) {
+            _divider1 = projectCmenu.addMenuDivider();
+            _divider2 = workingCmenu.addMenuDivider();
+            projectCmenu.addMenuItem(CMD_ADD_TO_IGNORE);
+            workingCmenu.addMenuItem(CMD_ADD_TO_IGNORE);
+            projectCmenu.addMenuItem(CMD_REMOVE_FROM_IGNORE);
+            workingCmenu.addMenuItem(CMD_REMOVE_FROM_IGNORE);
+        } else {
+            projectCmenu.removeMenuDivider(_divider1.id);
+            workingCmenu.removeMenuDivider(_divider2.id);
+            projectCmenu.removeMenuItem(CMD_ADD_TO_IGNORE);
+            workingCmenu.removeMenuItem(CMD_ADD_TO_IGNORE);
+            projectCmenu.removeMenuItem(CMD_REMOVE_FROM_IGNORE);
+            workingCmenu.removeMenuItem(CMD_REMOVE_FROM_IGNORE);
+        }
+        _toggleMenuEntriesState = bool;
+    }
+
+    // Event handlers
+    EventEmitter.on(Events.GIT_ENABLED, function () {
+        toggleMenuEntries(true);
+    });
+    EventEmitter.on(Events.GIT_DISABLED, function () {
+        toggleMenuEntries(false);
+    });
+    // TODO: investigate this event
+    EventEmitter.on(Events.HANDLE_PROJECT_REFRESH, function () {
+        $(ProjectManager).triggerHandler("projectRefresh");
+    });
+
     // API
     exports.$icon = $icon;
-    exports.getProjectRoot = getProjectRoot;
-    exports.isProjectRootEmpty = isProjectRootEmpty;
-    exports.isProjectRootWritable = isProjectRootWritable;
-    exports.refreshProjectFiles = refreshProjectFiles;
     exports.init = init;
+
 });

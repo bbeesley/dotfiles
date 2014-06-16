@@ -11,3 +11,5 @@
 	st = status
 [push]
 	default = matching
+[credential]
+	helper = cache

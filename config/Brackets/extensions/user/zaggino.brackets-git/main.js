@@ -5,63 +5,54 @@
  * @license http://opensource.org/licenses/MIT
  */
 
-/*jslint plusplus: true, vars: true, nomen: true */
-/*global define, brackets */
-
 define(function (require, exports, module) {
-    "use strict";
 
-    // Get module dependencies.
-    var q                          = require("./thirdparty/q"),
-        AppInit                    = brackets.getModule("utils/AppInit"),
-        CommandManager             = brackets.getModule("command/CommandManager"),
-        Commands                   = brackets.getModule("command/Commands"),
-        ExtensionUtils             = brackets.getModule("utils/ExtensionUtils"),
-        Menus                      = brackets.getModule("command/Menus"),
-        NodeConnection             = brackets.getModule("utils/NodeConnection"),
-        moduleDirectory            = ExtensionUtils.getModulePath(module);
+    // Brackets modules
+    var AppInit         = brackets.getModule("utils/AppInit"),
+        CommandManager  = brackets.getModule("command/CommandManager"),
+        Commands        = brackets.getModule("command/Commands"),
+        ExtensionUtils  = brackets.getModule("utils/ExtensionUtils"),
+        Menus           = brackets.getModule("command/Menus");
 
-    var ExtensionInfo              = require("src/ExtensionInfo"),
-        Preferences                = require("src/Preferences"),
-        ExtensionMain              = require("src/Main"),
-        ChangelogDialog            = require("src/ChangelogDialog"),
-        ErrorHandler               = require("src/ErrorHandler"),
-        ExpectedError              = require("src/ExpectedError"),
-        SettingsDialog             = require("src/SettingsDialog"),
-        Strings                    = require("strings"),
-        domainModulePath           = moduleDirectory + "src/Domains/cli",
-        nodeConnection             = new NodeConnection();
+    // Local modules
+    var ChangelogDialog = require("src/ChangelogDialog"),
+        ExtensionInfo   = require("src/ExtensionInfo"),
+        Main            = require("src/Main"),
+        Preferences     = require("src/Preferences"),
+        SettingsDialog  = require("src/SettingsDialog"),
+        Strings         = require("strings");
 
     // Load extension modules that are not included by core
-    var modules = ["src/Remotes"];
-    if (Preferences.get("useGitFtp")) {
-        modules.push("src/Ftp/Ftp");
-    }
+    var modules = [
+        "src/BracketsEvents",
+        "src/GutterManager",
+        "src/History",
+        "src/NoRepo",
+        "src/ProjectTreeMarks",
+        "src/Remotes",
+        "src/utils/Terminal"
+    ];
+    if (Preferences.get("useGitFtp")) { modules.push("src/ftp/Ftp"); }
     require(modules);
 
-    // Seems just too buggy right now
-    q.stopUnhandledRejectionTracking();
-
     // Load CSS
-    ExtensionUtils.loadStyleSheet(module, "less/brackets-git.less");
-    ExtensionUtils.loadStyleSheet(module, "less/fonts/octicon.less");
-
-    // Initialize PreferenceStorage.
-    Preferences.persist("extensionDirectory", moduleDirectory);
-
-    // Handle settings dialog
-    function openSettingsPanel() {
-        SettingsDialog.show();
-    }
+    ExtensionUtils.loadStyleSheet(module, "styles/brackets-git.less");
+    ExtensionUtils.loadStyleSheet(module, "styles/fonts/octicon.less");
+    if (Preferences.get("useGitFtp")) { ExtensionUtils.loadStyleSheet(module, "styles/src/ftp/styles/ftp.less"); }
 
     // Display settings panel on first start / changelog dialog on version change
     ExtensionInfo.get().then(function (packageJson) {
+        // do not display dialogs when running tests
+        if (window.isBracketsTestWindow) {
+            return;
+        }
+
         var lastVersion    = Preferences.get("lastVersion"),
             currentVersion = packageJson.version;
 
-        if (lastVersion === null) {
+        if (!lastVersion) {
             Preferences.persist("lastVersion", "firstStart");
-            openSettingsPanel();
+            SettingsDialog.show();
         } else if (lastVersion !== currentVersion) {
             Preferences.persist("lastVersion", currentVersion);
             ChangelogDialog.show();
@@ -70,21 +61,11 @@ define(function (require, exports, module) {
 
     // Register command and add it to the menu.
     var SETTINGS_COMMAND_ID = "brackets-git.settings";
-    CommandManager.register(Strings.GIT_SETTINGS, SETTINGS_COMMAND_ID, openSettingsPanel);
+    CommandManager.register(Strings.GIT_SETTINGS, SETTINGS_COMMAND_ID, SettingsDialog.show);
     Menus.getMenu(Menus.AppMenuBar.FILE_MENU).addMenuItem(SETTINGS_COMMAND_ID, "", Menus.AFTER, Commands.FILE_PROJECT_SETTINGS);
 
     AppInit.appReady(function () {
-        // Connects to Node
-        nodeConnection.connect(true).fail(function (err) {
-            ErrorHandler.showError(new ExpectedError(err), "Failed to connect to Node.js, extension requires Node.js installed");
-        }).then(function () {
-            // Register the domain.
-            return nodeConnection.loadDomains([domainModulePath], true).fail(function (err) {
-                ErrorHandler.showError(new ExpectedError(err), "Failed to register Node.js domain, extension requires Node.js installed");
-            });
-        }).then(function () {
-            ExtensionMain.init(nodeConnection);
-        }).done();
+        Main.init();
     });
 
 });

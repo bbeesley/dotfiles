@@ -1,19 +1,23 @@
-/*jslint plusplus: true, vars: true, nomen: true */
-/*global brackets, define */
-
 // this file was composed with a big help from @MiguelCastillo extension Brackets-InteractiveLinter
 // @see https://github.com/MiguelCastillo/Brackets-InteractiveLinter
 
 define(function (require, exports) {
-    "use strict";
 
-    var _                   = brackets.getModule("thirdparty/lodash"),
-        DocumentManager     = brackets.getModule("document/DocumentManager"),
-        EditorManager       = brackets.getModule("editor/EditorManager"),
-        Main                = require("./Main"),
-        Preferences         = require("./Preferences");
+    // Brackets modules
+    var _               = brackets.getModule("thirdparty/lodash"),
+        DocumentManager = brackets.getModule("document/DocumentManager"),
+        EditorManager   = brackets.getModule("editor/EditorManager"),
+        ErrorHandler    = require("src/ErrorHandler"),
+        Events          = require("src/Events"),
+        EventEmitter    = require("src/EventEmitter"),
+        Git             = require("src/git/Git"),
+        Preferences     = require("./Preferences"),
+        Utils           = require("src/Utils"),
+        Strings         = require("strings");
 
-    var cm = null,
+    var currentFilePath = null,
+        guttersEnabled = false,
+        cm = null,
         results = null,
         gutterName = "brackets-git-gutter",
         openWidgets = [];
@@ -32,6 +36,7 @@ define(function (require, exports) {
     }
 
     function clearOld() {
+        if (!cm) { return; }
         var gutters = cm.getOption("gutters").slice(0),
             io = gutters.indexOf(gutterName);
         if (io !== -1) {
@@ -73,7 +78,10 @@ define(function (require, exports) {
 
         cm.clearGutter(gutterName);
         results.forEach(function (obj) {
-            cm.setGutterMarker(obj.line, gutterName, $("<div class='" + gutterName + "-" + obj.type + "'>&nbsp;</div>")[0]);
+            var $marker = $("<div>")
+                            .addClass(gutterName + "-" + obj.type + " gitline-" + (obj.line + 1))
+                            .html("&nbsp;");
+            cm.setGutterMarker(obj.line, gutterName, $marker[0]);
         });
 
         // reopen widgets that were opened before refresh
@@ -122,6 +130,12 @@ define(function (require, exports) {
     }
 
     function refresh() {
+        // FUTURE: this might be called too often, do not call if previous refresh isn't finished?
+
+        if (!guttersEnabled) {
+            return;
+        }
+
         if (!Preferences.get("useGitGutter")) {
             return;
         }
@@ -135,8 +149,17 @@ define(function (require, exports) {
         }
         prepareGutter(editor._codeMirror);
 
-        var filename = currentDoc.file.fullPath.substring(Main.getProjectRoot().length);
-        Main.gitControl.gitDiff(filename).then(function (diff) {
+        currentFilePath = currentDoc.file.fullPath;
+
+        var currentProjectRoot = Utils.getProjectRoot();
+        if (currentFilePath.indexOf(currentProjectRoot) !== 0) {
+            // file is not in the current project
+            return;
+        }
+
+        var filename = currentFilePath.substring(currentProjectRoot.length);
+
+        Git.diffFile(filename).then(function (diff) {
             var added = [],
                 removed = [],
                 modified = [],
@@ -156,7 +179,7 @@ define(function (require, exports) {
                 var lineCount = parseInt(s1[1], 10);
                 if (isNaN(lineCount)) { lineCount = 1; }
                 if (lineCount > 0) {
-                    lineRemovedFrom = lineFrom > 0 ? lineFrom - 1 : 0;
+                    lineRemovedFrom = lineFrom - 1;
                     removed.push({
                         type: "removed",
                         line: lineRemovedFrom,
@@ -174,7 +197,7 @@ define(function (require, exports) {
                 var isModifiedMark = false;
                 var firstAddedMark = false;
                 for (var i = lineFrom, lineTo = lineFrom + lineCount; i < lineTo; i++) {
-                    var lineNo = i > 0 ? i - 1 : 0;
+                    var lineNo = i - 1;
                     if (lineNo === lineRemovedFrom) {
                         // modified
                         var o = removed.pop();
@@ -202,6 +225,8 @@ define(function (require, exports) {
             });
 
             showGutters(editor._codeMirror, [].concat(added, removed, modified));
+        }).catch(function (err) {
+            ErrorHandler.showError(err, "Refreshing gutter failed!");
         });
     }
 
@@ -242,9 +267,68 @@ define(function (require, exports) {
         }
     }
 
+    var _timer;
+    var $line = $(),
+        $gitGutterLines = $();
+
+    $(document)
+        .on("mouseenter", ".CodeMirror-linenumber", function (evt) {
+            var $target = $(evt.target);
+
+            // Remove tooltip
+            $line.attr("title", "");
+
+            // Remove any misc gutter hover classes
+            $(".CodeMirror-linenumber").removeClass("brackets-git-gutter-hover");
+            $(".brackets-git-gutter-hover").removeClass("brackets-git-gutter-hover");
+
+            // Add new gutter hover classes
+            $gitGutterLines = $(".gitline-" + $target.html()).addClass("brackets-git-gutter-hover");
+
+            // Add tooltips if there are any git gutter marks
+            if ($gitGutterLines.hasClass("brackets-git-gutter-modified") ||
+                $gitGutterLines.hasClass("brackets-git-gutter-removed")) {
+
+                $line = $target.attr("title", Strings.GUTTER_CLICK_DETAILS);
+                $target.addClass("brackets-git-gutter-hover");
+            }
+        })
+        .on("mouseleave", ".CodeMirror-linenumber", function (evt) {
+            var $target = $(evt.target);
+
+            if (_timer) {
+                clearTimeout(_timer);
+            }
+
+            _timer = setTimeout(function () {
+                $(".gitline-" + $target.html()).removeClass("brackets-git-gutter-hover");
+                $target.removeClass("brackets-git-gutter-hover");
+            }, 500);
+        });
+
+    // Event handlers
+    EventEmitter.on(Events.GIT_ENABLED, function () {
+        guttersEnabled = true;
+        refresh();
+    });
+    EventEmitter.on(Events.GIT_DISABLED, function () {
+        guttersEnabled = false;
+        clearOld();
+    });
+    EventEmitter.on(Events.BRACKETS_CURRENT_DOCUMENT_CHANGE, function () {
+        refresh();
+    });
+    EventEmitter.on(Events.GIT_COMMITED, function () {
+        refresh();
+    });
+    EventEmitter.on(Events.BRACKETS_FILE_CHANGED, function (evt, file) {
+        if (file.fullPath === currentFilePath) {
+            refresh();
+        }
+    });
+
     // API
     exports.refresh = refresh;
     exports.goToPrev = goToPrev;
     exports.goToNext = goToNext;
-
 });

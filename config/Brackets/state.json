@@ -1,6 +1,8 @@
 {
     "problems-panel": {
-        "visible": false
+        "visible": false,
+        "size": 100,
+        "contentSize": 71
     },
     "replace-all-results": {
         "visible": false
@@ -9,14 +11,201 @@
         "visible": true
     },
     "git-panel": {
-        "visible": true
+        "visible": true,
+        "size": 171,
+        "contentSize": 133
     },
     "canalyzerPanel": {
         "visible": false
     },
     "lastNotifiedBuildNumber": 0,
-    "lastInfoURLFetchTime": 1391167638064,
+    "lastInfoURLFetchTime": 1402911057081,
     "updateInfo": [
+        {
+            "buildNumber": 13109,
+            "versionString": "Sprint 40",
+            "dateString": "06-05-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-0.40",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Multiple File/Folder Exclusion Sets",
+                    "description": "Find in Files now supports multiple file/folder exclusion sets. Exclusion sets can be named for easier selection."
+                },
+                {
+                    "name": "Fixed Windows Menu Drawing",
+                    "description": "Menus on Windows now draw properly when you have a custom Windows theme installed."
+                },
+                {
+                    "name": "Code Inspection Fixes",
+                    "description": "Bug fixes and more unit tests for running multiple linters."
+                },
+                {
+                    "name": "Improvements for Toggling Comments",
+                    "description": "Toggle Comment now works for languages like CoffeeScript, where the open and close comment delimiters are the same and the line comment delimiter is a prefix of the block comment delimiter."
+                },
+                {
+                    "name": "Fix Keyboard Shortcuts for Non-English Keyboards",
+                    "description": "Brackets no longer adds keyboard shortcuts that have a key available only when AltGr key is pressed."
+                }
+            ]
+        },
+        {
+            "buildNumber": 12894,
+            "versionString": "Sprint 39",
+            "dateString": "05-09-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-Sprint-39",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Fuzzy CSS Code Hints",
+                    "description": "CSS Code Hints now uses the same smart string matching as Quick Open and JS Code Hints. For example, typing \"blc\" will suggest \"border-left-color\"."
+                },
+                {
+                    "name": "Extension Update Notifications",
+                    "description": "The Extension Manager toolbar icon now turns green indicating that one or more extensions have updates waiting to be installed."
+                },
+                {
+                    "name": "New Find Menu",
+                    "description": "The Find commands have been moved out of the Edit menu and into their own top-level menu to unclutter the Edit menu and make them easier to locate."
+                },
+                {
+                    "name": "Editing Improvements",
+                    "description": "Cut and Copy will now cut or copy the entire line containing the cursor when there is nothing selected. This also works with multiple cursors."
+                },
+                {
+                    "name": "Binary File Handling on Windows and Linux",
+                    "description": "Opening binary or other non-UTF8 encoded files on Linux and Windows will now result in an error message instead of garbled text, and file searches will skip those files, improving performance. This matches the existing Mac behavior."
+                },
+                {
+                    "name": "Map Filenames and Extensions to a Language",
+                    "description": "You can now add a preference to set the editor's syntax highlighting and other language features for files based on a filename or extension."
+                },
+                {
+                    "name": "Croatian Translation",
+                    "description": "Brackets has a new, community-submitted Croatian translation."
+                }
+            ]
+        },
+        {
+            "buildNumber": 12606,
+            "versionString": "Sprint 38",
+            "dateString": "04-14-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-Sprint-38",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Multiple Cursors and Selections",
+                    "description": "Create multiple cursors, discontiguous range selections, and rectangular selections in order to make similar edits in several places at once."
+                },
+                {
+                    "name": "Add Matches to Selection",
+                    "description": "Quickly add the next instance of the current word or range to the multiple selection by typing ⌘B/Ctrl+B, or add all instances with ⌘⌃G/Alt-F3. Useful for quick renames."
+                },
+                {
+                    "name": "Undo Selection",
+                    "description": "Undo the last selection change or edit with ⌘U/Ctrl+U, and redo selections with ⌘⇧U/Ctrl+Shift+U. This is useful for correcting a multiple selection mistake or jumping back to a previous selection location."
+                },
+                {
+                    "name": "Collapse All Children",
+                    "description": "Use ⌘⌥Click/Ctrl+Alt+Click to collapse all children of a folder in the file tree."
+                },
+                {
+                    "name": "Enhanced Quick Edit Feedback",
+                    "description": "Quick Edit (⌘E/Ctrl+E) and Quick Docs (⌘K/Ctrl+K) now give you helpful information when invoked on code elements that do not support those commands."
+                },
+                {
+                    "name": "Support for .ico Files in Image Preview",
+                    "description": "You can now select .ico files in the file tree to preview them."
+                },
+                {
+                    "name": "Asynchronous Linting API",
+                    "description": "Linters can now scan for lint asynchronously, improving responsiveness and performance."
+                }
+            ]
+        },
+        {
+            "buildNumber": 12014,
+            "versionString": "Sprint 37",
+            "dateString": "03-17-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-Sprint-37",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Exclude Files/Folders from Find in Files",
+                    "description": "Specify file and folder names or wildcards to exclude from multi-file searches."
+                },
+                {
+                    "name": "Signed Builds on Mac and Windows",
+                    "description": "Brackets builds are now code-signed on Mac and Windows, making installation and updates easier."
+                },
+                {
+                    "name": "Preferences Infrastructure Improvements",
+                    "description": "The new Preferences API is now ready for extensions to use. Also, new preferences have been added: see http://is.gd/BracketsPrefs for documentation."
+                },
+                {
+                    "name": "Install Extensions through Proxies",
+                    "description": "Users can now set the \"proxy\" preference to enable Brackets to install extensions from behind a proxy server. See http://is.gd/BracketsPrefs for more information."
+                },
+                {
+                    "name": "Improved Quick Edit for Timing Functions",
+                    "description": "You can now bring up Quick Edit on an incomplete animation timing function (e.g. \"cubic-bezier()\") to create a bezier from scratch."
+                },
+                {
+                    "name": "Overwrite Mode UI",
+                    "description": "The cursor changes when in overwrite mode, and you can toggle between insert and overwrite mode from the status bar."
+                },
+                {
+                    "name": "Improved Filesystem and Live Preview Stability and Performance",
+                    "description": "Fixed critical issues with external file changes not being recognized and Live Preview not starting properly."
+                },
+                {
+                    "name": "Indonesian Translation",
+                    "description": "A new Indonesian translation has been created."
+                }
+            ]
+        },
+        {
+            "buildNumber": 11506,
+            "versionString": "Sprint 36",
+            "dateString": "02-07-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-Sprint-36",
+            "downloadURL": "http://download.brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Improved Preferences",
+                    "description": "Use JSON configuration files to specify settings by folder or file-type."
+                },
+                {
+                    "name": "Improved LESS Support",
+                    "description": "CSS Code hints and Quick Docs support now available when editing LESS files."
+                },
+                {
+                    "name": "File System & Performance",
+                    "description": "Editor and Project file tree are now automatically updated with external changes. Operations like Find in Files are much faster."
+                },
+                {
+                    "name": "Extensions",
+                    "description": "New Debug > Reload Without Extensions command to help troubleshoot problems. When updating and removing extensions, Brackets now automatically reloads, so quit and re-launch is no longer required."
+                },
+                {
+                    "name": "Quick Edit for Animation Timing",
+                    "description": "When the selection is in a CSS animation steps() timing function, you can use Quick Edit (Ctrl+E/⌘E) to visually edit parameters."
+                },
+                {
+                    "name": "Windows UI Updates",
+                    "description": "Fixed many window-chrome glitches."
+                },
+                {
+                    "name": "Linting",
+                    "description": "Multiple extensions can register linters for the same language and all the results will be shown together in the linting panel."
+                },
+                {
+                    "name": "New Language Support",
+                    "description": "Greek and Korean Translations have been added to Brackets."
+                }
+            ]
+        },
         {
             "buildNumber": 10897,
             "versionString": "Sprint 35",
@@ -2710,12 +2899,572 @@
             ]
         },
         "/home/bill/code/wh-harness/": {
-            "project.treeState": []
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/carrie/": {
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/gaming-harness/": {
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/fastplay/": {
+            "project.treeState": [
+                [
+                    "/home/bill/code/fastplay/games/",
+                    "/home/bill/code/fastplay/libs/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/fastplay/drone.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 21,
+                                    "ch": 8
+                                },
+                                "end": {
+                                    "line": 25,
+                                    "ch": 10
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/games/r6en.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 8,
+                                    "ch": 1
+                                },
+                                "reversed": true,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/package.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 6,
+                                    "ch": 26
+                                },
+                                "end": {
+                                    "line": 6,
+                                    "ch": 26
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/.config/Brackets/brackets.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 50
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/index.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 1,
+                                    "ch": 23
+                                },
+                                "reversed": true,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/brain.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 2,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 7,
+                                    "ch": 20
+                                },
+                                "reversed": true,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/libs/config.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 3,
+                                    "ch": 9
+                                },
+                                "end": {
+                                    "line": 3,
+                                    "ch": 9
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/games/3een.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 13,
+                                    "ch": 25
+                                },
+                                "end": {
+                                    "line": 13,
+                                    "ch": 25
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/tmp/": {
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/gaming-tools/": {
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/oxi/": {
+            "project.treeState": [
+                [
+                    "/home/bill/code/oxi/lib/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/oxi/lib/hacks.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 87,
+                                    "ch": 4
+                                },
+                                "end": {
+                                    "line": 87,
+                                    "ch": 19
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 1306
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/oxi/package.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 16,
+                                    "ch": 22
+                                },
+                                "end": {
+                                    "line": 16,
+                                    "ch": 22
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/code/lastfemulate/": {
+            "project.treeState": [
+                [
+                    "/home/bill/code/lastfemulate/lib/",
+                    "/home/bill/code/lastfemulate/routes/",
+                    "/home/bill/code/lastfemulate/views/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/lastfemulate/package.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 8,
+                                    "ch": 20
+                                },
+                                "end": {
+                                    "line": 8,
+                                    "ch": 20
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/lastfemulate/app.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 52,
+                                    "ch": 4
+                                },
+                                "end": {
+                                    "line": 52,
+                                    "ch": 4
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 196
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/lastfemulate/routes/index.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 17,
+                                    "ch": 3
+                                },
+                                "end": {
+                                    "line": 17,
+                                    "ch": 3
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 189
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/lastfemulate/lib/lastfm.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 26,
+                                    "ch": 7
+                                },
+                                "end": {
+                                    "line": 26,
+                                    "ch": 7
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/lastfemulate/views/tracklist.jade",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 8,
+                                    "ch": 42
+                                },
+                                "end": {
+                                    "line": 8,
+                                    "ch": 42
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/lastfemulate/views/enteruser.jade",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 5,
+                                    "ch": 81
+                                },
+                                "end": {
+                                    "line": 5,
+                                    "ch": 81
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/code/reel-gen/": {
+            "project.treeState": [
+                [
+                    "/home/bill/code/reel-gen/js/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/reel-gen/.gitignore",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 3,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 3,
+                                    "ch": 0
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/reel-gen/js/gameList.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 27,
+                                    "ch": 2
+                                },
+                                "end": {
+                                    "line": 27,
+                                    "ch": 2
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/reel-gen/js/3EEN.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 3117,
+                                    "ch": 28
+                                },
+                                "end": {
+                                    "line": 3117,
+                                    "ch": 28
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 46218
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/reel-gen/js/slotGame.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 81,
+                                    "ch": 12
+                                },
+                                "end": {
+                                    "line": 81,
+                                    "ch": 12
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 953
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/reel-gen/js/BUEN.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 115,
+                                    "ch": 2
+                                },
+                                "end": {
+                                    "line": 115,
+                                    "ch": 2
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 1412
+                        }
+                    }
+                }
+            ]
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/code/wh-harness/",
+    "projectPath": "/home/bill/code/fastplay/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
@@ -2725,10 +3474,18 @@
     "fontSizeStyle": "12px",
     "livedev.highlight": true,
     "livedev.afterFirstLaunch": "true",
-    "caseSensitive": false,
+    "caseSensitive": true,
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
+        "/home/bill/code/fastplay",
+        "/home/bill/code/gaming-tools",
+        "/home/bill/code/oxi",
+        "/home/bill/code/reel-gen",
+        "/home/bill/code/lastfemulate",
+        "/home/bill/code/gaming-harness",
+        "/tmp",
+        "/home/bill/code/carrie",
         "/home/bill/code/wh-harness",
         "/home/bill/src/wh-harness",
         "/home/bill/src/JavaScript/node/gaming-tools",
@@ -2740,14 +3497,44 @@
         "/home/bill/src/JavaScript/node/bbGhost",
         "/home/bill/src/bbGhost",
         "/opt/brackets/samples/root/Getting Started",
-        "/home/bill/src/billbeesleycom",
-        "/home/bill/src/JavaScript/node/pandamania",
-        "/home/bill/src/JavaScript/node/useragent_NodeJs",
-        "/home/bill/src/JavaScript/node/oxi",
-        "/home/bill/src/JavaScript/node/harnesses/PDEN",
-        "/home/bill/src/reel-gen",
-        "/home/bill/src/qa-stubs/reel-gen",
-        "/home/bill/src/fairness-tools/node/parser-launcher",
-        "/home/bill/src/qa-stubs/gaming-tools/node-deploy"
-    ]
+        "/home/bill/src/billbeesleycom"
+    ],
+    "extensionUpdateInfo": [
+        {
+            "id": "ws-sanitizer",
+            "installVersion": "0.0.2",
+            "registryVersion": "0.0.3"
+        },
+        {
+            "id": "brackets-nodejs",
+            "installVersion": "1.1.4",
+            "registryVersion": "1.1.5"
+        },
+        {
+            "id": "quickdocsjs",
+            "installVersion": "1.3.1",
+            "registryVersion": "1.3.3"
+        },
+        {
+            "id": "zaggino.brackets-git",
+            "installVersion": "0.13.19",
+            "registryVersion": "0.13.20"
+        }
+    ],
+    "lastExtensionRegistryCheckTime": 1402919530456,
+    "brackets-git.lastVersion": "0.13.20",
+    "brackets-git.defaultRemotes": {
+        "/home/bill/code/wh-harness/": "origin",
+        "/home/bill/code/gaming-harness/": "origin",
+        "/home/bill/code/fastplay/": "origin",
+        "/home/bill/code/gaming-tools/": "origin",
+        "/home/bill/code/oxi/": "origin",
+        "/home/bill/code/lastfemulate/": "origin",
+        "/home/bill/code/reel-gen/": "origin"
+    },
+    "brackets-git.panelEnabled": true,
+    "sidebar": {
+        "size": 200
+    },
+    "brackets-git.pull.strategy": "DEFAULT"
 }

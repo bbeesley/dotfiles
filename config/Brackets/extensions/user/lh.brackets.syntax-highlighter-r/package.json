@@ -1,0 +1,17 @@
+{
+    "name": "lh.brackets.syntax-highlighter-r",
+    "title": "R language syntax highlighter",
+    "description": "Brings support for R language from CodeMirror to Brackets.",
+    "homepage": "https://github.com/Leif7/lh.brackets.syntax-highlighter-r",
+    "version": "1.0.0",
+    "author": {
+        "name": "Leif7",
+        "email": "<leifheppni@gmail.com>",
+        "url": "https://github.com/Leif7"
+    },     
+    "license": "MIT",
+    "categories": "language",
+    "engines": {
+        "brackets": ">=0.24.0"
+    }
+}

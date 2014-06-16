@@ -9,25 +9,35 @@ define(function (require, exports) {
 
     var Events        = require("src/Events"),
         EventEmitter  = require("src/EventEmitter"),
-        Main          = require("src/Main"),
+        Git           = require("src/git/Git"),
+        Utils         = require("src/Utils"),
         Strings       = require("strings");
 
     var $icon = $(null);
 
     function handleCloseNotModified() {
-        Main.gitControl.getGitStatus().then(function (modifiedFiles) {
+        Git.status().then(function (modifiedFiles) {
             var openFiles = DocumentManager.getWorkingSet(),
-                projectRoot = Main.getProjectRoot();
+                projectRoot = Utils.getProjectRoot();
             openFiles.forEach(function (openFile) {
                 var removeOpenFile = true;
                 modifiedFiles.forEach(function (modifiedFile) {
                     if (projectRoot + modifiedFile.file === openFile.fullPath) { removeOpenFile = false; }
                 });
+
+                if (removeOpenFile) {
+                    // check if file doesn't have any unsaved changes
+                    var doc = DocumentManager.getOpenDocumentForPath(openFile.fullPath);
+                    if (doc && doc.isDirty) {
+                        removeOpenFile = false;
+                    }
+                }
+
                 if (removeOpenFile) {
                     DocumentManager.closeFullEditor(openFile);
                 }
             });
-            EditorManager.focus();
+            EditorManager.focusEditor();
         });
     }
 

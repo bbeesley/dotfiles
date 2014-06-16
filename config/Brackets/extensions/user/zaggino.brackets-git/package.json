@@ -2,10 +2,9 @@
     "name": "zaggino.brackets-git",
 
     "title": "Brackets Git",
-    "description": "Integration of Git into Brackets UI",
-    "keywords": ["git"],
-    "categories": ["general", "external"],
-    "version": "0.12.2",
+    "description": "Integration of Git into Brackets",
+    "keywords": ["git", "version-control", "source-control"],
+    "version": "0.13.20",
 
     "license": "MIT",
     "homepage": "https://github.com/zaggino/brackets-git",
@@ -24,15 +23,20 @@
     },
 
     "engines": {
-        "brackets": ">=0.37.0"
+        "brackets": ">=0.40.0"
+    },
+    "scripts": {
+        "test": "grunt test"
     },
     "dependencies": {
 
     },
     "devDependencies": {
-        "q": "0.9.7",
         "grunt": "latest",
         "grunt-contrib-jshint": "latest",
-        "grunt-lesslint": "latest"
+        "grunt-jslint": "latest",
+        "grunt-lesslint": "latest",
+        "grunt-jscs-checker": "latest",
+        "grunt-contrib-compress": "latest"
     }
 }

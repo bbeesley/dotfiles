@@ -1,6 +1,3 @@
-/*jslint plusplus: true, vars: true, nomen: true */
-/*global $, brackets, define, Mustache */
-
 define(function (require, exports) {
     "use strict";
 
@@ -8,17 +5,18 @@ define(function (require, exports) {
         CommandManager          = brackets.getModule("command/CommandManager"),
         Dialogs                 = brackets.getModule("widgets/Dialogs"),
         EditorManager           = brackets.getModule("editor/EditorManager"),
-        FileSystem              = brackets.getModule("filesystem/FileSystem"),
         Menus                   = brackets.getModule("command/Menus"),
         PopUpManager            = brackets.getModule("widgets/PopUpManager"),
         StringUtils             = brackets.getModule("utils/StringUtils"),
-        SidebarView             = brackets.getModule("project/SidebarView");
+        SidebarView             = brackets.getModule("project/SidebarView"),
+        DocumentManager         = brackets.getModule("document/DocumentManager");
 
-    var Git                     = require("src/Git/Git"),
-        q                       = require("../thirdparty/q"),
+    var Git                     = require("src/git/Git"),
+        Events                  = require("src/Events"),
+        EventEmitter            = require("src/EventEmitter"),
         ErrorHandler            = require("./ErrorHandler"),
-        Main                    = require("./Main"),
         Panel                   = require("./Panel"),
+        ProgressDialog          = require("src/dialogs/Progress"),
         Strings                 = require("../strings"),
         Utils                   = require("./Utils"),
         branchesMenuTemplate    = require("text!templates/git-branches-menu.html"),
@@ -26,6 +24,7 @@ define(function (require, exports) {
         mergeBranchTemplate     = require("text!templates/branch-merge-dialog.html");
 
     var $gitBranchName          = $(null),
+        currentEditor,
         $dropdown;
 
     function renderList(branches) {
@@ -37,9 +36,9 @@ define(function (require, exports) {
             };
         });
         var templateVars  = {
-                branchList : _.filter(branches, function (o) { return !o.currentBranch; }),
-                Strings     : Strings
-            };
+            branchList: _.filter(branches, function (o) { return !o.currentBranch; }),
+            Strings:    Strings
+        };
         return Mustache.render(branchesMenuTemplate, templateVars);
     }
 
@@ -60,19 +59,52 @@ define(function (require, exports) {
             });
 
             var dialog  = Dialogs.showModalDialogUsingTemplate(compiledTemplate);
-            dialog.getElement().find("input").focus();
+            var $dialog = dialog.getElement();
+            $dialog.find("input").focus();
+
+            var $toBranch = $dialog.find("[name='branch-target']");
+            var $useRebase = $dialog.find("[name='use-rebase']");
+            if (fromBranch === "master") {
+                $useRebase.prop("checked", true);
+            }
+            if ($toBranch.val() === "master") {
+                $useRebase.prop("checked", false).prop("disabled", true);
+            }
+
+            var $mergeMessage = $dialog.find("[name='merge-message']");
+            $mergeMessage.attr("placeholder", "Merge branch '" + fromBranch + "'");
+            $dialog.find(".fill-pr").on("click", function () {
+                var prMsg = "Merge pull request #??? from " + fromBranch;
+                $mergeMessage.val(prMsg);
+                $mergeMessage[0].setSelectionRange(prMsg.indexOf("???"), prMsg.indexOf("???") + 3);
+            });
+
             dialog.done(function (buttonId) {
                 if (buttonId === "ok") {
                     // right now only merge to current branch without any configuration
                     // later delete merge branch and so ...
-                    Main.gitControl.mergeBranch(fromBranch).catch(function (err) {
-                        throw ErrorHandler.showError(err, "Merge failed");
-                    }).then(function (stdout) {
-                        // refresh should not be necessary in the future and trigerred automatically by Brackets, remove then
-                        CommandManager.execute("file.refresh");
-                        // show merge output
-                        Utils.showOutput(stdout, Strings.MERGE_RESULT);
-                    });
+                    var useRebase = $useRebase.prop("checked");
+                    var mergeMsg = $mergeMessage.val();
+
+                    if (useRebase) {
+
+                        Git.rebaseInit(fromBranch).catch(function (err) {
+                            throw ErrorHandler.showError(err, "Rebase failed");
+                        }).then(function (stdout) {
+                            Utils.showOutput(stdout, Strings.REBASE_RESULT);
+                            EventEmitter.emit(Events.REFRESH_ALL);
+                        });
+
+                    } else {
+
+                        Git.mergeBranch(fromBranch, mergeMsg).catch(function (err) {
+                            throw ErrorHandler.showError(err, "Merge failed");
+                        }).then(function (stdout) {
+                            Utils.showOutput(stdout, Strings.MERGE_RESULT);
+                            EventEmitter.emit(Events.REFRESH_ALL);
+                        });
+
+                    }
                 }
             });
         });
@@ -83,6 +115,25 @@ define(function (require, exports) {
             "{{#currentBranch}}selected{{/currentBranch}}>{{name}}</option>{{/branches}}";
         var html = Mustache.render(template, { branches: branches });
         $el.html(html);
+    }
+
+    function closeNotExistingFiles(oldBranchName, newBranchName) {
+        return Git.getDeletedFiles(oldBranchName, newBranchName).then(function (deletedFiles) {
+            var projectRoot = Utils.getProjectRoot(),
+                openedFiles = DocumentManager.getWorkingSet();
+            // Close files that does not exists anymore in the new selected branch
+            deletedFiles.forEach(function (dFile) {
+                var oFile = _.find(openedFiles, function (oFile) {
+                    return oFile.fullPath == projectRoot + dFile;
+                });
+                if (oFile) {
+                    DocumentManager.closeFullEditor(oFile);
+                }
+            });
+            EventEmitter.emit(Events.REFRESH_ALL);
+        }).catch(function (err) {
+            ErrorHandler.showError(err, "Getting list of deleted files failed.");
+        });
     }
 
     function handleEvents() {
@@ -110,6 +161,9 @@ define(function (require, exports) {
                             newVal = $opt.val();
                         if (remote) {
                             newVal = newVal.substring(remote.length + 1);
+                            if (remote !== "origin") {
+                                newVal = remote + "#" + newVal;
+                            }
                         }
                         $input.val(newVal);
                     }
@@ -118,14 +172,15 @@ define(function (require, exports) {
                 _reloadBranchSelect($select, branches);
                 dialog.getElement().find(".fetchBranches").on("click", function () {
                     var $this = $(this);
-                    Git.fetchAllRemotes().then(function () {
-                        return Git.getAllBranches().then(function (branches) {
-                            $this.prop("disabled", true).attr("title", "Already fetched");
-                            _reloadBranchSelect($select, branches);
+                    ProgressDialog.show(Git.fetchAllRemotes())
+                        .then(function () {
+                            return Git.getAllBranches().then(function (branches) {
+                                $this.prop("disabled", true).attr("title", "Already fetched");
+                                _reloadBranchSelect($select, branches);
+                            });
+                        }).catch(function (err) {
+                            throw ErrorHandler.showError(err, "Fetching remote information failed");
                         });
-                    }).catch(function (err) {
-                        throw ErrorHandler.showError(err, "Fetching remote information failed");
-                    });
                 });
 
                 dialog.getElement().find("input").focus();
@@ -139,12 +194,11 @@ define(function (require, exports) {
                             isRemote    = $option.attr("remote"),
                             track       = !!isRemote;
 
-                        Main.gitControl.createBranch(branchName, originName, track).catch(function (err) {
+                        Git.createBranch(branchName, originName, track).catch(function (err) {
                             ErrorHandler.showError(err, "Creating new branch failed");
                         }).then(function () {
                             closeDropdown();
-                            // refresh should not be necessary in the future and trigerred automatically by Brackets, remove then
-                            CommandManager.execute("file.refresh");
+                            EventEmitter.emit(Events.REFRESH_ALL);
                         });
                     }
                 });
@@ -152,14 +206,15 @@ define(function (require, exports) {
 
         }).on("click", "a.git-branch-link .switch-branch", function (e) {
             e.stopPropagation();
-            var branchName = $(this).parent().data("branch");
-            Main.gitControl.checkoutBranch(branchName).catch(function (err) {
-                ErrorHandler.showError(err, "Switching branches failed");
-            }).then(function () {
-                closeDropdown();
-                // refresh should not be necessary in the future and trigerred automatically by Brackets, remove then
-                CommandManager.execute("file.refresh");
-            });
+            var newBranchName = $(this).parent().data("branch");
+            return Git.getCurrentBranchName().then(function (oldBranchName) {
+                Git.checkout(newBranchName).then(function () {
+                    closeDropdown();
+                    return closeNotExistingFiles(oldBranchName, newBranchName);
+
+                }).catch(function (err) { ErrorHandler.showError(err, "Switching branches failed."); });
+            }).catch(function (err) { ErrorHandler.showError(err, "Getting current branch name failed."); });
+
         }).on("mouseenter", "a", function () {
             $(this).addClass("selected");
         }).on("mouseleave", "a", function () {
@@ -204,6 +259,12 @@ define(function (require, exports) {
         $("#project-files-container").on("scroll", closeDropdown);
         $(SidebarView).on("hide", closeDropdown);
         $("#titlebar .nav").on("click", closeDropdown);
+
+        currentEditor = EditorManager.getCurrentFullEditor();
+        if (currentEditor) {
+            currentEditor._codeMirror.on("focus", closeDropdown);
+        }
+
         // $(window).on("keydown", keydownHook);
     }
 
@@ -212,6 +273,11 @@ define(function (require, exports) {
         $("#project-files-container").off("scroll", closeDropdown);
         $(SidebarView).off("hide", closeDropdown);
         $("#titlebar .nav").off("click", closeDropdown);
+
+        if (currentEditor) {
+            currentEditor._codeMirror.off("focus", closeDropdown);
+        }
+
         // $(window).off("keydown", keydownHook);
 
         $dropdown = null;
@@ -255,23 +321,16 @@ define(function (require, exports) {
         });
     }
 
-    function _isRepositoryRoot() {
-        var gitFolder = Main.getProjectRoot() + "/.git",
-            defer = q.defer();
-        FileSystem.resolve(gitFolder, function (err, directory) {
-            defer.resolve(directory && !err ? true : false);
-        });
-        return defer.promise;
-    }
-
     function refresh() {
+        if ($gitBranchName.length === 0) { return; }
+
         // show info that branch is refreshing currently
         $gitBranchName
             .text("\u2026")
             .parent()
                 .show();
 
-        return _isRepositoryRoot().then(function (isRepositoryRoot) {
+        return Git.isProjectRepositoryRoot().then(function (isRepositoryRoot) {
             $gitBranchName.parent().toggle(isRepositoryRoot);
 
             if (!isRepositoryRoot) {
@@ -282,12 +341,38 @@ define(function (require, exports) {
                 return;
             }
 
-            return Main.gitControl.getBranchName().then(function (branchName) {
-                $gitBranchName.text(branchName)
-                    .off("click")
-                    .on("click", toggleDropdown)
-                    .append($("<span class='dropdown-arrow' />"));
-                Panel.enable();
+            return Git.getCurrentBranchName().then(function (branchName) {
+
+                Git.getMergeInfo().then(function (mergeInfo) {
+
+                    if (mergeInfo.mergeMode) {
+                        branchName += "|MERGING";
+                    }
+
+                    if (mergeInfo.rebaseMode) {
+                        if (mergeInfo.rebaseHead) {
+                            branchName = mergeInfo.rebaseHead;
+                        }
+                        branchName += "|REBASE";
+                        if (mergeInfo.rebaseNext && mergeInfo.rebaseLast) {
+                            branchName += "(" + mergeInfo.rebaseNext + "/" + mergeInfo.rebaseLast + ")";
+                        }
+                    }
+
+                    EventEmitter.emit(Events.REBASE_MERGE_MODE, mergeInfo.rebaseMode, mergeInfo.mergeMode);
+
+                    $gitBranchName
+                        .text(branchName)
+                        .attr("title", branchName.length > 15 ? branchName : null)
+                        .off("click")
+                        .on("click", toggleDropdown)
+                        .append($("<span class='dropdown-arrow' />"));
+                    Panel.enable();
+
+                }).catch(function (err) {
+                    ErrorHandler.showError(err, "Reading .git state failed");
+                });
+
             }).catch(function (ex) {
                 if (ErrorHandler.contains(ex, "unknown revision")) {
                     $gitBranchName
@@ -318,6 +403,20 @@ define(function (require, exports) {
         refresh();
     }
 
+    EventEmitter.on(Events.REFRESH_ALL, function () {
+        CommandManager.execute("file.refresh");
+        refresh();
+    });
+
+    EventEmitter.on(Events.BRACKETS_PROJECT_CHANGE, function () {
+        refresh();
+    });
+
+    EventEmitter.on(Events.BRACKETS_PROJECT_REFRESH, function () {
+        refresh();
+    });
+
     exports.init    = init;
     exports.refresh = refresh;
+
 });
