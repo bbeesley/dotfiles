@@ -1,0 +1,25 @@
+'editor':
+  'fontSize': 16
+  'tabLength': 4
+  'softWrap': true
+  'preferredLineLength': 140
+  'invisibles':
+    'eol': true
+    'cr': false
+    'tab': false
+'core':
+  'themes': [
+    'atom-dark-ui'
+    'atom-dark-syntax'
+  ]
+  'disabledPackages': [
+    'vim-mode'
+  ]
+'exception-reporting':
+  'userId': 'a0411194-ac3a-cb09-8435-4e2a9a073103'
+'release-notes':
+  'viewedVersion': '0.96.0-4fa0b6e'
+'welcome':
+  'showOnStartup': false
+'metrics':
+  'userId': '8d3b8e11467c677f6ee6544112713e00bf6d7deb'

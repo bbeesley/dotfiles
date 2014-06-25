@@ -56,5 +56,8 @@
     "brackets-git.dateFormat": null,
     "brackets-git.enableAdvancedFeatures": false,
     "brackets-git.terminalCommandArgs": null,
-    "brackets-wsSanitizer.enabled": true
+    "brackets-wsSanitizer.enabled": true,
+    "brackets-boilerplate.boilerplateDir": "/home/bill/code/reel-gen/scratch/",
+    "Themes-for-brackets.isCustom": false,
+    "Themes-for-brackets.theme": "cobalt"
 }

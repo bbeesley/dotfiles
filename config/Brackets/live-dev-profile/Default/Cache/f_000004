@@ -1,0 +1,870 @@
+// Global Variables
+/*jslint browser: true, devel: true, eqeq: true, forin: false, plusplus: true */
+/*global $, animate, bonus1, bonus2, bonus3, bonus4, bonusGames, bonusNum, canvases, changeBonus, changeReels, chooseBonusBox, chooseReelBox, cssTransform, drawCanvas, DRAW_OFFSET, drawReelset, envi, featNames, gameCode, gameLaunch, gameListBox, gameName, gameSet, getReelState, getTokens, gimmeWinline, has3d, idle, IMAGE_BOTTOM_MARGIN, IMAGE_HEIGHT, IMAGE_TOP_MARGIN, makeApiCallXml, makeBasicRandomNumberReq, makeRandomNumberReq, modNumbers, moveReels, now, nRows, numbers, numsForReels, postChunk, preloader, preloadImages, pullXml, r1down, r1up, r2down, r2up, r3down, r3up, r4down, r4up, r5down, r5up, reelOffset, reelSet, reelSet0, reelSet1, reelSet10, reelSet2, reelSet3, reelSet4, reelSet5, reelSet6, reelSet7, reelSet8, reelSet9, reelStrip, reelsymVis, reelVis, rnSet, rnSets, rs0r1, rs0r2, rs0r3, rs0r4, rs0r5, rs10r1, rs10r2, rs10r3, rs10r4, rs10r5, rs1r1, rs1r2, rs1r3, rs1r4, rs1r5, rs2r1, rs2r2, rs2r3, rs2r4, rs2r5, rs3r1, rs3r2, rs3r3, rs3r4, rs3r5, rs4r1, rs4r2, rs4r3, rs4r4, rs4r5, rs5r1, rs5r2, rs5r3, rs5r4, rs5r5, rs6r1, rs6r2, rs6r3, rs6r4, rs6r5, rs7r1, rs7r2, rs7r3, rs7r4, rs7r5, rs8r1, rs8r2, rs8r3, rs8r4, rs8r5, rs9r1, rs9r2, rs9r3, rs9r4, rs9r5, rsIndicator, scaleClose, scaleOpen, setBonus, setNum, setPositions, setReels, setToken, sgScript, showXml, shuffleNumbers, slotGames, SLOT_HEIGHT, SLOT_SEPARATOR_HEIGHT, stop, toggleReelpos, toggleReels, token, translateStops, trnClose, trnOpen, vendor, WebKitCSSMatrix, DOMParser */
+var IMAGE_HEIGHT = 64,
+    IMAGE_TOP_MARGIN = 5,
+    IMAGE_BOTTOM_MARGIN = 5,
+    SLOT_SEPARATOR_HEIGHT = 2,
+    SLOT_HEIGHT = IMAGE_HEIGHT + IMAGE_TOP_MARGIN + IMAGE_BOTTOM_MARGIN + SLOT_SEPARATOR_HEIGHT, // how many pixels one slot image takes
+    DRAW_OFFSET = 45, // how much draw offset in slot display from top
+    canvases = [$('#canvas1'), $('#canvas2'), $('#canvas3'), $('#canvas4'), $('#canvas5')], // array to hold identifiers for the canvases reels are painted on
+    setNum = 0, // index number for reel and random number set to use
+    nRows,
+    token,
+    stop = [],
+    oldStop = [],
+    oldReelSet = [],
+    oldNumbers = [],
+    rsIndicator = [],
+    bonusNum = 1, // index number for bonus to force
+    now,
+    modTime = new Date(),
+    idle = 0,
+    reelSet = gameSet[setNum], // reelset currently in use
+    rnSet = rnSets[setNum], // random number set currently in use
+    reelStrip = reelSet[0], // reel currently in use
+    numbers = [], // array to hold random numbers waiting to be sent
+    reelOffset = 0, // offset between reel position 0 and random number 0 (not currently used)
+    vendor =
+            (/webkit/i).test(navigator.appVersion) ? '-webkit' :
+                (/firefox/i).test(navigator.userAgent) ? '-moz' :
+                        (/msie/i).test(navigator.userAgent) ? 'ms' :
+                                window.hasOwnProperty('opera') ? '-o' : '', // get browser in use
+    cssTransform = vendor + '-transform', // css transform method to use
+    has3d = (window.hasOwnProperty('WebKitCSSMatrix') && new WebKitCSSMatrix().hasOwnProperty('m11')), // check for 3d capable browser
+    trnOpen = 'translate' + (has3d ? '3d(' : '('), // start of css transform call
+    trnClose = has3d ? ',0)' : ')',// end of css transform call
+    scaleOpen = 'scale' + (has3d ? '3d(' : '('),// start of css scale call
+    scaleClose = has3d ? ',0)' : ')',// end of css scale call
+    chooseReelBox = document.getElementById("chooseReelset"), // identifier for the reelset select box
+    reelVis = 1,
+    reelsymVis = 1,
+    accountId = '',
+    userName = '';
+(function () {
+    'use strict';
+    var i;
+    for (i = 0; i < gameSet.length; i++) {
+        chooseReelBox[i] = new Option('Reelset ' + (1 + i), i);
+    } // fill contents for the reelset select box
+}());
+var chooseBonusBox = document.getElementById("selectBonus"); // identifier for the bonus select box
+(function () {
+    'use strict';
+    var i,
+        combinedTotal = -1;
+    for (i = 0; i < bonusGames.length; i++) {
+        chooseBonusBox[i] = new Option(bonusGames[i].name, bonusGames[i].value);
+    } // fill contents for the reelset select box
+
+    if (rnSets.length === 0) {
+        numsForReels.forEach(function (i) {
+            combinedTotal += i;
+        });
+    // if rnSets haven't been added, we need to make them
+        for (i = 0; i < gameSet.length; i++) {
+            rnSets[i] = [
+                { min: 0, max: combinedTotal },
+                { min: 0, max: gameSet[i][0].length },
+                { min: 0, max: gameSet[i][1].length },
+                { min: 0, max: gameSet[i][2].length },
+                { min: 0, max: gameSet[i][3].length },
+                { min: 0, max: gameSet[i][4].length }
+            ];
+        }
+    }
+    if (bonusGames.length == 0) {
+        for (i = 0; i < featNames.length; i++) {
+            bonusGames[i] = { name: featNames[i], value: i + 1 };
+        }
+    }
+}());
+stop[0] = 1;
+stop[1] = stop[2] = stop[3] = stop[4] = stop[5] = 0; // reel  stop positions
+
+// Global Functions
+
+// fill window.numbers array with valid random window.numbers
+function shuffleNumbers() {
+    'use strict';
+    var i = 0,
+        num = window.numbers;
+    for (i = 0; i < window.numbers.length; i++) {
+        num[i] = Math.floor((Math.random() * rnSet[i].max) + rnSet[i].min);
+    }
+    return num;
+}
+
+function pickOne(reel) {
+    'use strict';
+    return Math.floor(Math.random() * reel.length);
+}
+
+function getSessionId(accId) {
+    'use strict';
+    var res = $.get('node/getSessionId?accountId=' + accId + '&env=' + envi, function (data) {
+        window.token = data.toString();
+        console.log(token);
+        alert('Found session ID: ' + token + '\n' + 'for user ' + userName + '\n' + 'with account number ' + accountId);
+        writeUname();
+    });
+}
+
+function getAccountId() {
+    'use strict';
+    var xml,
+        parser = new DOMParser(),
+        xmlDoc;
+    $.post('node/sendAccountValidate2?userName=' + userName + '&env=' + envi, function (data) {
+        xml = data;
+        xmlDoc = parser.parseFromString(xml, "text/xml");
+        window.accountId = xmlDoc.getElementsByTagName("accountNo")[0].childNodes[0].nodeValue;
+        getSessionId(window.accountId);
+        writeUname();
+    });
+}
+
+// show reelstops
+// function showReelstops() {
+
+function getCookie(cname) {
+    'use strict';
+    var name = cname + "=",
+        ca = document.cookie.split(';'),
+        i,
+        c;
+    for (i = 0; i < ca.length; i++) {
+        c = ca[i].trim();
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function setUserName() {
+    'use strict';
+    window.userName = prompt('Please enter your user name');
+    document.cookie = 'userName=' + userName;
+    getAccountId();
+    writeUname();
+}
+
+function setAccountId() {
+    'use strict';
+    window.accountId = prompt('Please enter your account ID');
+    document.cookie = 'accountId=' + accountId;
+}
+
+// get tokens
+function getTokens() {
+    'use strict';
+    var latestToken,
+        tokenResponse;
+    function clearTokens() {
+        $.post('dummy-rng-' + envi + '/clearAllValues.do');
+    }
+    function test(callback) {
+        if (tokenResponse) {
+            window.token = tokenResponse.textContent;
+            alert('Got token: ' + window.token);
+        } else {
+            callback();
+        }
+    }
+    function call() {
+        $.ajax({
+            dataType: "xml",
+            url: 'dummy-rng-' + envi + '/findAllTokens.do'
+        }).done(function (data) {
+            tokenResponse = $(data).find("td")[0];
+            test(call);
+        });
+    }
+    clearTokens();
+    call();
+}
+
+function setToken(tokenResponse) {
+    'use strict';
+    window.token = tokenResponse;
+    return token;
+}
+
+// function to send xml post
+function postChunk(xmlChunk, token) {
+    'use strict';
+    var postData = { numbers: xmlChunk, token: token };
+    $.ajax({
+        type: "POST",
+        url: 'dummy-rng-' + envi + '/setRandomNumbersForToken.do',
+        data: postData
+    });
+    window.rnSet = rnSets[setNum];
+    window.numbers = [];
+}
+
+// request display change
+window.requestAnimFrame = (function () {
+    'use strict';
+    return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (callback, element) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+}());
+
+function writeUname() {
+    'use strict';
+    if (userName.length > 0) {
+        $('#unameText').html(userName);
+    } else {
+        $('#unameText').html('Please Enter Your User Name');
+    }
+}
+
+// update the display based on stop positions
+function moveReels() {
+    'use strict';
+    translateStops();
+    $('#canvas1').css(cssTransform, trnOpen + '0px, -' + (stop[1] * SLOT_HEIGHT) + 'px' + trnClose);
+    $('#canvas2').css(cssTransform, trnOpen + '0px, -' + (stop[2] * SLOT_HEIGHT) + 'px' + trnClose);
+    $('#canvas3').css(cssTransform, trnOpen + '0px, -' + (stop[3] * SLOT_HEIGHT) + 'px' + trnClose);
+    $('#canvas4').css(cssTransform, trnOpen + '0px, -' + (stop[4] * SLOT_HEIGHT) + 'px' + trnClose);
+    $('#canvas5').css(cssTransform, trnOpen + '0px, -' + (stop[5] * SLOT_HEIGHT) + 'px' + trnClose);
+    if (!reelsymVis) {
+        $("#r1down").html(rsIndicator[1]);
+        $("#r2down").html(rsIndicator[2]);
+        $("#r3down").html(rsIndicator[3]);
+        $("#r4down").html(rsIndicator[4]);
+        $("#r5down").html(rsIndicator[5]);
+    }
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+    writeUname();
+}
+
+function init() {
+    'use strict';
+    var u = getCookie('userName');
+    if (u.length == 0) {
+        setUserName();
+    } else {
+        window.userName = u;
+        getAccountId();
+    }
+}
+
+// preloader for images to ensure canvas isn't filled until images are loaded
+function preloader(items, preloadFunction, callback) {
+    'use strict';
+    var itemc = items.length,
+        loadc = 0;
+
+    // called by preloadFunction to notify result
+    function check(err, id) {
+        if (err) {
+            alert('Failed to load ' + id + ': ' + err);
+        }
+        loadc++;
+        if (itemc == loadc) {
+            callback();
+        }
+    }
+
+    // queue each item for fetching
+    items.forEach(function (item) {
+        preloadFunction(item, check);
+    });
+}
+
+function preloadImages(images, callback) {
+    'use strict';
+    function preload(asset, doneCallback) {
+        asset.img = new Image();
+        asset.img.src = 'img/' + gameCode + '/' + asset.id + '.jpg';
+
+        asset.img.addEventListener("load", function () {
+            doneCallback();
+        }, false);
+
+        asset.img.addEventListener("error", function (err) {
+            doneCallback(err, asset.id);
+        }, false);
+    }
+    preloader(images, preload, callback);
+}
+
+// draw a reelstrip canvas, n is the index number of the reelstrip to be drawn in the current reelSet array
+function drawCanvas() {
+    'use strict';
+    var n,
+        reelStrip,
+        head,
+        tail,
+        canvas,
+        ctx,
+        i,
+        symbol;
+    for (n = 0; n < 5; n++) {
+        reelStrip = reelSet[n];
+        if (reelSet.nRows) {
+            window.nRows = reelSet.nRows;
+        } else {
+            window.nRows = 3;
+        }
+        $('#reelBox div').css('height', SLOT_HEIGHT * nRows);
+        head = reelStrip.slice(0, 3);
+        tail = reelStrip.slice(-3);
+        reelStrip = reelStrip.concat(head);
+        canvas = canvases[n];
+        ctx = canvas[0].getContext('2d');
+        ctx.fillStyle = '#ddd';
+        for (i = 0; i < reelStrip.length; i++) {
+            symbol = reelStrip[i];
+            ctx.save();
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
+            ctx.shadowBlur = 5;
+            ctx.drawImage(symbol.img, 3, i * SLOT_HEIGHT + IMAGE_TOP_MARGIN);
+            ctx.restore();
+            ctx.fillRect(0, i * SLOT_HEIGHT, 70, SLOT_SEPARATOR_HEIGHT);
+        }
+    }
+}
+
+// draw the whole reelset
+function drawReelset() {
+    'use strict';
+    $('#canvas1').attr('height', SLOT_HEIGHT * (reelSet[0].length + 3));
+    $('#canvas1').css('height', SLOT_HEIGHT * (reelSet[0].length + 3));
+    $('#canvas2').attr('height', SLOT_HEIGHT * (reelSet[1].length + 3));
+    $('#canvas2').css('height', SLOT_HEIGHT * (reelSet[1].length + 3));
+    $('#canvas3').attr('height', SLOT_HEIGHT * (reelSet[2].length + 3));
+    $('#canvas3').css('height', SLOT_HEIGHT * (reelSet[2].length + 3));
+    $('#canvas4').attr('height', SLOT_HEIGHT * (reelSet[3].length + 3));
+    $('#canvas4').css('height', SLOT_HEIGHT * (reelSet[3].length + 3));
+    $('#canvas5').attr('height', SLOT_HEIGHT * (reelSet[4].length + 3));
+    $('#canvas5').css('height', SLOT_HEIGHT * (reelSet[4].length + 3));
+    function fill() {
+        var loadCount = 0,
+            j;
+        function loaded() {
+            loadCount = loadCount + 1;
+            if (loadCount == 5) {
+                loadCount = 0;
+                drawCanvas();
+            }
+        }
+        for (j = 0; j < reelSet.length; j++) {
+            preloadImages(reelSet[j], loaded);
+        }
+    }
+    $(function () { $('h3').text(gameName); });
+    fill();
+}
+
+// runs on page load, sets and draws the initial display
+function animate(callback) {
+    'use strict';
+    if ($('canvas').height() == 300) {
+        $(function () { $('h3').text(gameName); });
+        window.reelSet = gameSet[0];
+        window.requestAnimFrame(drawReelset);
+    }
+    window.now = new Date();
+    if (oldStop.toString() != stop.toString() || oldReelSet.toString() != reelSet.toString() || oldNumbers.toString() != numbers.toString()) {
+        modTime = new Date();
+        oldStop = stop.slice();
+        oldReelSet = reelSet.slice();
+        oldNumbers = numbers.slice();
+        window.requestAnimFrame(drawReelset);
+    }
+    if (now - modTime < 2000) {
+        window.requestAnimFrame(callback);
+    }
+}
+
+// makes an xml string describing a single random number request
+function makeRandomNumberReq(count, min, max, value) {
+    'use strict';
+    var rnXml = '<randomNumberRequests>' +
+        '<randomNumberRequest>' +
+        '<count>' + count + '</count>' +
+        '<highest>' + max + '</highest>' +
+        '<lowest>' + min + '</lowest>' +
+        '<unique>false</unique>' +
+        '</randomNumberRequest>' +
+        '<returnValue>' + value + '</returnValue>' +
+        '<source>RNG</source>' +
+        '</randomNumberRequests>';
+    return rnXml;
+}
+
+// makes an xml string describing a single random number request without boundaries
+function makeBasicRandomNumberReq(count, value) {
+    'use strict';
+    var rnXml = '<randomNumberRequests>' +
+        '<randomNumberRequest>' +
+        '<count>' + count + '</count>' +
+        '<unique>false</unique>' +
+        '</randomNumberRequest>' +
+        '<returnValue>' + value + '</returnValue>' +
+        '<source>RNG</source>' +
+        '</randomNumberRequests>';
+    return rnXml;
+}
+
+// makes an xml string describing a whole random number request call
+function makeApiCallXml() {
+    'use strict';
+    var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<randomNumberRequestList>',
+        i;
+    function getCount(n) {
+        if (!n.length) {
+            return 1;
+        } else {
+            return n.length;
+        }
+    }
+    for (i = 0; i < window.numbers.length; i++) {
+        if (rnSet[i] === undefined) {
+            xml = String(xml).concat(makeBasicRandomNumberReq(getCount(window.numbers[i]), window.numbers[i]));
+        } else {
+            xml = String(xml).concat(makeRandomNumberReq(getCount(window.numbers[i]), rnSet[i].min, rnSet[i].max, window.numbers[i]));
+        }
+    }
+    xml = String(xml).concat('</randomNumberRequestList>');
+    return xml;
+}
+
+// Button functions
+function r1down() {
+    'use strict';
+    if (stop[1] < reelSet[0].length - 1) {
+        stop[1]++;
+    } else {
+        stop[1] = 0;
+    }
+    moveReels();
+}
+
+function r1up() {
+    'use strict';
+    if (stop[1] > 0) {
+        stop[1]--;
+    } else {
+        stop[1] = reelSet[0].length - 1;
+    }
+    moveReels();
+}
+
+function r2down() {
+    'use strict';
+    if (stop[2] < reelSet[1].length - 1) {
+        stop[2]++;
+    } else {
+        stop[2] = 0;
+    }
+    moveReels();
+}
+
+function r2up() {
+    'use strict';
+    if (stop[2] > 0) {
+        stop[2]--;
+    } else {
+        stop[2] = reelSet[1].length - 1;
+    }
+    moveReels();
+}
+
+function r3down() {
+    'use strict';
+    if (stop[3] < reelSet[2].length - 1) {
+        stop[3]++;
+    } else {
+        stop[3] = 0;
+    }
+    moveReels();
+}
+
+function r3up() {
+    'use strict';
+    if (stop[3] > 0) {
+        stop[3]--;
+    } else {
+        stop[3] = reelSet[2].length - 1;
+    }
+    moveReels();
+}
+
+function r4down() {
+    'use strict';
+    if (stop[4] < reelSet[3].length - 1) {
+        stop[4]++;
+    } else {
+        stop[4] = 0;
+    }
+    moveReels();
+}
+
+function r4up() {
+    'use strict';
+    if (stop[4] > 0) {
+        stop[4]--;
+    } else {
+        stop[4] = reelSet[3].length - 1;
+    }
+    moveReels();
+}
+
+function r5down() {
+    'use strict';
+    if (stop[5] < reelSet[4].length - 1) {
+        stop[5]++;
+    } else {
+        stop[5] = 0;
+    }
+    moveReels();
+}
+
+function r5up() {
+    'use strict';
+    if (stop[5] > 0) {
+        stop[5]--;
+    } else {
+        stop[5] = reelSet[4].length - 1;
+    }
+    moveReels();
+}
+
+// function to change reelset in use, called when the reelset select box is updated
+function changeReels() {
+    'use strict';
+    var selectValue = document.getElementById('chooseReelset').value;
+    window.setNum = 1 + parseInt(selectValue, 10);
+    window.reelSet = gameSet[setNum];
+    drawReelset();
+    /*animate( changeReels );*/
+}
+
+// function to change bonus in use, called when the bonus select box is updated
+function changeBonus() {
+    'use strict';
+    window.bonusNum = parseInt(document.getElementById('selectBonus').value, 10);
+}
+
+// function to display the xml to be sent in a popup box
+function showXml() {
+    'use strict';
+    var xmlWindow = window.open("", "Raw XML for Dummy RNG", "toolbar=yes,titlebar=yes");
+    xmlWindow.document.body.textContent = makeApiCallXml(window.numbers);
+}
+
+// function to allow a user to enter and send xml directly
+function pullXml() {
+    'use strict';
+    var userXml = prompt('Paste the xml string to send', 'Paste it here');
+    postChunk(userXml, token);
+}
+// Function to toggle visibility of reel strips
+function toggleReels() {
+    'use strict';
+  window.reelVis = 1 - reelVis;
+    if (reelVis) {
+        $('#reelBox div').css('overflow', 'hidden');
+    } else {
+        $('#reelBox div').css('overflow', 'visible');
+    }
+    /*animate( toggleReels );*/
+}
+
+// function to toggle reel position visibility
+function toggleReelpos() {
+    'use strict';
+    translateStops();
+    window.reelsymVis = 1 - reelsymVis;
+    if (reelsymVis) {
+      $("#r1down").html('+');
+        $("#r2down").html('+');
+        $("#r3down").html('+');
+        $("#r4down").html('+');
+        $("#r5down").html('+');
+  } else {
+      $("#r1down").html(rsIndicator[1]);
+        $("#r2down").html(rsIndicator[2]);
+        $("#r3down").html(rsIndicator[3]);
+        $("#r4down").html(rsIndicator[4]);
+        $("#r5down").html(rsIndicator[5]);
+  }
+}
+
+// function to modify the window.numbers array manually
+function modNumbers() {
+    'use strict';
+    var message = 'So you want to edit the RNG Queue?\n reels are currently at ' +
+                            rsIndicator.slice(1),
+        response = prompt(message, window.numbers);
+    window.numbers = response.replace(/,$/, "").split(',').map(function (n) {
+        return parseInt(n, 10);
+    });
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+    updateDisplay();
+    moveReels();
+}
+
+// function to save additional bonus combos
+function saveCombo() {
+    'use strict';
+    $('#viewport').load("saveForm.html", function () {
+        $('#enterCode').attr('value', gameCode);
+        $('#enterName').attr('value', 'Please choose a name for this outcome');
+        $('#enterNumbers').attr('value', numbers);
+        $('#submitNewBonus')[0].addEventListener('click', function () {
+            $('#viewport').load("slotGame.html #viewport", function () {
+                drawReelset();
+            });
+        });
+    });
+}
+
+// get a win line
+function gimmeWinline(wanted) {
+    'use strict';
+    var reel = 0,
+        stopName = '',
+        reelPos = 0;
+    function findSym(ob) {
+        if (ob.id == wanted) {
+            stop[reel + 1] = reelPos - 1;
+        }
+        reelPos++;
+    }
+    for (reel = 0; reel < reelSet.length; reel++) {
+        stopName = 'stop' + reel;
+        reelPos = 0;
+        reelSet[reel].forEach(findSym);
+    }
+    moveReels();
+}
+
+function c1Click(event) {
+    'use strict';
+    var reelLength = reelSet[0].length * SLOT_HEIGHT,
+        y,
+        posClicked;
+    event = event || window.event;
+    y = event.pageY - canvases[0].offset().top;
+    if (y >= reelLength) {
+        y = y - reelLength;
+    }
+    posClicked = parseInt(y / SLOT_HEIGHT, 10);
+
+    gimmeWinline(reelSet[0][posClicked].id);
+}
+
+function c2Click(event) {
+    'use strict';
+    var reelLength = reelSet[1].length * SLOT_HEIGHT,
+        y,
+        posClicked;
+    event = event || window.event;
+    y = event.pageY - canvases[1].offset().top;
+    if (y >= reelLength) {
+        y = y - reelLength;
+    }
+    posClicked = parseInt(y / SLOT_HEIGHT, 10);
+
+    gimmeWinline(reelSet[1][posClicked].id);
+}
+
+function c3Click(event) {
+    'use strict';
+    var reelLength = reelSet[2].length * SLOT_HEIGHT,
+        y,
+        posClicked;
+    event = event || window.event;
+    y = event.pageY - canvases[2].offset().top;
+    if (y >= reelLength) {
+        y = y - reelLength;
+    }
+    posClicked = parseInt(y / SLOT_HEIGHT, 10);
+
+    gimmeWinline(reelSet[2][posClicked].id);
+}
+
+function c4Click(event) {
+    'use strict';
+    var reelLength = reelSet[3].length * SLOT_HEIGHT,
+        y,
+        posClicked;
+    event = event || window.event;
+    y = event.pageY - canvases[3].offset().top;
+    if (y >= reelLength) {
+        y = y - reelLength;
+    }
+    posClicked = parseInt(y / SLOT_HEIGHT, 10);
+
+    gimmeWinline(reelSet[3][posClicked].id);
+}
+
+function c5Click(event) {
+    'use strict';
+    var reelLength = reelSet[4].length * SLOT_HEIGHT,
+        y,
+        posClicked;
+    event = event || window.event;
+    y = event.pageY - canvases[4].offset().top;
+    if (y >= reelLength) {
+        y = y - reelLength;
+    }
+    posClicked = parseInt(y / SLOT_HEIGHT, 10);
+
+    gimmeWinline(reelSet[4][posClicked].id);
+}
+
+
+// debug function to show me things
+function getReelState() {
+    'use strict';
+    return String(setNum).concat(', ', stop[1], ', ', stop[2], ', ', stop[3], ', ', stop[4], ', ', stop[5]);
+}
+
+// Button Bindings
+$('#canvas1')[0].addEventListener('click', c1Click);
+$('#canvas2')[0].addEventListener('click', c2Click);
+$('#canvas3')[0].addEventListener('click', c3Click);
+$('#canvas4')[0].addEventListener('click', c4Click);
+$('#canvas5')[0].addEventListener('click', c5Click);
+$('#unameText')[0].addEventListener('click', setUserName);
+$('#r1up').click(function () {
+    'use strict';
+    r1up();
+});
+$('#r1down').click(function () {
+    'use strict';
+    r1down();
+});
+$('#r2up').click(function () {
+    'use strict';
+    r2up();
+});
+$('#r2down').click(function () {
+    'use strict';
+    r2down();
+});
+$('#r3up').click(function () {
+    'use strict';
+    r3up();
+});
+$('#r3down').click(function () {
+    'use strict';
+    r3down();
+});
+$('#r4up').click(function () {
+    'use strict';
+    r4up();
+});
+$('#r4down').click(function () {
+    'use strict';
+    r4down();
+});
+$('#r5up').click(function () {
+    'use strict';
+    r5up();
+});
+$('#r5down').click(function () {
+    'use strict';
+    r5down();
+});
+$('#chooseReelset').change(function () {
+    'use strict';
+    changeReels();
+});
+$('#setReelset').click(function () {
+    'use strict';
+    setReels();
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+});
+$('#setBonus').click(function () {
+    'use strict';
+    setBonus();
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+});
+$('#selectBonus').click(function () {
+    'use strict';
+    changeBonus();
+});
+$('#setReelpos').click(function () {
+    'use strict';
+    setPositions();
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+});
+$('#send').click(function () {
+    'use strict';
+    var xmlChunk = makeApiCallXml();
+    postChunk(xmlChunk, token);
+    if (!isNaN(numbers[0])) {
+        $('#queueText').html('rng queue: ' + window.numbers);
+    } else {
+        $('#queueText').html('');
+    }
+});
+/*$('#getTokens').click(function () {
+    'use strict';
+    getTokens();
+});*/
+$('#getTokens').click(function () {
+    'use strict';
+    getSessionId(accountId);
+});
+$('#showXml').click(function () {
+    'use strict';
+    showXml();
+});
+$('#pullXml').click(function () {
+    'use strict';
+    pullXml();
+});
+$('#toggleReels').click(function () {
+    'use strict';
+    toggleReels();
+});
+$('#launcher').click(function () {
+    'use strict';
+    location.reload(true);
+});
+$('#numbersMod').click(function () {
+    'use strict';
+    modNumbers();
+});
+$('#toggleReelpos').click(function () {
+    'use strict';
+    toggleReelpos();
+});
+$('#saveCombo')[0].addEventListener('click', saveCombo);

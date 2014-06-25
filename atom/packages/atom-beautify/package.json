@@ -1,0 +1,87 @@
+{
+  "name": "atom-beautify",
+  "main": "./lib/atom-beautify",
+  "version": "0.3.3",
+  "private": true,
+  "description": "Beautify HTML, CSS and Javascript in Atom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/donaldpipowitch/atom-beautify"
+  },
+  "bugs": {
+    "url": "https://github.com/donaldpipowitch/atom-beautify/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Donald Pipowitch",
+    "email": "pipo@senaeh.de",
+    "url": "https://github.com/donaldpipowitch"
+  },
+  "contributors": [
+    {
+      "name": "László Károlyi",
+      "url": "https://github.com/karolyi"
+    },
+    {
+      "name": "Glavin Wiechert",
+      "email": "glavin.wiechert@gmail.com",
+      "url": "https://github.com/Glavin001"
+    },
+    {
+      "name": "Marco Tanzi",
+      "url": "https://github.com/mtanzi"
+    },
+    {
+      "name": "gvn lazar suntop",
+      "url": "https://github.com/gvn"
+    },
+    {
+      "name": "Vadim K.",
+      "url": "https://github.com/vadirn"
+    }
+  ],
+  "keywords": [
+    "atom",
+    "beautify",
+    "beautifier",
+    "js-beautify",
+    "format",
+    "pretty",
+    "html",
+    "handlebars",
+    "xml",
+    "css",
+    "javascript",
+    "json",
+    "css",
+    "sass",
+    "scss",
+    "less",
+    "sql",
+    "php",
+    "python",
+    "ruby"
+  ],
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "emissary": "^1.0.0",
+    "extend": "^1.2.1",
+    "js-beautify": "~1.5.1",
+    "nopt": "^3.0.0",
+    "lodash": "2.4.1",
+    "strip-json-comments": "^0.1.3",
+    "js-yaml": "^3.0.2",
+    "temp": "^0.8.0"
+  },
+  "readme": "# [atom-beautify](https://github.com/donaldpipowitch/atom-beautify)\n\n> [Beautify](https://github.com/einars/js-beautify)\nHTML (including [Handlebars](http://handlebarsjs.com/)),\nCSS (including [Sass](http://sass-lang.com/) and [LESS](http://lesscss.org/))\nand JavaScript in Atom.\n\nAtom Package: https://atom.io/packages/atom-beautify\n\n## Language Support\n\n- [x] JavaScript and JSON\n- [x] HTML, including\n  - [Handlebars](http://handlebarsjs.com/)\n  - XML\n- [x] CSS, including\n  - [Sass](http://sass-lang.com/)\n  - [LESS](http://lesscss.org/)\n- [x] SQL, special thanks to [pretty-data](https://github.com/vkiryukhin/pretty-data)\n- [x] [PHP](https://github.com/donaldpipowitch/atom-beautify/issues/26)  \n  - Requires [PHP_Beautifier](http://pear.php.net/package/PHP_Beautifier) to be already installed.\n- [x] [Python](https://github.com/donaldpipowitch/atom-beautify/issues/24)\n  - Requires [autopep8](https://github.com/hhatto/autopep8) to be already installed.\n  - Beautifies to [PEP 8](http://legacy.python.org/dev/peps/pep-0008/).\n- [x] [Ruby](https://github.com/donaldpipowitch/atom-beautify/issues/25)\n  - Requires [RBeautify](https://github.com/erniebrodeur/ruby-beautify)\n\n### Coming Soon\n\n- [ ] CoffeeScript, see https://github.com/donaldpipowitch/atom-beautify/issues/31\n\n\n## Usage\n\nOpen the [Command Palette](https://github.com/atom/command-palette), and type `Beautify`.\n\nIt will only beautify selected text, if a selection is found - if not, the whole file will be beautified.\n\n### Shortcut\n\nYou can also type `ctrl-alt-b` as a shortcut or click `Packages > Beautify` in the menu.\n\n### Package Options\n\nYou can also choose to beautify on every file save.\n\n\n## Configuration\n\nEdit your `.jsbeautifyrc` file in any of the following locations:\n\n- Atom Package Settings  \n  `Atom` ➔ `Preferences` ➔ Search for `atom-beautify`\n- Same directory as current file\n- Project root  \n`atom-beautify` will recursively look up from the current file's directory to find `.jsbeautifyrc`.\n- Your User's Home directory\n\n**Note**: *Comments are supported in `.jsbeautifyrc` thanks to [strip-json-comments](https://github.com/sindresorhus/strip-json-comments).*\n\nSee examples of both way inside [`examples/`](https://github.com/donaldpipowitch/atom-beautify/tree/master/examples)\n\n### Simple\n\nSee [examples/simple-jsbeautifyrc/.jsbeautifyrc](https://github.com/donaldpipowitch/atom-beautify/blob/master/examples/simple-jsbeautifyrc/.jsbeautifyrc).\n\n```json\n{\n  \"indent_size\": 2,\n  \"indent_char\": \" \",\n  \"other\": \" \",\n  \"indent_level\": 0,\n  \"indent_with_tabs\": false,\n  \"preserve_newlines\": true,\n  \"max_preserve_newlines\": 2,\n  \"jslint_happy\": true,\n  \"indent_handlebars\": true\n}\n```\n\n### Nested\n\nSee [examples/nested-jsbeautifyrc/.jsbeautifyrc](https://github.com/donaldpipowitch/atom-beautify/blob/master/examples/nested-jsbeautifyrc/.jsbeautifyrc).\n\n```json\n{\n  \"html\": {\n    \"brace_style\": \"collapse\",\n    \"indent_char\": \" \",\n    \"indent_scripts\": \"normal\",\n    \"indent_size\": 6,\n    \"max_preserve_newlines\": 1,\n    \"preserve_newlines\": true,\n    \"unformatted\": [\"a\", \"sub\", \"sup\", \"b\", \"i\", \"u\"],\n    \"wrap_line_length\": 0\n  },\n  \"css\": {\n    \"indent_char\": \" \",\n    \"indent_size\": 4\n  },\n  \"js\": {\n    \"indent_size\": 2,\n    \"indent_char\": \" \",\n    \"indent_level\": 0,\n    \"indent_with_tabs\": false,\n    \"preserve_newlines\": true,\n    \"max_preserve_newlines\": 2,\n    \"jslint_happy\": true\n  },\n  \"sql\": {\n    \"indent_size\": 4,\n    \"indent_char\": \" \",\n    \"indent_level\": 0,\n    \"indent_with_tabs\": false\n  }\n}\n```\n\n## Advanced Language Setup\n\n### PHP\n\nTo use with PHP we require [PHP_Beautifier](http://pear.php.net/package/PHP_Beautifier)\nand that you set the `Php beautifier path` in the package settings.\n\n#### Retrieve the path on Mac & Linux\n\nRun `which php_beautifier` in your Terminal.\n\n### Python\n\nTo use with Python we require [autopep8](https://github.com/hhatto/autopep8)\nand that you set the `Python autopep8 path` in the package settings.\n\n#### Retrieve the path on Mac & Linux\n\nRun `which autopep8` in your Terminal.\n\n\n## Contributing\n\n[See all contributors on GitHub](https://github.com/donaldpipowitch/atom-beautify/graphs/contributors).\n\nPlease update the [CHANGELOG.md](https://github.com/donaldpipowitch/atom-beautify/blob/master/CHANGELOG.md),\nadd yourself as a contributor to the [package.json](https://github.com/donaldpipowitch/atom-beautify/blob/master/package.json),\nand submit a [Pull Request on GitHub](https://help.github.com/articles/using-pull-requests).\n\n## License\n\n[MIT](https://github.com/donaldpipowitch/atom-beautify/blob/master/LICENSE.md) © [Donald Pipowitch](https://github.com/donaldpipowitch)\n",
+  "readmeFilename": "README.md",
+  "homepage": "https://github.com/donaldpipowitch/atom-beautify",
+  "_id": "atom-beautify@0.3.3",
+  "dist": {
+    "shasum": "4e082c0a9ad6ba42f6e59cb532d8da4ba9dbf177"
+  },
+  "_resolved": "/tmp/d-114523-5498-1c1cnar/package.tgz",
+  "_from": "/tmp/d-114523-5498-1c1cnar/package.tgz"
+}

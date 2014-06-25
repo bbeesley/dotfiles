@@ -1,6 +1,6 @@
 {
     "problems-panel": {
-        "visible": false,
+        "visible": true,
         "size": 100,
         "contentSize": 71
     },
@@ -11,7 +11,7 @@
         "visible": true
     },
     "git-panel": {
-        "visible": true,
+        "visible": false,
         "size": 171,
         "contentSize": 133
     },
@@ -19,7 +19,7 @@
         "visible": false
     },
     "lastNotifiedBuildNumber": 0,
-    "lastInfoURLFetchTime": 1402911057081,
+    "lastInfoURLFetchTime": 1403606380979,
     "updateInfo": [
         {
             "buildNumber": 13109,
@@ -2949,14 +2949,14 @@
                         "selections": [
                             {
                                 "start": {
-                                    "line": 0,
-                                    "ch": 0
+                                    "line": 4,
+                                    "ch": 21
                                 },
                                 "end": {
-                                    "line": 8,
-                                    "ch": 1
+                                    "line": 4,
+                                    "ch": 24
                                 },
-                                "reversed": true,
+                                "reversed": false,
                                 "primary": true
                             }
                         ],
@@ -3045,20 +3045,20 @@
                         "selections": [
                             {
                                 "start": {
-                                    "line": 2,
-                                    "ch": 0
+                                    "line": 19,
+                                    "ch": 19
                                 },
                                 "end": {
-                                    "line": 7,
-                                    "ch": 20
+                                    "line": 19,
+                                    "ch": 19
                                 },
-                                "reversed": true,
+                                "reversed": false,
                                 "primary": true
                             }
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 0
+                            "y": 12
                         }
                     }
                 },
@@ -3070,11 +3070,11 @@
                             {
                                 "start": {
                                     "line": 3,
-                                    "ch": 9
+                                    "ch": 20
                                 },
                                 "end": {
                                     "line": 3,
-                                    "ch": 9
+                                    "ch": 20
                                 },
                                 "reversed": false,
                                 "primary": true
@@ -3093,12 +3093,12 @@
                         "selections": [
                             {
                                 "start": {
-                                    "line": 13,
-                                    "ch": 25
+                                    "line": 0,
+                                    "ch": 0
                                 },
                                 "end": {
-                                    "line": 13,
-                                    "ch": 25
+                                    "line": 0,
+                                    "ch": 0
                                 },
                                 "reversed": false,
                                 "primary": true
@@ -3335,71 +3335,30 @@
         "/home/bill/code/reel-gen/": {
             "project.treeState": [
                 [
-                    "/home/bill/code/reel-gen/js/"
+                    "/home/bill/code/reel-gen/css/",
+                    "/home/bill/code/reel-gen/js/",
+                    "/home/bill/code/reel-gen/scratch/"
+                ],
+                [
+                    "/home/bill/code/reel-gen/scratch/css/",
+                    "/home/bill/code/reel-gen/scratch/img/",
+                    "/home/bill/code/reel-gen/scratch/js/"
                 ]
             ],
             "project.files": [
                 {
-                    "file": "/home/bill/code/reel-gen/.gitignore",
-                    "active": false,
-                    "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 3,
-                                    "ch": 0
-                                },
-                                "end": {
-                                    "line": 3,
-                                    "ch": 0
-                                },
-                                "reversed": false,
-                                "primary": true
-                            }
-                        ],
-                        "scrollPos": {
-                            "x": 0,
-                            "y": 0
-                        }
-                    }
-                },
-                {
-                    "file": "/home/bill/code/reel-gen/js/gameList.js",
-                    "active": false,
-                    "viewState": {
-                        "selections": [
-                            {
-                                "start": {
-                                    "line": 27,
-                                    "ch": 2
-                                },
-                                "end": {
-                                    "line": 27,
-                                    "ch": 2
-                                },
-                                "reversed": false,
-                                "primary": true
-                            }
-                        ],
-                        "scrollPos": {
-                            "x": 0,
-                            "y": 0
-                        }
-                    }
-                },
-                {
-                    "file": "/home/bill/code/reel-gen/js/3EEN.js",
+                    "file": "/home/bill/code/reel-gen/scratch/scratch.html",
                     "active": true,
                     "viewState": {
                         "selections": [
                             {
                                 "start": {
-                                    "line": 3117,
-                                    "ch": 28
+                                    "line": 39,
+                                    "ch": 84
                                 },
                                 "end": {
-                                    "line": 3117,
-                                    "ch": 28
+                                    "line": 39,
+                                    "ch": 84
                                 },
                                 "reversed": false,
                                 "primary": true
@@ -3407,23 +3366,23 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 46218
+                            "y": 0
                         }
                     }
                 },
                 {
-                    "file": "/home/bill/code/reel-gen/js/slotGame.js",
+                    "file": "/home/bill/code/reel-gen/scratch/css/reset.css",
                     "active": false,
                     "viewState": {
                         "selections": [
                             {
                                 "start": {
-                                    "line": 81,
-                                    "ch": 12
+                                    "line": 47,
+                                    "ch": 0
                                 },
                                 "end": {
-                                    "line": 81,
-                                    "ch": 12
+                                    "line": 47,
+                                    "ch": 0
                                 },
                                 "reversed": false,
                                 "primary": true
@@ -3431,23 +3390,29 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 953
+                            "y": 0
                         }
                     }
-                },
+                }
+            ],
+            "project.baseUrl": "http://localhost:8000/"
+        },
+        "/home/bill/src/games/DoctorLoveScratch/": {
+            "project.treeState": [],
+            "project.files": [
                 {
-                    "file": "/home/bill/code/reel-gen/js/BUEN.js",
-                    "active": false,
+                    "file": "/home/bill/src/games/DoctorLoveScratch/game_min.js",
+                    "active": true,
                     "viewState": {
                         "selections": [
                             {
                                 "start": {
-                                    "line": 115,
-                                    "ch": 2
+                                    "line": 0,
+                                    "ch": 0
                                 },
                                 "end": {
-                                    "line": 115,
-                                    "ch": 2
+                                    "line": 0,
+                                    "ch": 0
                                 },
                                 "reversed": false,
                                 "primary": true
@@ -3455,16 +3420,20 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 1412
+                            "y": 157865
                         }
                     }
                 }
             ]
+        },
+        "/home/bill/code/reel-gen/scratch/": {
+            "project.treeState": [],
+            "project.files": []
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/code/fastplay/",
+    "projectPath": "/home/bill/src/games/DoctorLoveScratch/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
@@ -3478,10 +3447,12 @@
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
+        "/home/bill/src/games/DoctorLoveScratch",
+        "/home/bill/code/reel-gen",
+        "/home/bill/code/reel-gen/scratch",
         "/home/bill/code/fastplay",
         "/home/bill/code/gaming-tools",
         "/home/bill/code/oxi",
-        "/home/bill/code/reel-gen",
         "/home/bill/code/lastfemulate",
         "/home/bill/code/gaming-harness",
         "/tmp",
@@ -3495,33 +3466,10 @@
         "/home/bill/games/WKEN/harness",
         "/home/bill/src/games/Inspired/WhiteKnight",
         "/home/bill/src/JavaScript/node/bbGhost",
-        "/home/bill/src/bbGhost",
-        "/opt/brackets/samples/root/Getting Started",
-        "/home/bill/src/billbeesleycom"
+        "/home/bill/src/bbGhost"
     ],
-    "extensionUpdateInfo": [
-        {
-            "id": "ws-sanitizer",
-            "installVersion": "0.0.2",
-            "registryVersion": "0.0.3"
-        },
-        {
-            "id": "brackets-nodejs",
-            "installVersion": "1.1.4",
-            "registryVersion": "1.1.5"
-        },
-        {
-            "id": "quickdocsjs",
-            "installVersion": "1.3.1",
-            "registryVersion": "1.3.3"
-        },
-        {
-            "id": "zaggino.brackets-git",
-            "installVersion": "0.13.19",
-            "registryVersion": "0.13.20"
-        }
-    ],
-    "lastExtensionRegistryCheckTime": 1402919530456,
+    "extensionUpdateInfo": [],
+    "lastExtensionRegistryCheckTime": 1403608042563,
     "brackets-git.lastVersion": "0.13.20",
     "brackets-git.defaultRemotes": {
         "/home/bill/code/wh-harness/": "origin",
@@ -3532,7 +3480,7 @@
         "/home/bill/code/lastfemulate/": "origin",
         "/home/bill/code/reel-gen/": "origin"
     },
-    "brackets-git.panelEnabled": true,
+    "brackets-git.panelEnabled": false,
     "sidebar": {
         "size": 200
     },
