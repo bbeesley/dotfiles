@@ -1,6 +1,6 @@
 {
     "problems-panel": {
-        "visible": true,
+        "visible": false,
         "size": 100,
         "contentSize": 71
     },
@@ -19,8 +19,33 @@
         "visible": false
     },
     "lastNotifiedBuildNumber": 0,
-    "lastInfoURLFetchTime": 1403606380979,
+    "lastInfoURLFetchTime": 1404986673710,
     "updateInfo": [
+        {
+            "buildNumber": 13418,
+            "versionString": "Release 0.41",
+            "dateString": "06-26-2014",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-0.41",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Replace across multiple files",
+                    "description": "Replace in Files shows all search matches first and you can uncheck any you don't wish to replace. Supports the same exclusion filtering as Find in Files."
+                },
+                {
+                    "name": "API Documentation",
+                    "description": "The Brackets API Documentation for the current master branch is now posted at http://brackets.io/docs and updated for every release."
+                },
+                {
+                    "name": "JavaScript Code Hinting Crash Prevention",
+                    "description": "Brackets automatically stops processing problematic JavaScript files that previously could cause a crash."
+                },
+                {
+                    "name": "Danish Translation",
+                    "description": "Brackets has a new, community-submitted Danish translation."
+                }
+            ]
+        },
         {
             "buildNumber": 13109,
             "versionString": "Sprint 40",
@@ -2992,7 +3017,7 @@
                 },
                 {
                     "file": "/home/bill/.config/Brackets/brackets.json",
-                    "active": false,
+                    "active": true,
                     "viewState": {
                         "selections": [
                             {
@@ -3010,7 +3035,7 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 50
+                            "y": 0
                         }
                     }
                 },
@@ -3088,7 +3113,31 @@
                 },
                 {
                     "file": "/home/bill/code/fastplay/games/3een.js",
-                    "active": true,
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 7,
+                                    "ch": 21
+                                },
+                                "end": {
+                                    "line": 7,
+                                    "ch": 21
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/service-monitor/index.js",
+                    "active": false,
                     "viewState": {
                         "selections": [
                             {
@@ -3109,6 +3158,30 @@
                             "y": 0
                         }
                     }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/start.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 2,
+                                    "ch": 37
+                                },
+                                "end": {
+                                    "line": 2,
+                                    "ch": 37
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
                 }
             ]
         },
@@ -3117,8 +3190,112 @@
             "project.files": []
         },
         "/home/bill/code/gaming-tools/": {
-            "project.treeState": [],
-            "project.files": []
+            "project.treeState": [
+                [
+                    "/home/bill/code/gaming-tools/bin/",
+                    "/home/bill/code/gaming-tools/config/",
+                    "/home/bill/code/gaming-tools/routes/",
+                    "/home/bill/code/gaming-tools/views/"
+                ]
+            ],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/gaming-tools/config/misc.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/gaming-tools/routes/index.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 2,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 15,
+                                    "ch": 2
+                                },
+                                "reversed": true,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/gaming-tools/views/cage.jade",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 3,
+                                    "ch": 13
+                                },
+                                "end": {
+                                    "line": 3,
+                                    "ch": 13
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/gaming-tools/routes/rng.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 19,
+                                    "ch": 16
+                                },
+                                "end": {
+                                    "line": 19,
+                                    "ch": 16
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
         },
         "/home/bill/code/oxi/": {
             "project.treeState": [
@@ -3348,7 +3525,7 @@
             "project.files": [
                 {
                     "file": "/home/bill/code/reel-gen/scratch/scratch.html",
-                    "active": true,
+                    "active": false,
                     "viewState": {
                         "selections": [
                             {
@@ -3420,7 +3597,7 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 157865
+                            "y": 7439
                         }
                     }
                 }
@@ -3429,11 +3606,80 @@
         "/home/bill/code/reel-gen/scratch/": {
             "project.treeState": [],
             "project.files": []
+        },
+        "/home/bill/code/mini-db/": {
+            "project.treeState": [
+                [
+                    "/home/bill/code/mini-db/routes/",
+                    "/home/bill/code/mini-db/views/"
+                ]
+            ],
+            "project.files": []
+        },
+        "/home/bill/": {
+            "project.treeState": [],
+            "project.files": []
+        },
+        "/home/bill/code/service-monitor/": {
+            "project.treeState": [],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/service-monitor/package.json",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 7,
+                                    "ch": 4
+                                },
+                                "end": {
+                                    "line": 7,
+                                    "ch": 4
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/service-monitor/index.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 5,
+                                    "ch": 12
+                                },
+                                "end": {
+                                    "line": 5,
+                                    "ch": 12
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "/home/bill/code/oxi-status-test/": {
+            "project.treeState": []
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/src/games/DoctorLoveScratch/",
+    "projectPath": "/home/bill/code/oxi-status-test/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
@@ -3447,11 +3693,15 @@
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
-        "/home/bill/src/games/DoctorLoveScratch",
-        "/home/bill/code/reel-gen",
-        "/home/bill/code/reel-gen/scratch",
+        "/home/bill/code/oxi-status-test",
         "/home/bill/code/fastplay",
+        "/home/bill/code/service-monitor",
         "/home/bill/code/gaming-tools",
+        "/home/bill",
+        "/home/bill/code/mini-db",
+        "/home/bill/code/reel-gen",
+        "/home/bill/src/games/DoctorLoveScratch",
+        "/home/bill/code/reel-gen/scratch",
         "/home/bill/code/oxi",
         "/home/bill/code/lastfemulate",
         "/home/bill/code/gaming-harness",
@@ -3462,15 +3712,11 @@
         "/home/bill/src/JavaScript/node/gaming-tools",
         "/home/bill/src/JavaScript/node/node-bullet",
         "/home/bill/src/JavaScript/node/node-testrail",
-        "/home/bill/games",
-        "/home/bill/games/WKEN/harness",
-        "/home/bill/src/games/Inspired/WhiteKnight",
-        "/home/bill/src/JavaScript/node/bbGhost",
-        "/home/bill/src/bbGhost"
+        "/home/bill/games"
     ],
     "extensionUpdateInfo": [],
-    "lastExtensionRegistryCheckTime": 1403608042563,
-    "brackets-git.lastVersion": "0.13.20",
+    "lastExtensionRegistryCheckTime": 1404990616071,
+    "brackets-git.lastVersion": "0.13.22",
     "brackets-git.defaultRemotes": {
         "/home/bill/code/wh-harness/": "origin",
         "/home/bill/code/gaming-harness/": "origin",
@@ -3478,11 +3724,16 @@
         "/home/bill/code/gaming-tools/": "origin",
         "/home/bill/code/oxi/": "origin",
         "/home/bill/code/lastfemulate/": "origin",
-        "/home/bill/code/reel-gen/": "origin"
+        "/home/bill/code/reel-gen/": "origin",
+        "/home/bill/code/service-monitor/": "origin",
+        "/home/bill/code/oxi-status-test/": "origin"
     },
     "brackets-git.panelEnabled": false,
     "sidebar": {
         "size": 200
     },
-    "brackets-git.pull.strategy": "DEFAULT"
+    "brackets-git.pull.strategy": "DEFAULT",
+    "find-in-files-results": {
+        "visible": false
+    }
 }

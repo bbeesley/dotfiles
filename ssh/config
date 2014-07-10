@@ -24,4 +24,4 @@ Host vegas2
   Hostname 10.1.28.48
   User bbeesley
   PermitLocalCommand yes
-  LocalCommand source ~/dotfiles/_bashrc
+  LocalCommand source /home/bbeesley/dotfiles/_bashrc
