@@ -19,7 +19,7 @@
         "visible": false
     },
     "lastNotifiedBuildNumber": 0,
-    "lastInfoURLFetchTime": 1404986673710,
+    "lastInfoURLFetchTime": 1405588291326,
     "updateInfo": [
         {
             "buildNumber": 13418,
@@ -3195,7 +3195,7 @@
                     "/home/bill/code/gaming-tools/bin/",
                     "/home/bill/code/gaming-tools/config/",
                     "/home/bill/code/gaming-tools/routes/",
-                    "/home/bill/code/gaming-tools/views/"
+                    "/home/bill/code/gaming-tools/test/"
                 ]
             ],
             "project.files": [
@@ -3243,7 +3243,7 @@
                         ],
                         "scrollPos": {
                             "x": 0,
-                            "y": 0
+                            "y": 2953
                         }
                     }
                 },
@@ -3273,7 +3273,7 @@
                 },
                 {
                     "file": "/home/bill/code/gaming-tools/routes/rng.js",
-                    "active": true,
+                    "active": false,
                     "viewState": {
                         "selections": [
                             {
@@ -3674,12 +3674,62 @@
             ]
         },
         "/home/bill/code/oxi-status-test/": {
-            "project.treeState": []
+            "project.treeState": [],
+            "project.files": [
+                {
+                    "file": "/home/bill/code/oxi-status-test/index.js",
+                    "active": true,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 8,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 8,
+                                    "ch": 0
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                {
+                    "file": "/home/bill/code/fastplay/start.js",
+                    "active": false,
+                    "viewState": {
+                        "selections": [
+                            {
+                                "start": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "end": {
+                                    "line": 0,
+                                    "ch": 0
+                                },
+                                "reversed": false,
+                                "primary": true
+                            }
+                        ],
+                        "scrollPos": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            ]
         }
     },
     "currentSort": "view.sortWorkingSetByAdded",
     "automaticSort": false,
-    "projectPath": "/home/bill/code/oxi-status-test/",
+    "projectPath": "/home/bill/code/gaming-tools/",
     "welcomeProjects": [
         "/home/bill/src/brackets/samples/root/Getting Started",
         "/home/bill/src/brackets-shell/out/Release/dev/samples/root/Getting Started",
@@ -3693,10 +3743,10 @@
     "regexp": true,
     "afterFirstLaunch": "true",
     "recentProjects": [
+        "/home/bill/code/gaming-tools",
         "/home/bill/code/oxi-status-test",
         "/home/bill/code/fastplay",
         "/home/bill/code/service-monitor",
-        "/home/bill/code/gaming-tools",
         "/home/bill",
         "/home/bill/code/mini-db",
         "/home/bill/code/reel-gen",
@@ -3714,8 +3764,24 @@
         "/home/bill/src/JavaScript/node/node-testrail",
         "/home/bill/games"
     ],
-    "extensionUpdateInfo": [],
-    "lastExtensionRegistryCheckTime": 1404990616071,
+    "extensionUpdateInfo": [
+        {
+            "id": "themesforbrackets",
+            "installVersion": "1.7.2",
+            "registryVersion": "1.7.3"
+        },
+        {
+            "id": "camden.csslint",
+            "installVersion": "2.0.12",
+            "registryVersion": "2.0.13"
+        },
+        {
+            "id": "zaggino.brackets-git",
+            "installVersion": "0.13.22",
+            "registryVersion": "0.13.23"
+        }
+    ],
+    "lastExtensionRegistryCheckTime": 1405428260643,
     "brackets-git.lastVersion": "0.13.22",
     "brackets-git.defaultRemotes": {
         "/home/bill/code/wh-harness/": "origin",

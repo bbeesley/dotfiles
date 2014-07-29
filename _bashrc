@@ -13,3 +13,4 @@ alias fp="ps -Af | grep"
 alias behat="php ~/lib/behat.phar"
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
+export EDITOR=vi

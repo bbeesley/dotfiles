@@ -33,6 +33,7 @@ class VimState
     @editorView.setInputEnabled?(false)
     @registerInsertIntercept()
     @registerInsertTransactionResets()
+    @registerUndoIntercept()
     if atom.config.get 'vim-mode.startInInsertMode'
       @activateInsertMode()
     else
@@ -62,6 +63,18 @@ class VimState
       else
         @clearOpStack()
         false
+
+  # Private: Intercept undo in insert mode.
+  #
+  # Undo in insert mode will blow up the previous transaction, but not
+  # put it into the redo stack anywhere correctly, as it hasn't been
+  # completed. As a workaround, we exit insert mode first and then
+  # bubble the event up
+  registerUndoIntercept: ->
+    @editorView.preempt 'core:undo', (e) =>
+      return true unless @mode == 'insert'
+      @activateCommandMode()
+      return true
 
   # Private: Reset transactions on input for undo/redo/repeat on several
   # core and vim-mode events
@@ -135,6 +148,8 @@ class VimState
       'move-to-first-character-of-line': => new Motions.MoveToFirstCharacterOfLine(@editor, @)
       'move-to-last-character-of-line': => new Motions.MoveToLastCharacterOfLine(@editor, @)
       'move-to-beginning-of-line': (e) => @moveOrRepeat(e)
+      'move-to-first-character-of-line-up': => new Motions.MoveToFirstCharacterOfLineUp(@editor, @)
+      'move-to-first-character-of-line-down': => new Motions.MoveToFirstCharacterOfLineDown(@editor, @)
       'move-to-start-of-file': => new Motions.MoveToStartOfFile(@editor, @)
       'move-to-line': => new Motions.MoveToLine(@editor, @)
       'move-to-top-of-screen': => new Motions.MoveToTopOfScreen(@editor, @, @editorView)
@@ -491,13 +506,15 @@ class VimState
       @opStack.length > 0
 
   updateStatusBar: ->
-    if !$('#status-bar-vim-mode').length
-      atom.packages.once 'activated', ->
+    atom.packages.once 'activated', =>
+      if !$('#status-bar-vim-mode').length
         atom.workspaceView.statusBar?.prependRight("<div id='status-bar-vim-mode' class='inline-block'>Command</div>")
+        @updateStatusBar()
 
-    if @mode is "insert"
-      $('#status-bar-vim-mode').html("Insert")
-    else if @mode is "command"
-      $('#status-bar-vim-mode').html("Command")
-    else if @mode is "visual"
-      $('#status-bar-vim-mode').html("Visual")
+    @removeStatusBarClass()
+    switch @mode
+      when 'insert'  then $('#status-bar-vim-mode').addClass('status-bar-vim-mode-insert').html("Insert")
+      when 'command' then $('#status-bar-vim-mode').addClass('status-bar-vim-mode-command').html("Command")
+      when 'visual'  then $('#status-bar-vim-mode').addClass('status-bar-vim-mode-visual').html("Visual")
+
+  removeStatusBarClass: -> $('#status-bar-vim-mode').removeClass('status-bar-vim-mode-insert status-bar-vim-mode-command status-bar-vim-mode-visual')
