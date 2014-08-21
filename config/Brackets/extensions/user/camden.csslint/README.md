@@ -2,10 +2,18 @@ brackets-csslint
 =================
 
 A Brackets extension to enable CSSLint support. To install, place in your ```brackets/src/extensions/user``` folder.
-When installed, you can enable CSSLint by clicking 'Enable CSSLint' in your View menu.
+
+CSSLint makes use of Bracket's built-in linting system. Errors will be signified
+with a yellow warning icon in the lower right hand corner of the editor. Clicking
+it will open a list of issues for the current file. If there are no issues, a green
+icon will be displayed instead. 
+
+CSSLint also supports .csslintrc files. See this for more information: https://github.com/CSSLint/csslint/issues/359
 
 Issues/Updates
 =====
+[7/13/2014] Remove SCSS support, as I thought I'd need to.
+
 [1/26/2014] User globexdesigns added support for .csslintrc files.
 
 [11/29/2013] Updated the display to include both the name of the rule, which makes it a bit clearer I think, as well as the code for the rule.

@@ -2,12 +2,12 @@
   'fontSize': 16
   'tabLength': 4
   'softWrap': true
-  'preferredLineLength': 140
   'invisibles':
     'eol': true
-    'cr': false
-    'tab': false
+    'cr': true
+    'tab': true
   'normalizeIndentOnPaste': true
+  'showIndentGuide': true
 'core':
   'themes': [
     'atom-dark-ui'
@@ -16,6 +16,8 @@
   'disabledPackages': [
     'vim-mode'
   ]
+  'excludeVcsIgnoredPaths': false
+  'projectHome': '/home/bill/code'
 'exception-reporting':
   'userId': 'a0411194-ac3a-cb09-8435-4e2a9a073103'
 'release-notes':

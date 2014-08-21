@@ -1,4 +1,5 @@
 @import "brackets/brackets_colors.less";
+@import "brackets/brackets_variables.less";
 @import "brackets/brackets_theme_default.less";
 @import "colors.less";
 @import "common.less";
@@ -11,6 +12,7 @@
 @import "dialogs/diff-dialog.less";
 @import "dialogs/error-dialog.less";
 @import "dialogs/pull-dialog.less";
+@import "theme-dark.less";
 
 @gutterWidth: 0.65em; // using ems so that it'll be scalable on cmd +/-
 
@@ -71,6 +73,8 @@
         .switch-branch {
             display: inline-block;
             width: 100%;
+            padding: 5px 0;
+            margin: -5px 0;
         }
         .trash-icon, .merge-branch {
             position: absolute;

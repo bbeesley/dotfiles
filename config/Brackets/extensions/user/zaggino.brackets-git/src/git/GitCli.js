@@ -16,8 +16,10 @@ define(function (require, exports) {
     // Local modules
     var Promise       = require("bluebird"),
         Cli           = require("src/Cli"),
+        ErrorHandler  = require("src/ErrorHandler"),
         Events        = require("src/Events"),
         EventEmitter  = require("src/EventEmitter"),
+        ExpectedError = require("src/ExpectedError"),
         Preferences   = require("src/Preferences"),
         Utils         = require("src/Utils");
 
@@ -178,12 +180,20 @@ define(function (require, exports) {
         --progress This flag forces progress status even if the standard error stream is not directed to a terminal.
     */
 
+    function repositoryNotFoundHandler(err) {
+        var m = ErrorHandler.matches(err, /Repository (.*) not found$/gim);
+        if (m) {
+            throw new ExpectedError(m[0]);
+        }
+        throw err;
+    }
+
     function fetchRemote(remote) {
-        return git(["fetch", "--progress", remote]);
+        return git(["fetch", "--progress", remote]).catch(repositoryNotFoundHandler);
     }
 
     function fetchAllRemotes() {
-        return git(["fetch", "--progress", "--all"]);
+        return git(["fetch", "--progress", "--all"]).catch(repositoryNotFoundHandler);
     }
 
     /*
@@ -317,6 +327,7 @@ define(function (require, exports) {
         }
 
         return git(args)
+            .catch(repositoryNotFoundHandler)
             .then(function (stdout) {
                 var retObj = {},
                     lines = stdout.split("\n"),
@@ -420,8 +431,17 @@ define(function (require, exports) {
         return git(["config", key.replace(/\s/g, "")]);
     }
 
-    function setConfig(key, value) {
-        return git(["config", key.replace(/\s/g, ""), value]);
+    function setConfig(key, value, allowGlobal) {
+        key = key.replace(/\s/g, "");
+        return git(["config", key, value]).catch(function (err) {
+
+            if (allowGlobal && ErrorHandler.contains(err, "No such file or directory")) {
+                return git(["config", "--global", key, value]);
+            }
+
+            throw err;
+
+        });
     }
 
     function getHistory(branch, skipCommits, file) {
@@ -548,11 +568,16 @@ define(function (require, exports) {
         return git(args);
     }
 
+    function _isquoted(str) {
+        return str[0] === "\"" && str[str.length - 1] === "\"";
+    }
+
     function _unquote(str) {
-        if (str[0] === "\"" && str[str.length - 1] === "\"") {
-            str = str.substring(1, str.length - 1);
-        }
-        return str;
+        return str.substring(1, str.length - 1);
+    }
+
+    function _isescaped(str) {
+        return /\\[0-9]{3}/.test(str);
     }
 
     function status(type) {
@@ -560,7 +585,8 @@ define(function (require, exports) {
             if (!stdout) { return []; }
 
             // files that are modified both in index and working tree should be resetted
-            var needReset = [],
+            var isEscaped = false,
+                needReset = [],
                 results = [],
                 lines = stdout.split("\n");
 
@@ -568,7 +594,15 @@ define(function (require, exports) {
                 var statusStaged = line.substring(0, 1),
                     statusUnstaged = line.substring(1, 2),
                     status = [],
-                    file = _unquote(line.substring(3));
+                    file = line.substring(3);
+
+                // check if the file is quoted
+                if (_isquoted(file)) {
+                    file = _unquote(file);
+                    if (_isescaped(file)) {
+                        isEscaped = true;
+                    }
+                }
 
                 if (statusStaged !== " " && statusUnstaged !== " " &&
                     statusStaged !== "?" && statusUnstaged !== "?") {
@@ -630,6 +664,15 @@ define(function (require, exports) {
                 });
             });
 
+            if (isEscaped) {
+                return setConfig("core.quotepath", "false").then(function () {
+                    if (type === "SET_QUOTEPATH") {
+                        throw new Error("git status is calling itself in a recursive loop!");
+                    }
+                    return status("SET_QUOTEPATH");
+                });
+            }
+
             if (needReset.length > 0) {
                 return Promise.all(needReset.map(function (fileName) {
                     if (fileName.indexOf("->") !== -1) {
@@ -670,7 +713,9 @@ define(function (require, exports) {
     }
 
     function getDiffOfStagedFiles() {
-        return git(["diff", "--no-ext-diff", "--no-color", "--staged"]);
+        return git(["diff", "--no-ext-diff", "--no-color", "--staged"], {
+            timeout: false // never timeout this
+        });
     }
 
     function getListOfStagedFiles() {

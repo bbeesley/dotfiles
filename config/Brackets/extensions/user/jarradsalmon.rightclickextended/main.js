@@ -62,13 +62,15 @@ define(function (require, exports, module) {
         chain(connect, loadClipboard, clipboardLoad);
     });
                      
-    
-   
+       
     
     $(nodeConnection).on("clipboard.paste", function (e, clipboardContent) {
         var thisEditor = EditorManager.getCurrentFullEditor();
         var cp = thisEditor._codeMirror.getCursor();
         thisEditor._codeMirror.replaceSelection(clipboardContent.content);
+
+        //move cursor to end of pasted content
+        cp.ch += clipboardContent.content.length;
         thisEditor._codeMirror.setCursor(cp);
     });
     
@@ -76,15 +78,18 @@ define(function (require, exports, module) {
     //Function to run when the menu item is clicked
     function handleRightClickPaste() {
         
+        //Paste text
         nodeConnection.domains.clipboard.callPaste();
-                
     }
     
     function handleRightClickCopy() {
         
         var thisEditor = EditorManager.getCurrentFullEditor();
         
-        nodeConnection.domains.clipboard.callCopy(thisEditor._codeMirror.getSelection());
+        //check selection is not blank
+        if(thisEditor._codeMirror.getSelection().trim() != ''){
+            nodeConnection.domains.clipboard.callCopy(thisEditor._codeMirror.getSelection());
+        }
         
     }
     

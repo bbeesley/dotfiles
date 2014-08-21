@@ -1,0 +1,19 @@
+{
+    "title": "Thunderstorm",
+    "name": "thunderstorm",
+    "description": "Thunderstorm - A dark theme for Brackets",
+    "version": "1.1.0",
+    "author": "Arissa Brown (https://github.com/recked/)",
+    "homepage": "https://github.com/recked/thunderstorm",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/recked/thunderstorm.git"
+    },
+    "engines": {
+        "brackets": ">=0.42.0"
+    },
+    "theme": {
+        "file": "theme.less",
+        "dark": true
+    }
+}

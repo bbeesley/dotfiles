@@ -51,11 +51,18 @@ define(function (require, exports) {
         $tableContainer = $(null);
 
     function lintFile(filename) {
-        var fullPath = Utils.getProjectRoot() + filename;
-        return Promise.cast(CodeInspection.inspectFile(FileSystem.getFileForPath(fullPath)))
-            .catch(function (err) {
-                ErrorHandler.logError(err + " on CodeInspection.inspectFile for " + fullPath);
-            });
+        var fullPath = Utils.getProjectRoot() + filename,
+            codeInspectionPromise;
+
+        try {
+            codeInspectionPromise = CodeInspection.inspectFile(FileSystem.getFileForPath(fullPath));
+        } catch (e) {
+            ErrorHandler.logError("CodeInspection.inspectFile failed to execute for file " + fullPath);
+            ErrorHandler.logError(e);
+            codeInspectionPromise = Promise.reject(e);
+        }
+
+        return Promise.cast(codeInspectionPromise);
     }
 
     function _makeDialogBig($dialog) {
@@ -250,7 +257,8 @@ define(function (require, exports) {
                     if (diff === stagedDiff) {
                         return Git.commit(commitMessage, amendCommit);
                     } else {
-                        throw new Error("Index was changed while commit dialog was shown!");
+                        throw new ExpectedError("The files you were going to commit were modified while commit dialog was displayed. " +
+                                                "Aborting the commit as the result would be different then what was shown in the dialog.");
                     }
                 }).catch(function (err) {
                     ErrorHandler.showError(err, "Git Commit failed");
@@ -409,7 +417,10 @@ define(function (require, exports) {
     }
 
     function _getStagedDiff() {
-        return Git.getDiffOfStagedFiles().then(function (diff) {
+        return ProgressDialog.show(Git.getDiffOfStagedFiles(),
+                                   Strings.GETTING_STAGED_DIFF_PROGRESS,
+                                   { preDelay: 3, postDelay: 1 })
+        .then(function (diff) {
             if (!diff) {
                 return Git.getListOfStagedFiles().then(function (filesList) {
                     return Strings.DIFF_FAILED_SEE_FILES + "\n\n" + filesList;
@@ -459,14 +470,30 @@ define(function (require, exports) {
 
             // do a code inspection for the file, if it was not deleted
             if (!isDeleted) {
-                return lintFile(fileObj.file).then(function (result) {
-                    if (result) {
-                        lintResults.push({
-                            filename: fileObj.file,
-                            result: result
-                        });
-                    }
-                });
+                return lintFile(fileObj.file)
+                    .catch(function () {
+                        return [
+                            {
+                                provider: { name: "See console [F12] for details" },
+                                result: {
+                                    errors: [
+                                        {
+                                            pos: { line: 0, ch: 0 },
+                                            message: "CodeInspection failed to execute for this file."
+                                        }
+                                    ]
+                                }
+                            }
+                        ];
+                    })
+                    .then(function (result) {
+                        if (result) {
+                            lintResults.push({
+                                filename: fileObj.file,
+                                result: result
+                            });
+                        }
+                    });
             }
         });
 
@@ -609,7 +636,7 @@ define(function (require, exports) {
 
         var p1 = Git.status();
 
-        //- push button
+        //  Push button
         var $pushBtn = $gitPanel.find(".git-push");
         var p2 = Git.getCommitsAhead().then(function (commits) {
             $pushBtn.children("span").remove();
@@ -620,7 +647,7 @@ define(function (require, exports) {
             $pushBtn.children("span").remove();
         });
 
-        //- Clone button
+        // Clone button
         $gitPanel.find(".git-clone").prop("disabled", false);
 
         // FUTURE: who listens for this?
@@ -793,33 +820,41 @@ define(function (require, exports) {
 
     }
 
-    function changeUserName() {
+    EventEmitter.on(Events.GIT_CHANGE_USERNAME, function (event, callback) {
         return Git.getConfig("user.name").then(function (currentUserName) {
-            return Utils.askQuestion(Strings.CHANGE_USER_NAME, Strings.ENTER_NEW_USER_NAME, {defaultValue: currentUserName})
+            return Utils.askQuestion(Strings.CHANGE_USER_NAME, Strings.ENTER_NEW_USER_NAME, { defaultValue: currentUserName })
                 .then(function (userName) {
                     if (!userName.length) { userName = currentUserName; }
-                    return Git.setConfig("user.name", userName).catch(function (err) {
-                        ErrorHandler.showError(err, "Impossible change username");
+                    return Git.setConfig("user.name", userName, true).catch(function (err) {
+                        ErrorHandler.showError(err, "Impossible to change username");
                     }).then(function () {
                         EventEmitter.emit(Events.GIT_USERNAME_CHANGED, userName);
+                    }).finally(function () {
+                        if (callback) {
+                            callback(userName);
+                        }
                     });
                 });
         });
-    }
+    });
 
-    function changeUserEmail() {
+    EventEmitter.on(Events.GIT_CHANGE_EMAIL, function (event, callback) {
         return Git.getConfig("user.email").then(function (currentUserEmail) {
-            return Utils.askQuestion(Strings.CHANGE_USER_EMAIL, Strings.ENTER_NEW_USER_EMAIL, {defaultValue: currentUserEmail})
+            return Utils.askQuestion(Strings.CHANGE_USER_EMAIL, Strings.ENTER_NEW_USER_EMAIL, { defaultValue: currentUserEmail })
                 .then(function (userEmail) {
                     if (!userEmail.length) { userEmail = currentUserEmail; }
-                    return Git.setConfig("user.email", userEmail).catch(function (err) {
-                        ErrorHandler.showError(err, "Impossible change user email");
+                    return Git.setConfig("user.email", userEmail, true).catch(function (err) {
+                        ErrorHandler.showError(err, "Impossible to change user email");
                     }).then(function () {
                         EventEmitter.emit(Events.GIT_EMAIL_CHANGED, userEmail);
+                    }).finally(function () {
+                        if (callback) {
+                            callback(userEmail);
+                        }
                     });
                 });
         });
-    }
+    });
 
     function discardAllChanges() {
         return Utils.askQuestion(Strings.RESET_LOCAL_REPO, Strings.RESET_LOCAL_REPO_CONFIRM, { booleanResponse: true })
@@ -844,6 +879,9 @@ define(function (require, exports) {
         });
         var $panelHtml = $(panelHtml);
         $panelHtml.find(".git-available, .git-not-available").hide();
+
+        // add theme class to style colors
+        $panelHtml.addClass("git-theme-" + Preferences.get("theme").toLowerCase());
 
         gitPanel = PanelManager.createBottomPanel("brackets-git.panel", $panelHtml, 100);
         $gitPanel = gitPanel.$panel;
@@ -876,7 +914,12 @@ define(function (require, exports) {
             .on("click", ".authors-file", handleAuthorsFile)
             .on("click", ".git-file-history", EventEmitter.emitFactory(Events.HISTORY_SHOW, "FILE"))
             .on("click", ".git-history-toggle", EventEmitter.emitFactory(Events.HISTORY_SHOW, "GLOBAL"))
-            .on("click", ".git-push", EventEmitter.emitFactory(Events.HANDLE_PUSH))
+            .on("click", ".git-push", function () {
+                var typeOfRemote = $(this).attr("x-selected-remote-type");
+                if (typeOfRemote === "git") {
+                    EventEmitter.emit(Events.HANDLE_PUSH);
+                }
+            })
             .on("click", ".git-pull", EventEmitter.emitFactory(Events.HANDLE_PULL))
             .on("click", ".git-bug", ErrorHandler.reportBug)
             .on("click", ".git-init", EventEmitter.emitFactory(Events.HANDLE_GIT_INIT))
@@ -894,8 +937,8 @@ define(function (require, exports) {
                     Menus.getContextMenu("git-panel-context-menu").open(e);
                 }, 1);
             })
-            .on("click", ".change-user-name", changeUserName)
-            .on("click", ".change-user-email", changeUserEmail)
+            .on("click", ".change-user-name", EventEmitter.emitFactory(Events.GIT_CHANGE_USERNAME))
+            .on("click", ".change-user-email", EventEmitter.emitFactory(Events.GIT_CHANGE_EMAIL))
             .on("click", ".undo-last-commit", undoLastLocalCommit)
             .on("click", ".git-bash", EventEmitter.emitFactory(Events.TERMINAL_OPEN))
             .on("click", ".reset-all", discardAllChanges);
@@ -1039,6 +1082,10 @@ define(function (require, exports) {
 
     EventEmitter.on(Events.HANDLE_GIT_COMMIT, function () {
         handleGitCommit();
+    });
+
+    EventEmitter.on(Events.TERMINAL_DISABLE, function (where) {
+        $gitPanel.find(".git-bash").prop("disabled", true).attr("title", Strings.TERMINAL_DISABLED + " @ " + where);
     });
 
     exports.init = init;

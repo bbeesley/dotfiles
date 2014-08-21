@@ -1,6 +1,0 @@
-{
- "name": "ASCIIFontsII",
- "dependencies": {
-      "figlet":">= 1.0.8"
- }
-}

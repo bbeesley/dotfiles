@@ -149,7 +149,7 @@ define({
     // TODO: localize DIALOG_RESET_HARD to pt-br
     // DIALOG_RESET_MIXED:                 "Changes after this commit will be unstaged.",
     // TODO: localize DIALOG_RESET_MIXED to pt-br
-    // DIALOG_RESET_SOFT:                  "Changes after this commit will be staged for a new commmit.",
+    // DIALOG_RESET_SOFT:                  "Changes after this commit will be staged for a new commit.",
     // TODO: localize DIALOG_RESET_SOFT to pt-br
     // DIFF:                               "Diff",
     DIFF:                                  "Diff",
@@ -204,7 +204,7 @@ define({
     // FILE_UNMERGED:                      "Unmerged",
     // TODO: localize FILE_UNMERGED to pt-br
     // FILE_UNMODIFIED:                    "Unmodified",
-     FILE_UNMODIFIED:                    "Não modificado",
+    FILE_UNMODIFIED:                       "Não modificado",
     // FILE_UNTRACKED:                     "Untracked",
     FILE_UNTRACKED:                        "Não versionado",
     // FOR_MAC_LINUX_USERS:                "For Mac/Linux users",
@@ -361,7 +361,7 @@ define({
     STRIP_WHITESPACE_FROM_COMMITS:         "Remover espaços em branco extras dos commits",
     // TARGET_BRANCH:                      "Target branch",
     // TODO: localize TARGET_BRANCH to pt-br
-    // TITLE_CHECKOUT:                     "Do you really wish to checkout this commmit?",
+    // TITLE_CHECKOUT:                     "Do you really wish to checkout this commit?",
     // TODO: localize TITLE_CHECKOUT to pt-br
     // TITLE_RESET:                        "Do you really wish to reset?",
     // TODO: localize TITLE_RESET to pt-br

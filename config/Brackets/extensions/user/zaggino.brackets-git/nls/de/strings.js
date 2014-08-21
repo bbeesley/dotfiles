@@ -73,6 +73,8 @@ define({
     DELETE_LOCAL_BRANCH_NAME:           "Wollen Sie den lokalen Branch \"{0}\" wirklich entfernen?",
     DELETE_REMOTE:                      "Remote-Repository entfernen",
     DELETE_REMOTE_NAME:                 "Wollen Sie das Remote-Repository \"{0}\" wirklich entfernen?",
+    DELETE_SCOPE:                       "Git-FTP Remote-Repository entfernen",
+    DELETE_SCOPE_NAME:                  "Wollen Sie das Git-FTP Remote-Repository \"{0}\" wirklich entfernen?",
     DIALOG_CHECKOUT:                    "Nachdem ein Commit ausgecheckt wurde, hat das Repository einen losgelösten HEAD. Sie können nicht committen, bis Sie aus diesem Zustand heraus einen Branch erstellen.",
     DIALOG_PULL_TITLE:                  "Vom Remote-Repository aktualisieren (\"Pull\")",
     DIALOG_PUSH_TITLE:                  "Zum Remote-Repository versenden (\"Push\")",
@@ -81,6 +83,7 @@ define({
     DIALOG_RESET_SOFT:                  "Änderungen nach diesem Commit werden für einen neuen Commit vorgemerkt.",
     DIFF:                               "Diff",
     DIFF_FAILED_SEE_FILES:              "Git diff konnte keine Unterschiede finden. Hier ist die Liste der zum Commit vorgemerkten Dateien, die committet werden:",
+    DIFF_TOO_LONG:                      "Diff zu lang zum Anzeigen",
     ENABLE_ADVANCED_FEATURES:           "Erweiterte Funktionen aktivieren",
     ENTER_GITFTP_SCOPE_NAME:            "Geben Sie den Namen des neuen Git-FTP Remote-Repositories ein:",
     ENTER_GITFTP_SCOPE_URL:             "Geben Sie die FTP-URL des neuen Git-FTP Remote-Repositories unter Angabe von Nutzername und Passwort ein:",
@@ -91,7 +94,7 @@ define({
     ENTER_REMOTE_NAME:                  "Geben Sie den Namen des neuen Remote-Repositories ein:",
     ENTER_REMOTE_URL:                   "Geben Sie die URL des neuen Remote-Repositories ein:",
     ENTER_USERNAME:                     "Nutzernamen eingeben:",
-    ERROR_CONNECT_NODEJS:               "Es konnte keine Verbindung zu NodeJS aufgebaut werden. Schließen Sie alle Instanzen von Brackets und starten es erneut, wenn Sie die Erweiterung gerade aktualisiert haben.",
+    ERROR_CONNECT_NODEJS:               "Es konnte keine Verbindung zu NodeJS aufgebaut werden. Schließen Sie alle Instanzen von Brackets und starten es erneut, wenn Sie die Erweiterung gerade aktualisiert haben. Probieren Sie, wenn das nicht hilft, andere installierte Erweiterungen zu entfernen, da eine davon wahrscheinlich das Problem verursacht.",
     ERROR_NOTHING_SELECTED:             "Es wurde nichts ausgewählt!",
     ERROR_SAVE_FIRST:                   "Speichern Sie die Datei erst!",
     ERROR_TERMINAL_NOT_FOUND:           "Die Konsole wurde in ihrem Betriebssystem nicht gefunden, Sie können einen eigenen Konsolenbefehl in den Einstellungen angeben",
@@ -111,6 +114,7 @@ define({
     FILE_UNTRACKED:                     "Unbeobachtet",
     FOR_MAC_LINUX_USERS:                "Für Mac-/Linux-Nutzer",
     FOR_WINDOWS_USERS:                  "Für Windows-Nutzer",
+    GETTING_STAGED_DIFF_PROGRESS:       "Diff der zum Commit vorgemerkten Dateien wird vorbereitet\u2026",
     GITFTP_PUSH_RESPONSE:               "Git-FTP Push: Antwort",
     GITFTP_SCOPES:                      "Git-FTP Remote-Repositories",
     GIT_COMMIT:                         "Git-Commit\u2026",
@@ -186,12 +190,16 @@ define({
     SHOW_UNTRACKED:                     "Unbeobachtete anzeigen",
     STRIP_WHITESPACE_FROM_COMMITS:      "Anhängende Leerzeichen von Commits entfernen",
     TARGET_BRANCH:                      "Ziel",
+    TERMINAL_DISABLED:                  "Bash/Terminal kann nicht genutzt werden, da keine Programmdatei gefunden werden konnte.",
+    THEME:                              "Design",
+    THEME_DARK:                         "Brackets-Git (dunkel)",
+    THEME_LIGHT:                        "Brackets-Git Standard (hell)",
     TITLE_CHECKOUT:                     "Wollen Sie diesen Commit wirklich auschecken?",
     TITLE_RESET:                        "Wollen Sie die Staging-Area wirklich umsetzen?",
     TOOLTIP_BUG:                        "Bug melden",
     TOOLTIP_CHECKOUT_COMMIT:            "Einen bestimmten Commit auschecken",
     TOOLTIP_CLONE:                      "Bereits existierendes Repository klonen",
-    TOOLTIP_CLOSE_NOT_MODIFIED:         "In Git unveränderte Dateien schließen",
+    TOOLTIP_CLOSE_NOT_MODIFIED:         "In Git unveränderte Dateien schließen [Umschalt+Klick zum Öffnen veränderter Dateien]",
     TOOLTIP_COMMIT:                     "Ausgewählte Dateien committen",
     TOOLTIP_FIND_CONFLICTS:             "Sucht nach Merge/Rebase-Konflikten im Projekt",
     TOOLTIP_GITPUSH:                    "Zum Git-FTP Remote-Repository versenden (\"Push\")",
@@ -227,4 +235,4 @@ define({
     VIEW_THIS_FILE:                     "Diese Datei anzeigen"
 });
 
-/* Last translated for fbc3411dadb6b4a23dadb7ca3590a2a75fc199ac */
+/* Last translated for 88bf31a7790fd50f2324a397dec4e680ee37f3bf */
