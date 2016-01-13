@@ -3,7 +3,7 @@ define(function (require) {
     // Brackets modules
     var _ = brackets.getModule("thirdparty/lodash"),
         DocumentManager = brackets.getModule("document/DocumentManager"),
-        ProjectManager = brackets.getModule("project/ProjectManager");
+        FileUtils = brackets.getModule("file/FileUtils");
 
     // Local modules
     var moment = require("moment"),
@@ -51,7 +51,9 @@ define(function (require) {
             .on("click.history", ".history-commit", function () {
                 var hash = $(this).attr("x-hash");
                 var commit = _.find(commitCache, function (commit) { return commit.hash === hash; });
-                HistoryViewer.show(commit, getCurrentDocument());
+                HistoryViewer.show(commit, getCurrentDocument(), {
+                    isInitial: $(this).attr("x-initial-commit") === "true"
+                });
             });
     }
 
@@ -147,6 +149,10 @@ define(function (require) {
                     return p.then(function (commits) {
                         if (commits.length === 0) {
                             $historyList.attr("x-finished", "true");
+                            // marks initial commit as first
+                            $historyList
+                                .find("tr.history-commit:last-child")
+                                .attr("x-initial-commit", "true");
                             return;
                         }
 
@@ -244,6 +250,7 @@ define(function (require) {
                     break;
                 /* mode 4 (Original Git date) is handled above */
             }
+            commit.hasTag = (commit.tags) ? true : false;
         });
 
         return commits;
@@ -293,7 +300,7 @@ define(function (require) {
             if (doc) {
                 file = {};
                 file.absolute = doc.file.fullPath;
-                file.relative = ProjectManager.makeProjectRelativeIfPossible(file.absolute);
+                file.relative = FileUtils.getRelativeFilename(Preferences.get("currentGitRoot"), file.absolute);
             } else {
                 // we want a file history but no file was found
                 historyEnabled = false;

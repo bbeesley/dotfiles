@@ -1,0 +1,327 @@
+{
+  "name": "atom-html5-boilerplate",
+  "main": "./lib/atom-html5-boilerplate",
+  "version": "0.2.0",
+  "description": "Download latest version of Html5 Boilerplate from http://html5boilerplate.com/",
+  "activationEvents": [
+    "atom-html5-boilerplate:toggle"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Snake231088/atom-html5-boilerplate"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "tar": ">= 0.1.20"
+  },
+  "readme": "# atom-html5-boilerplate package\n\nDownload latest html5-boilerplate template in root (for now is supported only root) folder of your project.\n### Warning\nThis packages replace filenames that match with boilerplate filenames.\nRecommended to use on empty project dir.\n\n\n## Installation\nRequire `curl`\n\n### Plugin installation\n```\n$ apm install atom-html5-boilerplate\n```\n\n## Contributing\nIf you would like to contribute enhancements or fixes, please do the following:\n\n1. Fork the plugin repository.\n1. Hack on a separate topic branch created from the latest `master`.\n1. Commit and push the topic branch.\n1. Make a pull request.\n1. welcome to the club\n\nPlease note that modifications should follow these coding guidelines:\n\n- Indent is 2 spaces.\n- Code should pass coffeelint linter.\n- Vertical whitespace helps readability, don’t be afraid to use it.\n\nThank you for helping out!\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Snake231088/atom-html5-boilerplate/issues"
+  },
+  "homepage": "https://github.com/Snake231088/atom-html5-boilerplate",
+  "_id": "atom-html5-boilerplate@0.2.0",
+  "_shasum": "1ef75fe31fd53eb7698bee260b85888784a9d362",
+  "_resolved": "file:../d-115330-90389-1srg7uw/package.tgz",
+  "_from": "../d-115330-90389-1srg7uw/package.tgz",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [
+      {
+        "name": "tar",
+        "version": "2.1.0",
+        "path": "node_modules/tar/tar.js"
+      },
+      {
+        "name": "block-stream",
+        "version": "0.0.7",
+        "path": "node_modules/tar/node_modules/block-stream/block-stream.js"
+      },
+      {
+        "name": "fstream",
+        "version": "1.0.4",
+        "path": "node_modules/tar/node_modules/fstream/fstream.js"
+      },
+      {
+        "name": "graceful-fs",
+        "version": "3.0.6",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/graceful-fs/graceful-fs.js"
+      },
+      {
+        "name": "mkdirp",
+        "version": "0.5.0",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/mkdirp/index.js"
+      },
+      {
+        "name": "minimist",
+        "version": "0.0.8",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/mkdirp/node_modules/minimist/index.js"
+      },
+      {
+        "name": "rimraf",
+        "version": "2.3.2",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/rimraf.js"
+      },
+      {
+        "name": "glob",
+        "version": "4.5.3",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/glob.js"
+      },
+      {
+        "name": "inflight",
+        "version": "1.0.4",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/inflight.js"
+      },
+      {
+        "name": "wrappy",
+        "version": "1.0.1",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/node_modules/wrappy/wrappy.js"
+      },
+      {
+        "name": "minimatch",
+        "version": "2.0.7",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/minimatch.js"
+      },
+      {
+        "name": "brace-expansion",
+        "version": "1.1.0",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/index.js"
+      },
+      {
+        "name": "balanced-match",
+        "version": "0.2.0",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/balanced-match/index.js"
+      },
+      {
+        "name": "concat-map",
+        "version": "0.0.1",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/concat-map/index.js"
+      },
+      {
+        "name": "once",
+        "version": "1.3.1",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/once.js"
+      },
+      {
+        "name": "wrappy",
+        "version": "1.0.1",
+        "path": "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/node_modules/wrappy/wrappy.js"
+      },
+      {
+        "name": "inherits",
+        "version": "2.0.1",
+        "path": "node_modules/tar/node_modules/inherits/inherits.js"
+      }
+    ],
+    "extensions": {
+      ".coffee": [
+        "lib/atom-html5-boilerplate.coffee"
+      ],
+      ".js": [
+        "node_modules/tar/examples/extracter.js",
+        "node_modules/tar/examples/packer.js",
+        "node_modules/tar/examples/reader.js",
+        "node_modules/tar/lib/buffer-entry.js",
+        "node_modules/tar/lib/entry-writer.js",
+        "node_modules/tar/lib/entry.js",
+        "node_modules/tar/lib/extended-header-writer.js",
+        "node_modules/tar/lib/extended-header.js",
+        "node_modules/tar/lib/extract.js",
+        "node_modules/tar/lib/global-header-writer.js",
+        "node_modules/tar/lib/header.js",
+        "node_modules/tar/lib/pack.js",
+        "node_modules/tar/lib/parse.js",
+        "node_modules/tar/node_modules/block-stream/bench/block-stream-pause.js",
+        "node_modules/tar/node_modules/block-stream/bench/block-stream.js",
+        "node_modules/tar/node_modules/block-stream/bench/dropper-pause.js",
+        "node_modules/tar/node_modules/block-stream/bench/dropper.js",
+        "node_modules/tar/node_modules/block-stream/block-stream.js",
+        "node_modules/tar/node_modules/fstream/examples/filter-pipe.js",
+        "node_modules/tar/node_modules/fstream/examples/pipe.js",
+        "node_modules/tar/node_modules/fstream/examples/reader.js",
+        "node_modules/tar/node_modules/fstream/examples/symlink-write.js",
+        "node_modules/tar/node_modules/fstream/fstream.js",
+        "node_modules/tar/node_modules/fstream/lib/abstract.js",
+        "node_modules/tar/node_modules/fstream/lib/collect.js",
+        "node_modules/tar/node_modules/fstream/lib/dir-reader.js",
+        "node_modules/tar/node_modules/fstream/lib/dir-writer.js",
+        "node_modules/tar/node_modules/fstream/lib/file-reader.js",
+        "node_modules/tar/node_modules/fstream/lib/file-writer.js",
+        "node_modules/tar/node_modules/fstream/lib/get-type.js",
+        "node_modules/tar/node_modules/fstream/lib/link-reader.js",
+        "node_modules/tar/node_modules/fstream/lib/link-writer.js",
+        "node_modules/tar/node_modules/fstream/lib/proxy-reader.js",
+        "node_modules/tar/node_modules/fstream/lib/proxy-writer.js",
+        "node_modules/tar/node_modules/fstream/lib/reader.js",
+        "node_modules/tar/node_modules/fstream/lib/socket-reader.js",
+        "node_modules/tar/node_modules/fstream/lib/writer.js",
+        "node_modules/tar/node_modules/fstream/node_modules/graceful-fs/fs.js",
+        "node_modules/tar/node_modules/fstream/node_modules/graceful-fs/graceful-fs.js",
+        "node_modules/tar/node_modules/fstream/node_modules/graceful-fs/polyfills.js",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/bin/cmd.js",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/examples/pow.js",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/index.js",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/node_modules/minimist/example/parse.js",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/node_modules/minimist/index.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/bin.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/common.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/glob.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/inflight.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/node_modules/wrappy/wrappy.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/test.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/browser.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/minimatch.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/example.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/index.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/balanced-match/example.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/balanced-match/index.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/concat-map/example/map.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/concat-map/index.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/node_modules/wrappy/wrappy.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/once.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/sync.js",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/rimraf.js",
+        "node_modules/tar/node_modules/inherits/inherits.js",
+        "node_modules/tar/node_modules/inherits/inherits_browser.js",
+        "node_modules/tar/node_modules/inherits/test.js",
+        "node_modules/tar/tar.js"
+      ],
+      ".json": [
+        "node_modules/tar/node_modules/block-stream/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/graceful-fs/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/node_modules/minimist/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/mkdirp/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/node_modules/wrappy/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/balanced-match/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/node_modules/concat-map/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/node_modules/wrappy/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/package.json",
+        "node_modules/tar/node_modules/fstream/node_modules/rimraf/package.json",
+        "node_modules/tar/node_modules/fstream/package.json",
+        "node_modules/tar/node_modules/inherits/package.json",
+        "node_modules/tar/package.json",
+        "package.json"
+      ]
+    },
+    "folders": [
+      {
+        "paths": [
+          "lib",
+          ""
+        ],
+        "dependencies": {
+          "tar": ">= 0.1.20"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/examples",
+          "node_modules/tar/lib",
+          "node_modules/tar",
+          "node_modules/tar/test"
+        ],
+        "dependencies": {
+          "block-stream": "*",
+          "fstream": "^1.0.2",
+          "inherits": "2"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/block-stream/bench",
+          "node_modules/tar/node_modules/block-stream",
+          "node_modules/tar/node_modules/block-stream/test"
+        ],
+        "dependencies": {
+          "inherits": "~2.0.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/examples",
+          "node_modules/tar/node_modules/fstream",
+          "node_modules/tar/node_modules/fstream/lib"
+        ],
+        "dependencies": {
+          "graceful-fs": "3",
+          "inherits": "~2.0.0",
+          "mkdirp": ">=0.5 0",
+          "rimraf": "2"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/mkdirp/bin",
+          "node_modules/tar/node_modules/fstream/node_modules/mkdirp/examples",
+          "node_modules/tar/node_modules/fstream/node_modules/mkdirp",
+          "node_modules/tar/node_modules/fstream/node_modules/mkdirp/test"
+        ],
+        "dependencies": {
+          "minimist": "0.0.8"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf"
+        ],
+        "dependencies": {
+          "glob": "^4.4.2"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob"
+        ],
+        "dependencies": {
+          "inflight": "^1.0.4",
+          "inherits": "2",
+          "minimatch": "^2.0.1",
+          "once": "^1.3.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/inflight"
+        ],
+        "dependencies": {
+          "once": "^1.3.0",
+          "wrappy": "1"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch"
+        ],
+        "dependencies": {
+          "brace-expansion": "^1.0.0"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion",
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/minimatch/node_modules/brace-expansion/test"
+        ],
+        "dependencies": {
+          "balanced-match": "^0.2.0",
+          "concat-map": "0.0.1"
+        }
+      },
+      {
+        "paths": [
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once",
+          "node_modules/tar/node_modules/fstream/node_modules/rimraf/node_modules/glob/node_modules/once/test"
+        ],
+        "dependencies": {
+          "wrappy": "1"
+        }
+      }
+    ]
+  }
+}

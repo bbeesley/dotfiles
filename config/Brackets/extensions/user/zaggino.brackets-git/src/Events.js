@@ -11,7 +11,6 @@ define(function (require, exports) {
     exports.BRACKETS_PROJECT_CHANGE = "brackets.project.change";
     exports.BRACKETS_PROJECT_REFRESH = "brackets.project.refresh";
     exports.BRACKETS_DOCUMENT_SAVED = "brackets.document.saved";
-    exports.HANDLE_PROJECT_REFRESH = "handle.project.refresh";
     exports.BRACKETS_FILE_CHANGED = "brackets.file.changed";
 
     // Git events
@@ -21,6 +20,10 @@ define(function (require, exports) {
     exports.GIT_NO_BRANCH_EXISTS = "git.no.branch.exists";
     exports.GIT_CHANGE_USERNAME = "git.change.username";
     exports.GIT_CHANGE_EMAIL = "git.change.email";
+
+    // Gerrit events
+    exports.GERRIT_TOGGLE_PUSH_REF = "gerrit.toggle.push.ref";
+    exports.GERRIT_PUSH_REF_TOGGLED = "gerrit.push.ref.toggled";
 
     // Startup events
     exports.REFRESH_ALL = "git.refresh.all";

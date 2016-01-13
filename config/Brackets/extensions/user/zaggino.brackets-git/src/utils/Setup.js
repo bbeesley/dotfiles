@@ -5,12 +5,11 @@ define(function (require, exports) {
     var _ = brackets.getModule("thirdparty/lodash");
 
     // Local modules
-    var Cli = require("src/Cli");
-    var Git = require("src/git/Git");
-    var Preferences = require("src/Preferences");
-    var Promise = require("bluebird");
-
-    // Templates
+    var Cli         = require("src/Cli"),
+        Git         = require("src/git/Git"),
+        Preferences = require("src/Preferences"),
+        Promise     = require("bluebird"),
+        Utils       = require("src/Utils");
 
     // Module variables
     var standardGitPathsWin = [
@@ -20,6 +19,7 @@ define(function (require, exports) {
 
     var standardGitPathsNonWin = [
         "/usr/local/git/bin/git",
+        "/usr/local/bin/git",
         "/usr/bin/git"
     ];
 
@@ -28,7 +28,7 @@ define(function (require, exports) {
         return new Promise(function (resolve, reject) {
 
             // TODO: do this in two steps - first check user config and then check all
-            var pathsToLook = ["git", Preferences.get("gitPath")].concat(brackets.platform === "win" ? standardGitPathsWin : standardGitPathsNonWin);
+            var pathsToLook = [Preferences.get("gitPath"), "git"].concat(brackets.platform === "win" ? standardGitPathsWin : standardGitPathsNonWin);
             pathsToLook = _.unique(_.compact(pathsToLook));
 
             var results = [],
@@ -63,7 +63,9 @@ define(function (require, exports) {
             });
 
             pathsToLook.forEach(function (path, index) {
-                Cli.spawnCommand(path, ["--version"]).then(function (stdout) {
+                Cli.spawnCommand(path, ["--version"], {
+                    cwd: Utils.getExtensionDirectory()
+                }).then(function (stdout) {
                     var m = stdout.match(/^git version\s+(.*)$/);
                     if (m) {
                         results.push({

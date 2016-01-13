@@ -8,6 +8,7 @@ define(function (require, exports) {
         Preferences             = require("./Preferences"),
         ChangelogDialog         = require("../src/ChangelogDialog"),
         Strings                 = require("../strings"),
+        Git                     = require("./git/Git"),
         settingsDialogTemplate  = require("text!templates/git-settings-dialog.html");
 
     var dialog,
@@ -39,7 +40,9 @@ define(function (require, exports) {
             if (type === "checkbox") {
                 Preferences.set(property, $this.prop("checked"));
             } else if (prefType === "number") {
-                Preferences.set(property, parseInt($this.val().trim(), 10));
+                var newValue = parseInt($this.val().trim(), 10);
+                if (isNaN(newValue)) { newValue = Preferences.getDefaults()[property]; }
+                Preferences.set(property, newValue);
             } else {
                 Preferences.set(property, $this.val().trim() || null);
             }
@@ -48,19 +51,49 @@ define(function (require, exports) {
     }
 
     function assignActions() {
+        var $useDifftoolCheckbox = $("#git-settings-useDifftool", $dialog);
+
+        Git.getConfig("diff.tool").then(function (diffToolConfiguration) {
+
+            if (!diffToolConfiguration) {
+                $useDifftoolCheckbox.prop({
+                    checked: false,
+                    disabled: true
+                });
+            } else {
+                $useDifftoolCheckbox.prop({
+                    disabled: false
+                });
+            }
+
+        }).catch(function () {
+
+            // an error with git
+            // we were not able to check whether diff tool is configured or not
+            // so we disable it just to be sure
+            $useDifftoolCheckbox.prop({
+                checked: false,
+                disabled: true
+            });
+
+        });
+
         $("#git-settings-stripWhitespaceFromCommits", $dialog).on("change", function () {
             var on = $(this).is(":checked");
             $("#git-settings-addEndlineToTheEndOfFile,#git-settings-removeByteOrderMark,#git-settings-normalizeLineEndings", $dialog)
                 .prop("checked", on)
                 .prop("disabled", !on);
         });
+
         $("#git-settings-dateMode", $dialog).on("change", function () {
             $("#git-settings-dateFormat-container", $dialog).toggle($("option:selected", this).prop("value") === "3");
         });
+
         $("button[data-button-id='defaults']", $dialog).on("click", function (e) {
             e.stopPropagation();
             setValues(Preferences.getDefaults());
         });
+
         $("button[data-button-id='changelog']", $dialog).on("click", function (e) {
             e.stopPropagation();
             ChangelogDialog.show();

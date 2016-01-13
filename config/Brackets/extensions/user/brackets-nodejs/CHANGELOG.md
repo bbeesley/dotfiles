@@ -1,3 +1,21 @@
+# 1.4.2
+* Add "Run as Node debug" (node --debug-brk command line) in menu
+
+# 1.4.1
+* Switch from NodeConnection to NodeDomain and remove Server sent Events as transportation
+
+# 1.4.0
+* Add option for adding V8 flags ([#39](https://github.com/Acconut/brackets-nodejs/pull/39))
+
+# 1.3.1
+* Listen on host defined in config ([#38](https://github.com/Acconut/brackets-nodejs/issues/38))
+
+# 1.3.0
+* Add option for disabling autoscrolling ([#35](https://github.com/Acconut/brackets-nodejs/issues/35))
+
+# 1.2.1
+* Use `WorkspaceManager` to avoid deprication messages ([#34](https://github.com/Acconut/brackets-nodejs/pull/34))
+
 # 1.2.0
 * Use project directory if no file is selected
 * Allow install packages as devDependencies

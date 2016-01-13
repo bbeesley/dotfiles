@@ -8,7 +8,6 @@ define(function (require, exports, module) {
 
     var defaultPreferences = {
         // features
-        "theme": {                          "type": "string",            "value": "LIGHT"            },
         "stripWhitespaceFromCommits": {     "type": "boolean",           "value": true              },
         "addEndlineToTheEndOfFile": {       "type": "boolean",           "value": true              },
         "removeByteOrderMark": {            "type": "boolean",           "value": false             },
@@ -21,9 +20,11 @@ define(function (require, exports, module) {
         "showBashButton": {                 "type": "boolean",           "value": true              },
         "dateMode": {                       "type": "number",            "value": 1                 },
         "dateFormat": {                     "type": "string",            "value": null              },
-        "showReportBugButton": {            "type": "boolean",           "value": true              },
         "enableAdvancedFeatures": {         "type": "boolean",           "value": false             },
         "useVerboseDiff": {                 "type": "boolean",           "value": false             },
+        "useDifftool": {                    "type": "boolean",           "value": false             },
+        "clearWhitespaceOnSave": {          "type": "boolean",           "value": false             },
+        "gerritPushref": {                  "type": "boolean",           "value": false             },
         // shortcuts
         "panelShortcut": {                  "type": "string",            "value": "Ctrl-Alt-G"      },
         "commitCurrentShortcut": {          "type": "string",            "value": null              },
@@ -33,9 +34,11 @@ define(function (require, exports, module) {
         "pullShortcut": {                   "type": "string",            "value": null              },
         "gotoPrevChangeShortcut": {         "type": "string",            "value": null              },
         "gotoNextChangeShortcut": {         "type": "string",            "value": null              },
+        "refreshShortcut": {                "type": "string",            "value": null              },
+        "showTerminalIcon": {               "type": "boolean",           "value": false             },
         // system
         "debugMode": {                      "type": "boolean",           "value": false             },
-        "TIMEOUT_VALUE": {                  "type": "number",            "value": 30000             },
+        "gitTimeout": {                     "type": "number",            "value": 30                },
         "gitPath": {                        "type": "string",            "value": ""                },
         "terminalCommand": {                "type": "string",            "value": ""                },
         "terminalCommandArgs": {            "type": "string",            "value": ""                }

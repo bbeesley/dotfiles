@@ -66,11 +66,16 @@
                     <li><a class="change-user-name" href="#">{{S.CHANGE_USER_NAME}} (<span class="git-user-name"></span>)</a></li>
                     <li><a class="change-user-email" href="#">{{S.CHANGE_USER_EMAIL}} (<span class="git-user-email"></span>)</a></li>
                     <li class="divider"></li>
+                    <li><a class="toggle-gerrit-push-ref" href="#">{{S.ENABLE_GERRIT_PUSH_REF}}</a></li>
+                    <li class="divider"></li>
                     <li><a class="authors-selection" href="#">{{S.VIEW_AUTHORS_SELECTION}}</a></li>
                     <li><a class="authors-file" href="#">{{S.VIEW_AUTHORS_FILE}}</a></li>
                     <li class="divider"></li>
                     <li><a class="git-toggle-untracked" href="#">{{S.HIDE_UNTRACKED}}</a></li>
                 </ul>
+            </div>
+            <div class="btn-group">
+                <button title="Create tag" class="btn small tags"><i class="octicon octicon-tag"></i></button>
             </div>
         </div>
         <!-- on right -->
@@ -87,7 +92,6 @@
             <div class="btn-group">
                 {{#showBashButton}}<button title="{{S.TOOLTIP_OPEN_BASH}}" class="btn small git-bash"><i class="octicon octicon-terminal"></i></button>{{/showBashButton}}
                 <button title="{{S.GIT_SETTINGS}}" class="btn small git-settings"><i class="octicon octicon-settings"></i></button>
-                {{#showReportBugButton}}<button title="{{S.TOOLTIP_BUG}}" class="btn small git-bug"><i class="octicon octicon-bug"></i></button>{{/showReportBugButton}}
             </div>
         </div>
         <a href="#" class="close">&times;</a>

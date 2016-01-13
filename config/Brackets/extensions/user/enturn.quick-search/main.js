@@ -52,7 +52,8 @@ define(function (require, exports, module) {
     }
 
     // Extension functions.
-     
+    
+    // similar to Editor.prototype.selectWordAt 
     function isWordSelected(line, selectedText, selection) {
         var start = selection.start.ch, //Start is inclusive, end is exclusive.
             end = selection.end.ch;
@@ -74,50 +75,9 @@ define(function (require, exports, module) {
         return startBoundary && endBoundary;
     }
     
-    // modified from Editor.prototype.selectWordAt 
-    /*function getWordAt(line, pos) {
-        var start = pos.ch,
-            end = pos.ch;
-        
-        function isWordChar(ch) {
-            return (/\w/).test(ch) || ch.toUpperCase() !== ch.toLowerCase();
-        }
-        
-        while (start > 0 && isWordChar(line.charAt(start - 1))) {
-            --start;
-        }
-        while (end < line.length && isWordChar(line.charAt(end))) {
-            ++end;
-        }
-        
-        return line.slice(start, end);
-    }*/
-    
     function escapeRegexpChars(selectedText) {
         //http://stackoverflow.com/questions/3115150/how-to-escape-regular-expression-special-characters-using-javascript
         return selectedText.replace(/[\-\[\]{}()*+?.,\\$\^|#\s]/g, "\\$&");
-        /*
-        function contains(list, text) {
-            var i, length = list.length;
-            for (i = 0; i < length; ++i) {
-                if (text === list[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        
-        var result = "", i, length = selectedText.length;
-        var regexpChars = ["(", ")", "\\", "/", "*", "+", ".", "^", "$", ":", "?", "[", "]", "|", "{", "}"];
-
-        for (i = 0; i < length; ++i) {
-            if (contains(regexpChars, selectedText[i])) {
-                result += "\\" + selectedText[i];
-            } else {
-                result += selectedText[i];
-            }
-        }
-        return result;*/
     }
     
     function _handler(event, editor) {
@@ -146,6 +106,7 @@ define(function (require, exports, module) {
                 
                 if (isWordSelected(line, selectedText, selection)) {
                     // make sure certain characters are escaped for the regexp
+                    var rawText = selectedText;
                     selectedText = escapeRegexpChars(selectedText);
                     
                     // the boundary characters make sure only the whole word is searched
@@ -155,11 +116,13 @@ define(function (require, exports, module) {
                         regexp = '/' + selectedText + '\\b/i';
                     }
                     _find.updateBuiltinSearchState(editor, regexp);
-                    _find.doSearch(editor, false, regexp);
+                    _find.doSearch(editor, false, regexp, rawText);
                 }
             } else {
-                _previousQuery = "";
-                _find.clear(editor);
+                if (_previousQuery !== "") {
+                    _previousQuery = "";
+                    _find.clear(editor);
+                }
             }
         }
         
@@ -177,9 +140,35 @@ define(function (require, exports, module) {
     function DummyFindBar() {}
     DummyFindBar.prototype.close = function () {
         var editor = EditorManager.getActiveEditor();
-        _find.clear(editor);
-        _previouslySearched = true;
+        // active editor is null when no open files
+        if (editor) {
+            _find.clear(editor);
+            _previouslySearched = true;
+        }
     };
+    // the other FindBar functions in case they're needed
+    DummyFindBar.prototype.isClosed = function () { return true; };
+    DummyFindBar.prototype.open = function () { };
+    DummyFindBar.prototype.getOptions = function () { return {}; };
+    DummyFindBar.prototype.getQueryInfo = function () {
+        return {
+            query: _previousQuery || "",
+            isCaseSensitive: false,
+            isRegexp: true
+        };
+    };
+    DummyFindBar.prototype.showError = function (error, isHTML) { };
+    DummyFindBar.prototype.showFindCount = function (count) { };
+    DummyFindBar.prototype.showNoResults = function (showIndicator, showMessage) { };
+    DummyFindBar.prototype.getReplaceText = function () { return ""; };
+    DummyFindBar.prototype.enable = function (enable) { };
+    DummyFindBar.prototype.isEnabled = function () { return false; };
+    DummyFindBar.prototype.isReplaceEnabled = function () { return false; };
+    DummyFindBar.prototype.enableNavigation = function (enable) { };
+    DummyFindBar.prototype.enableReplace = function (enable) { };
+    DummyFindBar.prototype.focusQuery = function () { };
+    DummyFindBar.prototype.focusReplace = function () { };
+    
 
     if (parseFloat(brackets.metadata.apiVersion) < 0.41) {
         try {

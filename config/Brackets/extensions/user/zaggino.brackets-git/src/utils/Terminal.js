@@ -9,6 +9,7 @@ define(function (require) {
         ErrorHandler  = require("src/ErrorHandler"),
         Events        = require("src/Events"),
         EventEmitter  = require("src/EventEmitter"),
+        ExpectedError = require("src/ExpectedError"),
         Preferences   = require("src/Preferences"),
         Promise       = require("bluebird"),
         Utils         = require("src/Utils");
@@ -24,13 +25,21 @@ define(function (require) {
         return (url.substring(0, 1) === "//" && brackets.platform === "win") ? url.replace("/", "\\") : url;
     }
 
-    function chmodTerminalScript() {
-        var file = Utils.getExtensionDirectory() + "shell/" +
-                (brackets.platform === "mac" ? "terminal.osa" : "terminal.sh");
-        return Cli.executeCommand("chmod", [
-            "+x",
-            Cli.escapeShellArg(file)
-        ]);
+    function chmodTerminalScript(allowExec) {
+        var files = brackets.platform === "mac" ? [
+            // mac
+            "terminal.osa",
+            "iterm.osa"
+        ] : [
+            // linux
+            "terminal.sh"
+        ];
+
+        var args = [allowExec ? "+x" : "-x"].concat(files.map(function (file) {
+            return Cli.escapeShellArg(Utils.getExtensionDirectory() + "shell/" + file);
+        }));
+
+        return Cli.executeCommand("chmod", args);
     }
 
     function open(event) {
@@ -45,9 +54,9 @@ define(function (require) {
             };
 
         cmd = customCmd;
-        args = customArgs.split(" ").map(function (arg) {
+        args = customArgs ? customArgs.split(" ").map(function (arg) {
             return arg.replace("$1", Cli.escapeShellArg(normalizeUncUrls(folder)));
-        });
+        }) : [];
 
         if (brackets.platform === "mac" && cmd.match(/\.osa$/)) {
             args.unshift(Cli.escapeShellArg(cmd));
@@ -63,7 +72,7 @@ define(function (require) {
             throw new Error(err + ": " + pathExecuted);
         }).catch(function (err) {
             if (event !== "retry" && ErrorHandler.contains(err, "Permission denied")) {
-                chmodTerminalScript().catch(function (err) {
+                chmodTerminalScript(true).catch(function (err) {
                     throw ErrorHandler.showError(err);
                 }).then(function () {
                     open("retry");
@@ -82,6 +91,8 @@ define(function (require) {
             if (brackets.platform === "win") {
                 paths.push("C:\\Program Files (x86)\\Git\\Git Bash.vbs");
                 paths.push("C:\\Program Files\\Git\\Git Bash.vbs");
+                paths.push("C:\\Program Files (x86)\\Git\\git-bash.exe");
+                paths.push("C:\\Program Files\\Git\\git-bash.exe");
             } else if (brackets.platform === "mac") {
                 paths.push(Utils.getExtensionDirectory() + "shell/terminal.osa");
             } else {
@@ -100,13 +111,15 @@ define(function (require) {
                         // nothing meaningful found, so restore default configuration
                         Preferences.set("terminalCommand", paths[1]);
                         Preferences.set("terminalCommandArgs", "$1");
-                        // and then disabled the button for this session
-                        EventEmitter.emit(Events.TERMINAL_DISABLE, paths[0]);
                         resolve(false);
                         return;
                     }
                     Preferences.set("terminalCommand", validPaths[0]);
-                    Preferences.set("terminalCommandArgs", "$1");
+                    if (/git\-bash\.exe$/.test(validPaths[0])) {
+                        Preferences.set("terminalCommandArgs", "--cd=$1");
+                    } else {
+                        Preferences.set("terminalCommandArgs", "$1");
+                    }
                 } else {
                     Preferences.set("terminalCommand", results[0]);
                 }
@@ -130,16 +143,34 @@ define(function (require) {
                 });
             });
 
+        }).then(function (result) {
+            // my mac yosemite will actually fail if the scripts are executable!
+            // so do -x here and then do +x when permission denied is encountered
+            // TODO: explore linux/ubuntu behaviour
+            if (brackets.platform === "mac") {
+                return chmodTerminalScript(false).then(function () {
+                    return result;
+                });
+            }
+            return result;
         });
     });
 
     // Event subscriptions
     EventEmitter.on(Events.TERMINAL_OPEN, function () {
-        setup().then(function (configuredOk) {
-            if (configuredOk) {
-                open();
-            }
-        });
+        setup()
+            .then(function (configuredOk) {
+                if (configuredOk) {
+                    open();
+                } else {
+                    throw new ExpectedError("Terminal configuration invalid, restoring defaults. Restart Brackets to apply.");
+                }
+            })
+            .catch(function (err) {
+                // disable the button for this session
+                EventEmitter.emit(Events.TERMINAL_DISABLE);
+                ErrorHandler.showError(err);
+            });
     });
 
 });

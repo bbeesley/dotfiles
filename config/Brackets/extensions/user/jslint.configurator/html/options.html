@@ -1,16 +1,16 @@
 <div class="georapbox-jslint-settings-dialog modal">
     <div class="modal-header">
         <h1 class="dialog-title">{{DIALOG_TITLE}}</h1>
-        
+
         <div class="header-options">
             <a href="#" class="btn primary clear-options">{{CLEAR_OPTIONS}}</a>
         </div>
     </div>
     <div class="modal-body">
-        <div class="field-container clearfix">            
+        <div class="field-container clearfix">
             <div class="column">
                 <h3>{{ASSUME}}...</h3>
-                
+
                 <div title="browser">
                     <button></button>
                     <var class="default">default</var> {{BROWSER}}
@@ -36,13 +36,13 @@
                     <var class="default">default</var> {{PASSFAIL}}
                 </div>
             </div>
-            
+
             <div class="column">
                 <h3>{{TOLERATE}}...</h3>
-                
-                <div title="ass">
+
+                <div title="white">
                     <button></button>
-                    <var class="default">default</var> {{ASS}}
+                    <var class="default">default</var> {{WHITE}}
                 </div>
                 <div title="bitwise">
                     <button></button>
@@ -65,10 +65,10 @@
                     <var class="default">default</var> {{EQEQ}}
                 </div>
             </div>
-            
+
             <div class="column">
                 <h3>{{TOLERATE}}...</h3>
-                
+
                 <div title="evil">
                     <button></button>
                     <var class="default">default</var> {{EVIL}}
@@ -98,10 +98,10 @@
                     <var class="default">default</var> {{UNPARAM}}
                 </div>
             </div>
-            
+
             <div class="column">
                 <h3>{{TOLERATE}}...</h3>
-               
+
                 <div title="sloppy">
                     <button></button>
                     <var class="default">default</var> {{SLOPPY}}
@@ -122,35 +122,33 @@
                     <button></button>
                     <var class="default">default</var> {{VARS}}
                 </div>
-                <div title="white">
-                    <button></button>
-                    <var class="default">default</var> {{WHITE}}
-                </div>
             </div>
-            
+
+            <div style="clear:both;"></div>
+
             <div class="column last">
-                <input title="indent" type="number" min="0"><label title="indent">{{INDENT}}</label><br/>
-                <input title="maxlen" type="number" min="0"><label title="maxlen">{{MAXLEN}}</label><br/>
-                <input title="maxerr" type="number" min="0"><label title="maxerr">{{MAXERR}}</label>
+                <input title="indent" type="number" min="0" max="10"><label title="indent">{{INDENT}}</label><br/>
+                <input title="maxlen" type="number" min="0" max="256"><label title="maxlen">{{MAXLEN}}</label><br/>
+                <input title="maxerr" type="number" min="0" max="1000"><label title="maxerr">{{MAXERR}}</label>
             </div>
         </div>
     </div>
-    
+
     <div class="modal-footer first">
         <div class="field-container clearfix">
             <h2>{{DIRECTIVE_TITLE}}</h2>
             <div class="textarea-options">
                 <a class="select-button" href="#">{{SELECT}}</a> |
-                <a class="extract-button" href="#">{{EXTRACT}}</a>    
+                <a class="extract-button" href="#">{{EXTRACT}}</a>
             </div>
             <textarea id="georapbox-jsl-conf-result" readonly required></textarea>
             <p style="float:left;color:#787878;margin:0;"><em>{{{HINT}}}</em></p>
             <p style="float:right;margin:0;"><label><input type="checkbox" name="jsonConvert"> {{JSON_CONVERT}}</label></p>
-        </div>	
+        </div>
     </div>
-       
+
    <div class="modal-footer last">
-        <a style="float:left;" href="http://www.jslint.com/lint.html#options">{{JSLINT_INFO}}</a>
+        <a style="float:left;" href="http://www.jslint.com/help.html">{{JSLINT_INFO}}</a>
         <a href="#" class="dialog-button btn primary" data-button-id="ok">{{DIALOG_OK}}</a>
         <a href="#" class="dialog-button btn" data-button-id="cancel">{{DIALOG_CANCEL}}</a>
     </div>

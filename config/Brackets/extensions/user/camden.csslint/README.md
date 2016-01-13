@@ -6,12 +6,24 @@ A Brackets extension to enable CSSLint support. To install, place in your ```bra
 CSSLint makes use of Bracket's built-in linting system. Errors will be signified
 with a yellow warning icon in the lower right hand corner of the editor. Clicking
 it will open a list of issues for the current file. If there are no issues, a green
-icon will be displayed instead. 
+icon will be displayed instead.
+
+Global default options are available under "Debug > Open Preferences File" by adding or modifying "csslint.options".
 
 CSSLint also supports .csslintrc files. See this for more information: https://github.com/CSSLint/csslint/issues/359
 
 Issues/Updates
 =====
+[6/30/2015] Merge PR - https://github.com/cfjedimaster/brackets-csslint/pull/43
+
+[5/27/2015] Adding support for global preferences
+
+[1/22/2015] Fix for CSSLint behaving badly.
+
+[1/4/2015] Updated CSSLint - again - this time credit goes to @ArgTang
+
+[1/4/2015] Updated CSSLint
+
 [7/13/2014] Remove SCSS support, as I thought I'd need to.
 
 [1/26/2014] User globexdesigns added support for .csslintrc files.

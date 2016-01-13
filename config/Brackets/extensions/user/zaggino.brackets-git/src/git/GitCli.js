@@ -41,6 +41,9 @@ define(function (require, exports) {
         UNMERGED: "UNMERGED"
     };
 
+    // This SHA1 represents the empty tree. You get it using `git mktree < /dev/null`
+    var EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
     // Implementation
     function getGitPath() {
         if (_gitPath) { return _gitPath; }
@@ -53,6 +56,27 @@ define(function (require, exports) {
         Preferences.set("gitPath", path);
         _gitPath = path;
     }
+
+    function strEndsWith(subjectString, searchString, position) {
+        if (position === undefined || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    }
+
+    /*
+    function fixCygwinPath(path) {
+        if (typeof path === "string" && brackets.platform === "win" && path.indexOf("/cygdrive/") === 0) {
+            path = path.substring("/cygdrive/".length)
+                       .replace(/^([a-z]+)\//, function (a, b) {
+                           return b.toUpperCase() + ":/";
+                       });
+        }
+        return path;
+    }
+    */
 
     function _processQueue() {
         // do nothing if the queue is busy
@@ -70,7 +94,7 @@ define(function (require, exports) {
             args  = item[1],
             opts  = item[2];
         // execute git command in a queue so no two commands are running at the same time
-        _gitQueueBusy = true;
+        if (opts.nonblocking !== true) { _gitQueueBusy = true; }
         Cli.spawnCommand(getGitPath(), args, opts)
             .progressed(function () {
                 defer.progress.apply(defer, arguments);
@@ -84,7 +108,7 @@ define(function (require, exports) {
                 defer.reject(e);
             })
             .finally(function () {
-                _gitQueueBusy = false;
+                if (opts.nonblocking !== true) { _gitQueueBusy = false; }
                 _processQueue();
             });
     }
@@ -189,11 +213,15 @@ define(function (require, exports) {
     }
 
     function fetchRemote(remote) {
-        return git(["fetch", "--progress", remote]).catch(repositoryNotFoundHandler);
+        return git(["fetch", "--progress", remote], {
+            timeout: false // never timeout this
+        }).catch(repositoryNotFoundHandler);
     }
 
     function fetchAllRemotes() {
-        return git(["fetch", "--progress", "--all"]).catch(repositoryNotFoundHandler);
+        return git(["fetch", "--progress", "--all"], {
+            timeout: false // never timeout this
+        }).catch(repositoryNotFoundHandler);
     }
 
     /*
@@ -252,7 +280,7 @@ define(function (require, exports) {
         args.push(remote + "/" + branch);
 
         var readMergeMessage = function () {
-            return Utils.loadPathContent(Utils.getProjectRoot() + "/.git/MERGE_MSG").then(function (msg) {
+            return Utils.loadPathContent(Preferences.get("currentGitRoot") + "/.git/MERGE_MSG").then(function (msg) {
                 return msg;
             });
         };
@@ -285,8 +313,9 @@ define(function (require, exports) {
         });
     }
 
-    function mergeBranch(branchName, mergeMessage) {
-        var args = ["merge", "--no-ff"];
+    function mergeBranch(branchName, mergeMessage, useNoff) {
+        var args = ["merge"];
+        if (useNoff) { args.push("--no-ff"); }
         if (mergeMessage && mergeMessage.trim()) { args.push("-m", mergeMessage); }
         args.push(branchName);
         return git(args);
@@ -322,15 +351,35 @@ define(function (require, exports) {
         }
         args.push(remoteName);
 
+        if (remoteBranch && Preferences.get("gerritPushref")) {
+            return getConfig("gerrit.pushref").then(function (strGerritEnabled) {
+                if (strGerritEnabled === "true") {
+                    args.push("HEAD:refs/for/" + remoteBranch);
+                } else {
+                    args.push(remoteBranch);
+                }
+                return doPushWithArgs(args);
+            });
+        }
+
         if (remoteBranch) {
             args.push(remoteBranch);
         }
 
+        return doPushWithArgs(args);
+    }
+
+    function doPushWithArgs(args) {
         return git(args)
             .catch(repositoryNotFoundHandler)
             .then(function (stdout) {
+                // this should clear lines from push hooks
+                var lines = stdout.split("\n");
+                while (lines.length > 0 && lines[0].match(/^To/) === null) {
+                    lines.shift();
+                }
+
                 var retObj = {},
-                    lines = stdout.split("\n"),
                     lineTwo = lines[1].split("\t");
 
                 retObj.remoteUrl = lines[0].trim().split(" ")[1];
@@ -368,7 +417,7 @@ define(function (require, exports) {
     }
 
     function getCurrentBranchName() {
-        return git(["branch"]).then(function (stdout) {
+        return git(["branch", "--no-color"]).then(function (stdout) {
             var branchName = _.find(stdout.split("\n"), function (l) { return l[0] === "*"; });
             if (branchName) {
                 branchName = branchName.substring(1).trim();
@@ -454,13 +503,14 @@ define(function (require, exports) {
                 "%ai", // author date, ISO 8601 format
                 "%ae", // author email
                 "%s",  // subject
-                "%b"   // body
+                "%b",  // body
+                "%d"   // tags
             ].join(separator) + newline;
 
         var args = ["log", "-100"];
         if (skipCommits) { args.push("--skip=" + skipCommits); }
-        args.push("--format=" + format);
-        args.push(branch);
+        args.push("--format=" + format, branch, "--");
+
         // follow is too buggy - do not use
         // if (file) { args.push("--follow"); }
         if (file) { args.push(file); }
@@ -480,6 +530,19 @@ define(function (require, exports) {
                 commit.subject    = data[5];
                 commit.body       = data[6];
 
+                if (data[7]) {
+                    var tags = data[7];
+                    var regex = new RegExp("tag: ([^,|\)]+)", "g");
+                    tags = tags.match(regex);
+
+                    for (var key in tags) {
+                        if (tags[key] && tags[key].replace) {
+                            tags[key] = tags[key].replace("tag:", "");
+                        }
+                    }
+                    commit.tags = tags;
+                }
+
                 return commit;
 
             });
@@ -491,14 +554,15 @@ define(function (require, exports) {
     }
 
     function clone(remoteGitUrl, destinationFolder) {
-        return git(["clone", remoteGitUrl, destinationFolder, "--progress"]);
+        return git(["clone", remoteGitUrl, destinationFolder, "--progress"], {
+            timeout: false // never timeout this
+        });
     }
 
-    function stage(file, updateIndex) {
+    function stage(fileOrFiles, updateIndex) {
         var args = ["add"];
         if (updateIndex) { args.push("-u"); }
-        args.push("--", file);
-        return git(args);
+        return git(args.concat("--", fileOrFiles));
     }
 
     function stageAll() {
@@ -519,7 +583,7 @@ define(function (require, exports) {
         } else {
             return new Promise(function (resolve, reject) {
                 // FUTURE: maybe use git commit --file=-
-                var fileEntry = FileSystem.getFileForPath(Utils.getProjectRoot() + ".bracketsGitTemp");
+                var fileEntry = FileSystem.getFileForPath(Preferences.get("currentGitRoot") + ".bracketsGitTemp");
                 Promise.cast(FileUtils.writeText(fileEntry, message))
                     .then(function () {
                         args.push("-F", ".bracketsGitTemp");
@@ -583,6 +647,8 @@ define(function (require, exports) {
     function status(type) {
         return git(["status", "-u", "--porcelain"]).then(function (stdout) {
             if (!stdout) { return []; }
+
+            var currentSubFolder = Preferences.get("currentGitSubfolder");
 
             // files that are modified both in index and working tree should be resetted
             var isEscaped = false,
@@ -656,6 +722,11 @@ define(function (require, exports) {
                     file = file.substring(io + 2).trim();
                 }
 
+                // we don't want to display paths that lead to this file outside the project
+                if (currentSubFolder && display.indexOf(currentSubFolder) === 0) {
+                    display = display.substring(currentSubFolder.length);
+                }
+
                 results.push({
                     status: status,
                     display: display,
@@ -718,8 +789,20 @@ define(function (require, exports) {
         });
     }
 
+    function getDiffOfAllIndexFiles(files) {
+        var args = ["diff", "--no-ext-diff", "--no-color", "--full-index"];
+        if (files) {
+            args = args.concat("--", files);
+        }
+        return git(args, {
+            timeout: false // never timeout this
+        });
+    }
+
     function getListOfStagedFiles() {
-        return git(["diff", "--no-ext-diff", "--no-color", "--staged", "--name-only"]);
+        return git(["diff", "--no-ext-diff", "--no-color", "--staged", "--name-only"], {
+            timeout: false // never timeout this
+        });
     }
 
     function diffFile(file) {
@@ -727,7 +810,9 @@ define(function (require, exports) {
             var args = ["diff", "--no-ext-diff", "--no-color"];
             if (staged) { args.push("--staged"); }
             args.push("-U0", "--", file);
-            return git(args);
+            return git(args, {
+                timeout: false // never timeout this
+            });
         });
     }
 
@@ -736,7 +821,23 @@ define(function (require, exports) {
             var args = ["diff", "--no-ext-diff", "--no-color"];
             if (staged) { args.push("--staged"); }
             args.push("--", file);
-            return git(args);
+            return git(args, {
+                timeout: false // never timeout this
+            });
+        });
+    }
+
+    function difftool(file) {
+        return _isFileStaged(file).then(function (staged) {
+            var args = ["difftool"];
+            if (staged) {
+                args.push("--staged");
+            }
+            args.push("--", file);
+            return git(args, {
+                timeout: false, // never timeout this
+                nonblocking: true // allow running other commands before this command finishes its work
+            });
         });
     }
 
@@ -744,14 +845,25 @@ define(function (require, exports) {
         return git(["clean", "-f", "-d"]);
     }
 
-    function getFilesFromCommit(hash) {
-        return git(["diff", "--no-ext-diff", "--name-only", hash + "^!"]).then(function (stdout) {
+    function getFilesFromCommit(hash, isInitial) {
+        var args = ["diff", "--no-ext-diff", "--name-only"];
+        args = args.concat((isInitial ? EMPTY_TREE : hash + "^") + ".." + hash);
+        return git(args).then(function (stdout) {
             return !stdout ? [] : stdout.split("\n");
         });
     }
 
-    function getDiffOfFileFromCommit(hash, file) {
-        return git(["diff", "--no-ext-diff", "--no-color", hash + "^!", "--", file]);
+    function getDiffOfFileFromCommit(hash, file, isInitial) {
+        var args = ["diff", "--no-ext-diff", "--no-color"];
+        args = args.concat((isInitial ? EMPTY_TREE : hash + "^") + ".." + hash);
+        args = args.concat("--", file);
+        return git(args);
+    }
+
+    function difftoolFromHash(hash, file, isInitial) {
+        return git(["difftool", (isInitial ? EMPTY_TREE : hash + "^") + ".." + hash, "--", file], {
+            timeout: false // never timeout this
+        });
     }
 
     function rebaseInit(branchName) {
@@ -827,6 +939,89 @@ define(function (require, exports) {
         });
     }
 
+    function getGitRoot() {
+        var projectRoot = Utils.getProjectRoot();
+        return git(["rev-parse", "--show-toplevel"], {
+                cwd: projectRoot
+            })
+            .catch(function (e) {
+                if (ErrorHandler.contains(e, "Not a git repository")) {
+                    return null;
+                }
+                throw e;
+            })
+            .then(function (root) {
+                if (root === null) {
+                    return root;
+                }
+
+                // paths on cygwin look a bit different
+                // root = fixCygwinPath(root);
+
+                // we know projectRoot is in a Git repo now
+                // because --show-toplevel didn't return Not a git repository
+                // we need to find closest .git
+
+                function checkPathRecursive(path) {
+
+                    if (strEndsWith(path, "/")) {
+                        path = path.slice(0, -1);
+                    }
+
+                    Utils.consoleDebug("Checking path for .git: " + path);
+
+                    return new Promise(function (resolve) {
+
+                        // keep .git away from file tree for now
+                        // this branch of code will not run for intel xdk
+                        if (typeof brackets !== "undefined" && brackets.fs && brackets.fs.stat) {
+                            brackets.fs.stat(path + "/.git", function (err, result) {
+                                var exists = err ? false : (result.isFile() || result.isDirectory());
+                                if (exists) {
+                                    Utils.consoleDebug("Found .git in path: " + path);
+                                    resolve(path);
+                                } else {
+                                    Utils.consoleDebug("Failed to find .git in path: " + path);
+                                    path = path.split("/");
+                                    path.pop();
+                                    path = path.join("/");
+                                    resolve(checkPathRecursive(path));
+                                }
+                            });
+                            return;
+                        }
+
+                        FileSystem.resolve(path + "/.git", function (err, item, stat) {
+                            var exists = err ? false : (stat.isFile || stat.isDirectory);
+                            if (exists) {
+                                Utils.consoleDebug("Found .git in path: " + path);
+                                resolve(path);
+                            } else {
+                                Utils.consoleDebug("Failed to find .git in path: " + path);
+                                path = path.split("/");
+                                path.pop();
+                                path = path.join("/");
+                                resolve(checkPathRecursive(path));
+                            }
+                        });
+
+                    });
+
+                }
+
+                return checkPathRecursive(projectRoot).then(function (path) {
+                    return path + "/";
+                });
+
+            });
+    }
+
+    function setTagName(tagname) {
+        return git(["tag", tagname]).then(function (stdout) {
+            return stdout.trim();
+        });
+    }
+
     // Public API
     exports._git                      = git;
     exports.setGitPath                = setGitPath;
@@ -860,9 +1055,11 @@ define(function (require, exports) {
     exports.status                    = status;
     exports.diffFile                  = diffFile;
     exports.diffFileNice              = diffFileNice;
+    exports.difftool                  = difftool;
     exports.clean                     = clean;
     exports.getFilesFromCommit        = getFilesFromCommit;
     exports.getDiffOfFileFromCommit   = getDiffOfFileFromCommit;
+    exports.difftoolFromHash          = difftoolFromHash;
     exports.rebase                    = rebase;
     exports.rebaseInit                = rebaseInit;
     exports.mergeRemote               = mergeRemote;
@@ -872,8 +1069,10 @@ define(function (require, exports) {
     exports.getCommitsAhead           = getCommitsAhead;
     exports.getLastCommitMessage      = getLastCommitMessage;
     exports.mergeBranch               = mergeBranch;
+    exports.getDiffOfAllIndexFiles    = getDiffOfAllIndexFiles;
     exports.getDiffOfStagedFiles      = getDiffOfStagedFiles;
     exports.getListOfStagedFiles      = getListOfStagedFiles;
     exports.getBlame                  = getBlame;
-
+    exports.getGitRoot                = getGitRoot;
+    exports.setTagName                = setTagName;
 });

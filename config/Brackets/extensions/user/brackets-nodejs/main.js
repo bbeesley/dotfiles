@@ -5,44 +5,29 @@ define(function (require, exports, module) {
     var CommandManager = brackets.getModule("command/CommandManager"),
         Menus = brackets.getModule("command/Menus"),
         DocumentManager = brackets.getModule("document/DocumentManager"),
-        EditorManager = brackets.getModule("editor/EditorManager"),
+        WorkspaceManager = brackets.getModule("view/WorkspaceManager"),
         ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
-        NodeConnection = brackets.getModule("utils/NodeConnection"),
+        NodeDomain = brackets.getModule("utils/NodeDomain"),
         ProjectManager = brackets.getModule("project/ProjectManager"),
         Dialogs = brackets.getModule("widgets/Dialogs"),
         ansi = require("./ansi"),
         prefs = require("./preferences"),
-        nodeConnection = new NodeConnection(),
         NodeMenuID = "node-menu",
         NodeMenu = Menus.addMenu("Node.js", NodeMenuID),
-        source = null,
         NODE_SETTINGS_DIALOG_ID = "node-settings-dialog",
         NODE_INSTALL_DIALOG_ID = "node-install-dialog",
         NODE_EXEC_DIALOG_ID = "node-exec-dialog",
         LS_PREFIX = "node-",
-        API_VERSION = 1;
+        DOMAIN_NAME = "brackets-nodejs",
+        scrollEnabled = prefs.get("autoscroll");
 
     /**
-     * Load the configuration
+     * Connect to the backend nodejs domain
      */
-    var config = JSON.parse(require("text!config.json"));
-
-    /**
-     * Start the node server
-     */
-    nodeConnection.connect(true).then(function () {
-        nodeConnection.loadDomains(
-            [ExtensionUtils.getModulePath(module, "server.js")],
-            true
-        ).then(
-            function () {
-                console.log("[brackets-nodejs] Connected to nodejs");
-            }
-        ).fail(
-            function () {
-                console.log("[brackets-nodejs] Failed to connect to nodejs. The server may be up because of another instance");
-            }
-        );
+    var domain = new NodeDomain(DOMAIN_NAME, ExtensionUtils.getModulePath(module, "node/processDomain"));
+    
+    domain.on("output", function(info, data) {
+        Panel.write(data);
     });
 
     /**
@@ -63,12 +48,6 @@ define(function (require, exports, module) {
          */
         // This need to be inside quotes since new is a reserved word
         "new": function (command, cwd) {
-
-            if (source && source.close) source.close();
-
-            // Build url
-            var url = "http://" + config.host + ":" + config.port + "/?command=" + encodeURIComponent(command);
-
             // If no cwd is specified use the current file's directory
             // if available else fallback to the project directory
             var doc = DocumentManager.getCurrentDocument(),
@@ -80,30 +59,22 @@ define(function (require, exports, module) {
             } else {
                 dir = ProjectManager.getProjectRoot().fullPath;
             }
-
-            // Append cwd to url
-            url += "&cwd=" + encodeURIComponent(dir);
-
-            // Add api version
-            url += "&apiversion=" + API_VERSION;
-
+            
+            ConnectionManager.exit();
+            Panel.show(command);
+            Panel.clear();
+            
+            domain.exec("startProcess", command, dir)
+                .done(function(exitCode) {
+                    Panel.write("Program exited with status code of " + exitCode + ".");
+                }).fail(function(err) {
+                    Panel.write("Error inside brackets-nodejs' processes occured: \n" + err);
+                });
+            
             // Store the last command and cwd
             this.last.command = command;
             this.last.cwd = dir;
 
-            // Server should be running
-            source = new EventSource(url);
-
-            source.addEventListener("message", function (msg) {
-                Panel.write(msg.data);
-            }, false);
-            source.addEventListener("error", function () {
-                source.close();
-                Panel.write("Program exited.");
-            }, false);
-
-            Panel.show(command);
-            Panel.clear();
         },
 
         newNpm: function (command) {
@@ -120,9 +91,15 @@ define(function (require, exports, module) {
 
         },
 
-        newNode: function () {
+        newNode: function (param) {
 
-            var nodeBin = prefs.get("node-bin");
+            var nodeBin = prefs.get("node-bin"),
+                v8flags = prefs.get("v8-flags");
+
+            if (param == 'debug') {
+                v8flags += " --debug-brk "
+            }
+
             if(nodeBin === "") {
                 nodeBin = "node";
             } else {
@@ -134,7 +111,7 @@ define(function (require, exports, module) {
             var doc = DocumentManager.getCurrentDocument();
             if(doc === null || !doc.file.isFile) return;
 
-            this.new(nodeBin + ' "' + doc.file.fullPath + '"');
+            this.new(nodeBin + ' ' + v8flags + ' ' + ' "' + doc.file.fullPath + '"');
 
         },
 
@@ -151,7 +128,7 @@ define(function (require, exports, module) {
          * Close the current connection if server is started
          */
         exit: function () {
-            source.close();
+            domain.exec("stopProcess");
         }
     };
 
@@ -176,11 +153,11 @@ define(function (require, exports, module) {
         show: function (command) {
             this.panel.style.display = "block";
             this.commandTitle.textContent = command;
-            EditorManager.resizeEditor();
+            WorkspaceManager.recomputeLayout();
         },
         hide: function () {
             this.panel.style.display = "none";
-            EditorManager.resizeEditor();
+            WorkspaceManager.recomputeLayout();
         },
         clear: function () {
             this.pre.innerHTML = null;
@@ -193,17 +170,17 @@ define(function (require, exports, module) {
          * @param: String to be output
          */
         write: function (str) {
-            var e = document.createElement("div");
+            var e = document.createElement("span");
             e.innerHTML = ansi(str.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
 
             var scroll = false;
             if (this.pre.parentNode.scrollTop === 0 || this.pre.parentNode.scrollTop === this.pre.parentNode.scrollHeight || this.pre.parentNode.scrollHeight - this.pre.parentNode.scrollTop === this.pre.parentNode.clientHeight) {
-                scroll = true;   
+                scroll = true;
             }
 
             this.pre.appendChild(e);
 
-            if (scroll) {
+            if (scroll && scrollEnabled) {
                 this.pre.parentNode.scrollTop = this.pre.parentNode.scrollHeight;
             }
         },
@@ -215,7 +192,7 @@ define(function (require, exports, module) {
 
             var h = Panel.height + (Panel.y - e.pageY);
             Panel.panel.style.height = h + "px";
-            EditorManager.resizeEditor();
+            WorkspaceManager.recomputeLayout();
 
         },
         mouseup: function (e) {
@@ -245,14 +222,14 @@ define(function (require, exports, module) {
     /**
      * Terminal buttons
      */
-    document.querySelector("#" + Panel.id + " .action-close").addEventListener("click", function () {
+    Panel.get(".action-close").addEventListener("click", function () {
         ConnectionManager.exit();
         Panel.hide();
     });
-    document.querySelector("#" + Panel.id + " .action-terminate").addEventListener("click", function () {
+    Panel.get(".action-terminate").addEventListener("click", function () {
         ConnectionManager.exit();
     });
-    document.querySelector("#" + Panel.id + " .action-rerun").addEventListener("click", function () {
+    Panel.get(".action-rerun").addEventListener("click", function () {
         ConnectionManager.rerun();
     });
 
@@ -293,20 +270,29 @@ define(function (require, exports, module) {
                     if (id !== "ok") return;
 
                     var node = nodeInput.value,
-                        npm = npmInput.value;
+                        npm = npmInput.value,
+                        v8flags = flagsInput.value;
+
+                    // Store autoscroll config globally
+                    scrollEnabled = scrollInput.checked;
 
                     prefs.set("node-bin", node.trim());
                     prefs.set("npm-bin", npm.trim());
+                    prefs.set("v8-flags", v8flags.trim());
+                    prefs.set("autoscroll", scrollEnabled);
                     prefs.save();
 
                 });
 
                 // It's important to get the elements after the modal is rendered but before the done event
                 var nodeInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .node"),
-                    npmInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .npm");
+                    npmInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .npm"),
+                    scrollInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .autoscroll"),
+                    flagsInput = document.querySelector("." + NODE_SETTINGS_DIALOG_ID + " .flags");
                 nodeInput.value = prefs.get("node-bin");
                 npmInput.value = prefs.get("npm-bin");
-
+                flagsInput.value = prefs.get("v8-flags");
+                scrollInput.checked = prefs.get("autoscroll");
             }
         },
 
@@ -428,6 +414,7 @@ define(function (require, exports, module) {
      */
     var RUN_CMD_ID = "brackets-nodejs.run",
         EXEC_CMD_ID = "brackets-nodejs.exec",
+        RUN_DEBUG_CMD_ID = "brackets-nodejs.debug",
         RUN_NPM_START_CMD_ID = "brackets-nodejs.run_npm_start",
         RUN_NPM_STOP_CMD_ID = "brackets-nodejs.run_npm_stop",
         RUN_NPM_TEST_CMD_ID = "brackets-nodejs.run_npm_test",
@@ -435,10 +422,13 @@ define(function (require, exports, module) {
         INSTALL_CMD_ID = "brackets-nodejs.install",
         CONFIG_CMD_ID = "brackets-nodejs.config";
     CommandManager.register("Run", RUN_CMD_ID, function () {
-        ConnectionManager.newNode();
+        ConnectionManager.newNode("");
     });
     CommandManager.register("Execute command", EXEC_CMD_ID, function() {
         Dialog.exec.show();
+    });
+    CommandManager.register("Run as node debug", RUN_DEBUG_CMD_ID, function () {
+        ConnectionManager.newNode("debug");
     });
     CommandManager.register("Run as npm start", RUN_NPM_START_CMD_ID, function () {
         ConnectionManager.newNpm("start");
@@ -457,12 +447,12 @@ define(function (require, exports, module) {
     });
     CommandManager.register("Configuration...", CONFIG_CMD_ID, function () {
         Dialog.settings.show();
-
     });
 
     NodeMenu.addMenuItem(RUN_CMD_ID, "Alt-N");
     NodeMenu.addMenuItem(EXEC_CMD_ID);
     NodeMenu.addMenuDivider();
+    NodeMenu.addMenuItem(RUN_DEBUG_CMD_ID);
     NodeMenu.addMenuItem(RUN_NPM_START_CMD_ID);
     NodeMenu.addMenuItem(RUN_NPM_STOP_CMD_ID);
     NodeMenu.addMenuItem(RUN_NPM_TEST_CMD_ID);

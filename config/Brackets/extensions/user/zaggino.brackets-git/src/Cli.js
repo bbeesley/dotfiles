@@ -13,9 +13,8 @@ define(function (require, exports, module) {
     var moduleDirectory   = ExtensionUtils.getModulePath(module),
         domainModulePath  = moduleDirectory + "domains/cli",
         debugOn           = Preferences.get("debugMode"),
-        TIMEOUT_VALUE     = Preferences.get("TIMEOUT_VALUE"),
+        gitTimeout        = Preferences.get("gitTimeout") * 1000,
         domainName        = "brackets-git",
-        extName           = "[brackets-git] ",
         nodeConnection    = new NodeConnection(),
         nextCliId         = 0,
         deferredMap       = {};
@@ -32,7 +31,7 @@ define(function (require, exports, module) {
     }
 
     function attachEventHandlers() {
-        $(nodeConnection)
+        nodeConnection
             .off(EVENT_NAMESPACE)
             .on(domainName + ":progress" + EVENT_NAMESPACE, function (err, cliId, time, message) {
                 var deferred = deferredMap[cliId];
@@ -65,6 +64,15 @@ define(function (require, exports, module) {
                     reject(ErrorHandler.toError(err));
                 });
             }).fail(function (err) { // jQuery promise - .fail is fine
+                if (ErrorHandler.contains(err, "Max connection attempts reached")) {
+                    Utils.consoleLog("Max connection attempts reached, trying again.", "warn");
+                    // try again
+                    connectPromise = null;
+                    connectToNode()
+                        .then(function (result) { resolve(result); })
+                        .catch(function (err) { reject(err); });
+                    return;
+                }
                 reject(ErrorHandler.toError(err));
             });
         });
@@ -109,9 +117,9 @@ define(function (require, exports, module) {
             processInfo.push("ID=" + opts.cliId);
         }
 
-        var msg = extName + "cmd-" + method + "-" + type + " (" + processInfo.join(";") + ")";
+        var msg = "cmd-" + method + "-" + type + " (" + processInfo.join(";") + ")";
         if (out) { msg += ": \"" + out + "\""; }
-        Utils.consoleLog(msg);
+        Utils.consoleDebug(msg);
     }
 
     function cliHandler(method, cmd, args, opts, retry) {
@@ -126,10 +134,8 @@ define(function (require, exports, module) {
 
         // it is possible to set a custom working directory in options
         // otherwise the current project root is used to execute commands
-        if (opts.cwd) {
-            opts.customCwd = true;
-        } else {
-            opts.cwd = Utils.getProjectRoot();
+        if (!opts.cwd) {
+            opts.cwd = Preferences.get("currentGitRoot") || Utils.getProjectRoot();
         }
 
         // convert paths like c:/foo/bar to c:\foo\bar on windows
@@ -138,9 +144,9 @@ define(function (require, exports, module) {
         // log all cli communication into console when debug mode is on
         if (debugOn) {
             var startTime = (new Date()).getTime();
-            Utils.consoleLog(extName + "cmd-" + method + (watchProgress ? "-watch" : "") + ": " +
-                             (opts.customCwd ? opts.cwd + "\\" : "") +
-                             cmd + " " + args.join(" "));
+            Utils.consoleDebug("cmd-" + method + (watchProgress ? "-watch" : "") + ": " +
+                               opts.cwd + " -> " +
+                               cmd + " " + args.join(" "));
         }
 
         // we connect to node (promise is returned immediately if we are already connected)
@@ -150,7 +156,7 @@ define(function (require, exports, module) {
         }).then(function (wasConnected) {
 
             var resolved      = false,
-                timeoutLength = opts.timeout ? (opts.timeout * 1000) : TIMEOUT_VALUE;
+                timeoutLength = opts.timeout ? (opts.timeout * 1000) : gitTimeout;
 
             var domainOpts = {
                 cliId: cliId,
@@ -177,6 +183,13 @@ define(function (require, exports, module) {
                         delete deferredMap[cliId];
 
                         err = ErrorHandler.toError(err);
+
+                        // spawn ENOENT error
+                        var invalidCwdErr = "spawn ENOENT";
+                        if (err.stack && err.stack.indexOf(invalidCwdErr)) {
+                            err.message = err.message.replace(invalidCwdErr, invalidCwdErr + " (" + opts.cwd + ")");
+                            err.stack = err.stack.replace(invalidCwdErr, invalidCwdErr + " (" + opts.cwd + ")");
+                        }
 
                         // socket was closed so we should try this once again (if not already retrying)
                         if (err.stack && err.stack.indexOf("WebSocket.self._ws.onclose") !== -1 && !retry) {
@@ -253,12 +266,12 @@ define(function (require, exports, module) {
                             var diff = currentTime - lastProgressTime;
                             if (diff > timeoutLength) {
                                 if (debugOn) {
-                                    Utils.consoleLog(extName + "cmd(" + cliId + ") - last progress message was sent " + diff + "ms ago - timeout");
+                                    Utils.consoleDebug("cmd(" + cliId + ") - last progress message was sent " + diff + "ms ago - timeout");
                                 }
                                 timeoutPromise();
                             } else {
                                 if (debugOn) {
-                                    Utils.consoleLog(extName + "cmd(" + cliId + ") - last progress message was sent " + diff + "ms ago - delay");
+                                    Utils.consoleDebug("cmd(" + cliId + ") - last progress message was sent " + diff + "ms ago - delay");
                                 }
                                 timeoutCall();
                             }

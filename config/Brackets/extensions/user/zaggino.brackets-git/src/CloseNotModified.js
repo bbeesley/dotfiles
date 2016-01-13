@@ -5,13 +5,13 @@ define(function (require, exports) {
     "use strict";
 
     var DocumentManager = brackets.getModule("document/DocumentManager"),
-        EditorManager   = brackets.getModule("editor/EditorManager"),
-        FileSystem      = brackets.getModule("filesystem/FileSystem");
+        FileSystem      = brackets.getModule("filesystem/FileSystem"),
+        MainViewManager = brackets.getModule("view/MainViewManager");
 
     var Events        = require("src/Events"),
         EventEmitter  = require("src/EventEmitter"),
         Git           = require("src/git/Git"),
-        Utils         = require("src/Utils"),
+        Preferences   = require("src/Preferences"),
         Strings       = require("strings");
 
     var $icon = $(null);
@@ -23,13 +23,13 @@ define(function (require, exports) {
         }
 
         Git.status().then(function (modifiedFiles) {
-            var openFiles = DocumentManager.getWorkingSet(),
-                projectRoot = Utils.getProjectRoot();
+            var openFiles      = MainViewManager.getWorkingSet(MainViewManager.ALL_PANES),
+                currentGitRoot = Preferences.get("currentGitRoot");
 
             openFiles.forEach(function (openFile) {
                 var removeOpenFile = true;
                 modifiedFiles.forEach(function (modifiedFile) {
-                    if (projectRoot + modifiedFile.file === openFile.fullPath) {
+                    if (currentGitRoot + modifiedFile.file === openFile.fullPath) {
                         removeOpenFile = false;
                         modifiedFile.isOpen = true;
                     }
@@ -43,8 +43,8 @@ define(function (require, exports) {
                     }
                 }
 
-                if (removeOpenFile) {
-                    DocumentManager.closeFullEditor(openFile);
+                if (removeOpenFile && !reopenModified) {
+                    MainViewManager._close(MainViewManager.ALL_PANES, openFile);
                 }
             });
 
@@ -53,13 +53,24 @@ define(function (require, exports) {
                     return !modifiedFile.isOpen;
                 });
                 filesToReopen.forEach(function (fileObj) {
-                    var fileEntry = FileSystem.getFileForPath(projectRoot + fileObj.file);
-                    DocumentManager.addToWorkingSet(fileEntry);
+                    var fileEntry = FileSystem.getFileForPath(currentGitRoot + fileObj.file);
+                    MainViewManager.addToWorkingSet(MainViewManager.ACTIVE_PANE, fileEntry);
                 });
             }
 
-            EditorManager.focusEditor();
+            MainViewManager.focusActivePane();
         });
+    }
+
+    function updateIconState() {
+        if (MainViewManager.getPaneCount() === 1 &&
+            MainViewManager.getWorkingSetSize(MainViewManager.ACTIVE_PANE) === 0) {
+            $icon.toggleClass("working-set-not-available", true);
+            $icon.toggleClass("working-set-available", false);
+        } else {
+            $icon.toggleClass("working-set-not-available", false);
+            $icon.toggleClass("working-set-available", true);
+        }
     }
 
     function init() {
@@ -69,7 +80,8 @@ define(function (require, exports) {
             .attr("title", Strings.TOOLTIP_CLOSE_NOT_MODIFIED)
             .html("<i class='octicon octicon-remove-close'></i>")
             .on("click", handleCloseNotModified)
-            .appendTo("#working-set-header");
+            .appendTo("#sidebar");
+        updateIconState();
     }
 
     EventEmitter.on(Events.GIT_ENABLED, function () {
@@ -78,6 +90,18 @@ define(function (require, exports) {
 
     EventEmitter.on(Events.GIT_DISABLED, function () {
         $icon.hide();
+    });
+
+    MainViewManager.on([
+        "workingSetAdd",
+        "workingSetAddList",
+        "workingSetRemove",
+        "workingSetRemoveList",
+        "workingSetUpdate",
+        "paneCreate",
+        "paneDestroy"
+    ].join(" "), function () {
+        updateIconState();
     });
 
     // Public API

@@ -11,13 +11,18 @@ define(function (require, exports) {
     var ExpectedError     = require("src/ExpectedError"),
         Events            = require("src/Events"),
         EventEmitter      = require("src/EventEmitter"),
-        Strings           = require("../strings"),
-        ErrorHandler      = require("./ErrorHandler"),
-        Panel             = require("./Panel"),
-        Branch            = require("./Branch"),
-        CloseNotModified  = require("./CloseNotModified"),
+        Strings           = require("strings"),
+        ErrorHandler      = require("src/ErrorHandler"),
+        Panel             = require("src/Panel"),
+        Branch            = require("src/Branch"),
+        ChangelogDialog   = require("src/ChangelogDialog"),
+        SettingsDialog    = require("src/SettingsDialog"),
+        CloseNotModified  = require("src/CloseNotModified"),
+        ExtensionInfo     = require("src/ExtensionInfo"),
         Setup             = require("src/utils/Setup"),
-        Utils             = require("src/Utils");
+        Preferences       = require("src/Preferences"),
+        Utils             = require("src/Utils"),
+        Promise           = require("bluebird");
 
     var CMD_ADD_TO_IGNORE      = "git.addToIgnore",
         CMD_REMOVE_FROM_IGNORE = "git.removeFromIgnore",
@@ -25,6 +30,14 @@ define(function (require, exports) {
                                     .attr("title", Strings.LOADING)
                                     .addClass("loading")
                                     .appendTo($("#main-toolbar .buttons"));
+
+    EventEmitter.on(Events.GIT_DISABLED, function () {
+        $icon.removeClass("dirty");
+    });
+
+    EventEmitter.on(Events.GIT_STATUS_RESULTS, function (results) {
+        $icon.toggleClass("dirty", results.length !== 0);
+    });
 
     // This only launches when Git is available
     function initUi() {
@@ -37,9 +50,9 @@ define(function (require, exports) {
     }
 
     function _addRemoveItemInGitignore(selectedEntry, method) {
-        var projectRoot = Utils.getProjectRoot(),
-            entryPath = "/" + selectedEntry.fullPath.substring(projectRoot.length),
-            gitignoreEntry = FileSystem.getFileForPath(projectRoot + ".gitignore");
+        var gitRoot = Preferences.get("currentGitRoot"),
+            entryPath = "/" + selectedEntry.fullPath.substring(gitRoot.length),
+            gitignoreEntry = FileSystem.getFileForPath(gitRoot + ".gitignore");
 
         gitignoreEntry.read(function (err, content) {
             if (err) {
@@ -82,14 +95,38 @@ define(function (require, exports) {
 
     function addItemToGitingoreFromPanel() {
         var filePath = Panel.getPanel().find("tr.selected").attr("x-file"),
-            fileEntry = FileSystem.getFileForPath(Utils.getProjectRoot() + filePath);
+            fileEntry = FileSystem.getFileForPath(Preferences.get("currentGitRoot") + filePath);
         return _addRemoveItemInGitignore(fileEntry, "add");
     }
 
     function removeItemFromGitingoreFromPanel() {
         var filePath = Panel.getPanel().find("tr.selected").attr("x-file"),
-            fileEntry = FileSystem.getFileForPath(Utils.getProjectRoot() + filePath);
+            fileEntry = FileSystem.getFileForPath(Preferences.get("currentGitRoot") + filePath);
         return _addRemoveItemInGitignore(fileEntry, "remove");
+    }
+
+    function _displayExtensionInfoIfNeeded() {
+        return new Promise(function (resolve) {
+            // Display settings panel on first start / changelog dialog on version change
+            ExtensionInfo.get().then(function (packageJson) {
+                // do not display dialogs when running tests
+                if (window.isBracketsTestWindow) {
+                    return;
+                }
+                var lastVersion    = Preferences.get("lastVersion"),
+                    currentVersion = packageJson.version;
+
+                if (!lastVersion) {
+                    Preferences.persist("lastVersion", "firstStart");
+                    SettingsDialog.show();
+                } else if (lastVersion !== currentVersion) {
+                    Preferences.persist("lastVersion", currentVersion);
+                    ChangelogDialog.show();
+                }
+
+                resolve();
+            });
+        });
     }
 
     function init() {
@@ -99,14 +136,22 @@ define(function (require, exports) {
 
             // Try to get Git version, if succeeds then Git works
             Setup.findGit().then(function (version) {
+
                 Strings.GIT_VERSION = version;
+
+                _displayExtensionInfoIfNeeded();
+
                 initUi();
+
             }).catch(function (err) {
                 $icon.addClass("error").attr("title", Strings.CHECK_GIT_SETTINGS + " - " + err.toString());
 
-                var expected = new ExpectedError(err);
-                expected.detailsUrl = "https://github.com/zaggino/brackets-git#dependencies";
-                ErrorHandler.showError(expected, Strings.CHECK_GIT_SETTINGS);
+                _displayExtensionInfoIfNeeded().then(function () {
+                    var expected = new ExpectedError(err);
+                    expected.detailsUrl = "https://github.com/zaggino/brackets-git#dependencies";
+                    ErrorHandler.showError(expected, Strings.CHECK_GIT_SETTINGS);
+                });
+
             });
 
             // register commands for project tree / working files
@@ -130,7 +175,7 @@ define(function (require, exports) {
             return;
         }
         var projectCmenu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-        var workingCmenu = Menus.getContextMenu(Menus.ContextMenuIds.WORKING_SET_MENU);
+        var workingCmenu = Menus.getContextMenu(Menus.ContextMenuIds.WORKING_SET_CONTEXT_MENU);
         if (bool) {
             _divider1 = projectCmenu.addMenuDivider();
             _divider2 = workingCmenu.addMenuDivider();
@@ -155,10 +200,6 @@ define(function (require, exports) {
     });
     EventEmitter.on(Events.GIT_DISABLED, function () {
         toggleMenuEntries(false);
-    });
-    // TODO: investigate this event
-    EventEmitter.on(Events.HANDLE_PROJECT_REFRESH, function () {
-        $(ProjectManager).triggerHandler("projectRefresh");
     });
 
     // API

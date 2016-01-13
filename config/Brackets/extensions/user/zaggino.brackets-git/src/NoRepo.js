@@ -7,13 +7,14 @@ define(function (require) {
 
     // Local modules
     var Promise         = require("bluebird"),
-        Strings         = require("strings"),
         ErrorHandler    = require("src/ErrorHandler"),
         Events          = require("src/Events"),
         EventEmitter    = require("src/EventEmitter"),
         ExpectedError   = require("src/ExpectedError"),
         ProgressDialog  = require("src/dialogs/Progress"),
+        CloneDialog     = require("src/dialogs/Clone"),
         Git             = require("src/git/Git"),
+        Preferences     = require("src/Preferences"),
         Utils           = require("src/Utils");
 
     // Templates
@@ -24,7 +25,7 @@ define(function (require) {
     // Implementation
 
     function createGitIgnore() {
-        var gitIgnorePath = Utils.getProjectRoot() + ".gitignore";
+        var gitIgnorePath = Preferences.get("currentGitRoot") + ".gitignore";
         return Utils.pathExists(gitIgnorePath).then(function (exists) {
             if (!exists) {
                 return Promise.cast(FileUtils.writeText(FileSystem.getFileForPath(gitIgnorePath), gitignoreTemplate));
@@ -37,8 +38,6 @@ define(function (require) {
             return Git.stage(".gitignore");
         }).then(function () {
             return Git.commit(msg || ".gitignore created by brackets-git extension");
-        }).then(function () {
-            return EventEmitter.emit(Events.HANDLE_PROJECT_REFRESH);
         });
     }
 
@@ -70,6 +69,8 @@ define(function (require) {
             return commitGitIgnore("Initial commit");
         }).catch(function (err) {
             ErrorHandler.showError(err, "Initializing new repository failed");
+        }).then(function () {
+            EventEmitter.emit(Events.REFRESH_ALL);
         });
     }
 
@@ -87,21 +88,48 @@ define(function (require) {
 
     function handleGitClone() {
         var $gitPanel = $("#git-panel");
+        var $cloneButton = $gitPanel.find(".git-clone");
+        $cloneButton.prop("disabled", true);
         isProjectRootEmpty().then(function (isEmpty) {
             if (isEmpty) {
-                return Utils.askQuestion(Strings.CLONE_REPOSITORY, Strings.ENTER_REMOTE_GIT_URL).then(function (remoteGitUrl) {
-                    $gitPanel.find(".git-clone").prop("disabled", true);
-                    return ProgressDialog.show(Git.clone(remoteGitUrl, "."))
-                        .then(function () {
-                            EventEmitter.emit(Events.REFRESH_ALL);
+                CloneDialog.show().then(function (cloneConfig) {
+                    var q = Promise.resolve();
+                    // put username and password into remote url
+                    var remoteUrl = cloneConfig.remoteUrl;
+                    if (cloneConfig.remoteUrlNew) {
+                        remoteUrl = cloneConfig.remoteUrlNew;
+                    }
+
+                    // do the clone
+                    q = q.then(function () {
+                        return ProgressDialog.show(Git.clone(remoteUrl, "."));
+                    }).catch(function (err) {
+                        ErrorHandler.showError(err, "Cloning remote repository failed!");
+                    });
+
+                    // restore original url if desired
+                    if (cloneConfig.remoteUrlRestore) {
+                        q = q.then(function () {
+                            return Git.setRemoteUrl(cloneConfig.remote, cloneConfig.remoteUrlRestore);
                         });
+                    }
+
+                    return q.finally(function () {
+                        EventEmitter.emit(Events.REFRESH_ALL);
+                    });
+                }).catch(function (err) {
+                    // when dialog is cancelled, there's no error
+                    if (err) { ErrorHandler.showError(err, "Cloning remote repository failed!"); }
                 });
+
             } else {
                 var err = new ExpectedError("Project root is not empty, be sure you have deleted hidden files");
                 ErrorHandler.showError(err, "Cloning remote repository failed!");
             }
         }).catch(function (err) {
             ErrorHandler.showError(err);
+        }).finally(function () {
+            $cloneButton.prop("disabled", false);
         });
     }
 
@@ -113,7 +141,10 @@ define(function (require) {
         handleGitClone();
     });
     EventEmitter.on(Events.GIT_NO_BRANCH_EXISTS, function () {
-        commitGitIgnore();
+        commitGitIgnore()
+            .then(function () {
+                EventEmitter.emit(Events.REFRESH_ALL);
+            });
     });
 
 });

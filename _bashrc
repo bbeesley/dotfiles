@@ -14,3 +14,18 @@ alias behat="php ~/lib/behat.phar"
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 export EDITOR=vi
+
+# maven shit
+export M2_HOME=/opt/apache-maven-3.3.3
+export M2=$M2_HOME/bin
+PATH=$M2:$PATH
+
+# java shit
+JAVA_HOME=/etc/alternatives/java_sdk
+export JAVA_HOME
+PATH=$JAVA_HOME/bin:$PATH
+export PATH
+export VAGRANT_DEFAULT_PROVIDER=virtualbox
+
+export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+export PATH="$PATH:$HOME/cx/dev_tools/scripts" # WHC scripts

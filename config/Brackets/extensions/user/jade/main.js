@@ -3,8 +3,8 @@ define(function (require, exports, module) {
 
   CodeMirror.defineMode('jade', function (config) {
     'use strict';
-      
-    if (!CodeMirror.StringStream.prototype.hideFirstChars) {
+  
+    if (false && !CodeMirror.StringStream.prototype.hideFirstChars) {
       var SS = CodeMirror.StringStream.prototype;
       var countColumn = CodeMirror.countColumn;
       SS.sol = function () {
@@ -31,50 +31,50 @@ define(function (require, exports, module) {
         finally { this.lineStart -= n; }
       }
     }
-   
+  
     // token types
     var KEYWORD = 'keyword';
     var DOCTYPE = 'meta';
     var ID = 'builtin';
     var CLASS = 'qualifier';
-   
+  
     var ATTRS_NEST = {
       '{': '}',
       '(': ')',
       '[': ']'
     };
-    
+  
     var jsMode = CodeMirror.getMode(config, 'javascript');
     // So the dependency can be detected
     CodeMirror.getMode(config, 'css');
-    
+  
     function State() {
       this.javaScriptLine = false;
       this.javaScriptLineExcludesColon = false;
-      
+  
       this.javaScriptArguments = false;
       this.javaScriptArgumentsDepth = 0;
-      
+  
       this.isInterpolating = false;
       this.interpolationNesting = 0;
-      
+  
       this.jsState = jsMode.startState();
-      
+  
       this.restOfLine = '';
-      
+  
       this.isIncludeFiltered = false;
       this.isEach = false;
-      
+  
       this.lastTag = '';
       this.scriptType = '';
-      
+  
       // Attributes Mode
       this.isAttrs = false;
       this.attrsNest = [];
       this.inAttributeName = true;
       this.attributeIsType = false;
       this.attrValue = '';
-      
+  
       // Indented Mode
       this.indentOf = Infinity;
       this.indentToken = '';
@@ -104,9 +104,9 @@ define(function (require, exports, module) {
       if (this.innerMode && this.innerState) {
         res.innerState = CodeMirror.copyState(this.innerMode, this.innerState);
       }
-      
+  
       res.restOfLine = this.restOfLine;
-      
+  
       res.isIncludeFiltered = this.isIncludeFiltered;
       res.isEach = this.isEach;
       res.lastTag = this.lastTag;
@@ -161,7 +161,7 @@ define(function (require, exports, module) {
         return tok || true;
       }
     }
-    
+  
     function yieldStatement(stream, state) {
       if (stream.match(/^yield\b/)) {
           return 'keyword';
@@ -173,7 +173,7 @@ define(function (require, exports, module) {
           return DOCTYPE;
       }
     }
-    
+  
     function interpolation(stream, state) {
       if (stream.match('#{')) {
         state.isInterpolating = true;
@@ -197,14 +197,14 @@ define(function (require, exports, module) {
         return jsMode.token(stream, state.jsState) || true;
       }
     }
-    
+  
     function caseStatement(stream, state) {
       if (stream.match(/^case\b/)) {
         state.javaScriptLine = true;
         return KEYWORD;
       }
     }
-    
+  
     function when(stream, state) {
       if (stream.match(/^when\b/)) {
         state.javaScriptLine = true;
@@ -212,20 +212,20 @@ define(function (require, exports, module) {
         return KEYWORD;
       }
     }
-    
+  
     function defaultStatement(stream, state) {
       if (stream.match(/^default\b/)) {
         return KEYWORD;
       }
     }
-    
+  
     function extendsStatement(stream, state) {
       if (stream.match(/^extends?\b/)) {
         state.restOfLine = 'string';
         return KEYWORD;
       }
     }
-    
+  
     function append(stream, state) {
       if (stream.match(/^append\b/)) {
         state.restOfLine = 'variable';
@@ -244,14 +244,14 @@ define(function (require, exports, module) {
         return KEYWORD;
       }
     }
-    
+  
     function include(stream, state) {
       if (stream.match(/^include\b/)) {
         state.restOfLine = 'string';
         return KEYWORD;
       }
     }
-    
+  
     function includeFiltered(stream, state) {
       if (stream.match(/^include:([a-zA-Z0-9\-]+)/, false) && stream.match('include')) {
         state.isIncludeFiltered = true;
@@ -267,14 +267,14 @@ define(function (require, exports, module) {
         return tok;
       }
     }
-    
+  
     function mixin(stream, state) {
       if (stream.match(/^mixin\b/)) {
         state.javaScriptLine = true;
         return KEYWORD;
       }
     }
-    
+  
     function call(stream, state) {
       if (stream.match(/^\+([-\w]+)/)) {
         if (!stream.match(/^\( *[-\w]+ *=/, false)) {
@@ -299,14 +299,14 @@ define(function (require, exports, module) {
         return true;
       }
     }
-    
+  
     function conditional(stream, state) {
       if (stream.match(/^(if|unless|else if|else)\b/)) {
         state.javaScriptLine = true;
         return KEYWORD;
       }
     }
-    
+  
     function each(stream, state) {
       var captures;
       if (stream.match(/^(- *)?(each|for)\b/)) {
@@ -328,14 +328,14 @@ define(function (require, exports, module) {
         }
       }
     }
-    
+  
     function whileStatement(stream, state) {
       if (stream.match(/^while\b/)) {
         state.javaScriptLine = true;
         return KEYWORD;
       }
     }
-    
+  
     function tag(stream, state) {
       var captures;
       if (captures = stream.match(/^(\w(?:[-:\w]*\w)?)\/?/)) {
@@ -346,7 +346,7 @@ define(function (require, exports, module) {
         return 'tag';
       }
     }
-    
+  
     function filter(stream, state) {
       if (stream.match(/^:([\w\-]+)/)) {
         var innerMode;
@@ -363,26 +363,26 @@ define(function (require, exports, module) {
         return 'atom';
       }
     }
-    
+  
     function code(stream, state) {
       if (stream.match(/^(!?=|-)/)) {
         state.javaScriptLine = true;
         return 'punctuation';
       }
     }
-    
+  
     function id(stream, state) {
       if (stream.match(/^#([\w-]+)/)) {
         return ID;
       }
     }
-    
+  
     function className(stream, state) {
       if (stream.match(/^\.([\w-]+)/)) {
         return CLASS;
       }
     }
-    
+  
     function attrs(stream, state) {
       if (stream.peek() == '(') {
         stream.next();
@@ -394,7 +394,7 @@ define(function (require, exports, module) {
         return 'punctuation';
       }
     }
-    
+  
     function attrsContinued(stream, state) {
       if (state.isAttrs) {
         if (ATTRS_NEST[stream.peek()]) {
@@ -418,7 +418,7 @@ define(function (require, exports, module) {
           }
           return 'attribute';
         }
-        
+  
         var tok = jsMode.token(stream, state.jsState);
         if (state.attributeIsType && tok === 'string') {
           state.scriptType = stream.current().toString();
@@ -438,7 +438,7 @@ define(function (require, exports, module) {
         return tok || true;
       }
     }
-    
+  
     function attributesBlock(stream, state) {
       if (stream.match(/^&attributes\b/)) {
         state.javaScriptArguments = true;
@@ -446,13 +446,13 @@ define(function (require, exports, module) {
         return 'keyword';
       }
     }
-    
+  
     function indent(stream, state) {
       if (stream.sol() && stream.eatSpace()) {
         return 'indent';
       }
     }
-    
+  
     function comment(stream, state) {
       if (stream.match(/^ *\/\/(-)?([^\n]*)/)) {
         state.indentOf = stream.indentation();
@@ -460,13 +460,13 @@ define(function (require, exports, module) {
         return 'comment';
       }
     }
-    
+  
     function colon(stream, state) {
       if (stream.match(/^: */)) {
         return 'colon';
       }
     }
-    
+  
     function text(stream, state) {
       if (stream.match(/^(?:\| ?| )([^\n]+)/)) {
         return 'string';
@@ -478,7 +478,7 @@ define(function (require, exports, module) {
         return innerMode(stream, state, true);
       }
     }
-    
+  
     function dot(stream, state) {
       if (stream.eat('.')) {
         var innerMode = null;
@@ -491,20 +491,20 @@ define(function (require, exports, module) {
         return 'dot';
       }
     }
-    
+  
     function fail(stream, state) {
       stream.next();
       return null;
     }
-   
-    
+  
+  
     function setInnerMode(stream, state, mode) {
       mode = CodeMirror.mimeModes[mode] || mode;
       mode = config.innerModes ? config.innerModes(mode) || mode : mode;
       mode = CodeMirror.mimeModes[mode] || mode;
       mode = CodeMirror.getMode(config, mode);
       state.indentOf = stream.indentation();
-      
+  
       if (mode && mode.name !== 'null') {
         state.innerMode = mode;
       } else {
@@ -543,8 +543,8 @@ define(function (require, exports, module) {
         return tok;
       }
     }
-    
-    
+  
+  
     function startState() {
       return new State();
     }
@@ -607,6 +607,53 @@ define(function (require, exports, module) {
       token: nextToken
     }
   });
+  ;//Adding an overlay to the js CodeMirror mode
+  
+  (function (CodeMirror, getMode) {
+    if (!CodeMirror.overlayMode) return;
+    var jade = CodeMirror.getMode({}, 'jade');
+    CodeMirror.getMode = function (options, spec) {
+      var mode = getMode.apply(this, arguments);
+      if (mode && mode.name === 'javascript' && !mode.hasJadeSupport) {
+        //{ startState: startState, copyState: copyState, token: nextToken }
+        mode = CodeMirror.overlayMode(mode, {
+          startState: function () {
+            return {overlay: false, jade: null};
+          },
+          copyState: function (s) {
+            return {overlay: s.overlay, jade: s.jade ? jade.copyState(s.jade) : s.jade};
+          },
+          token: function(stream, state) {
+            if (!state.overlay && stream.match('jade`')) {
+              state.overlay = true;
+              state.jade = jade.startState();
+              return null;
+            }
+            if (state.overlay && stream.match('`')) {
+              state.overlay = false;
+              state.jade = null;
+              return null;
+            }
+            if (state.overlay) {
+              var token = jade.token(stream, state.jade);
+              if (stream.current().indexOf('`') !== -1) {
+                state.overlay = false;
+                state.jade = null;
+              }
+              return token ? token : 'jade-default';
+            } else {
+              stream.skipTo('j') || stream.skipToEnd();
+              if (!stream.current()) stream.next();
+              return null;
+            }
+          }
+        });
+        mode.name = 'javascript';
+        mode.hasJadeSupport = true;
+      }
+      return mode;
+    };
+  }(CodeMirror, CodeMirror.getMode));
   
 
   var LanguageManager = brackets.getModule("language/LanguageManager");

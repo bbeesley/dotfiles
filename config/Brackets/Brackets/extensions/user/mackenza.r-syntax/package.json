@@ -1,0 +1,16 @@
+{
+    "name": "mackenza.r-syntax",
+    "title": "R Language Syntax Highlighting",
+    "description": "Uses the R mode from CodeMirror",
+    "homepage": "https://github.com/mackenza/php-composer",
+    "version": "1.0.0",
+    "author": {
+        "name": "Andrew MacKenzie",
+        "email": "a.mackenzie@gmail.com",
+        "url": "https://github.com/mackenza"
+    },
+    "license": "MIT",
+    "engines": {
+        "brackets": ">=1.0.0"
+    }
+}

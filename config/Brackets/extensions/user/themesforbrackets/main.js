@@ -26,6 +26,8 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
 /*global define, $, brackets, window, */
 
+//var text = document.createElement('textarea');
+
 define(function (require, exports, module) {
     "use strict";
 
@@ -41,12 +43,10 @@ define(function (require, exports, module) {
 
     prefs.on("change", function (e, data) {
         var i = 0, theme;
-        console.log("Possibly changed prefs:", data.ids);
         for (i = 0; i < data.ids.length; i++) {
             if (data.ids[i] === "theme") {
                 theme = prefs.get("theme");
                 if (theme.indexOf("Themes-for-Brackets") === 0) {
-                    console.log("Themes for Brackets theme. Loading css...");
                     $("#TfB-style").attr("href", moduleThemesDir + theme.substr(20) + ".css"); //20 = "Themes-for-Brackets-"
                 }
             }
@@ -58,18 +58,37 @@ define(function (require, exports, module) {
     }
 
     FileSystem.getDirectoryForPath(moduleThemesDir).getContents(function (err, contents) {
-        var i;
+        var i, tempArr = [];
         if (err) {
             console.log("Error getting themes:" + err);
+            return false;
         }
         for (i = 0; i < contents.length; i++) {
             if (contents[i].name !== ".DS_Store") {
-
-                var name = "Themes-for-Brackets-" + contents[i].name.replace(".css", ""),
-                    title = "Themes for Brackets  " + upperCase(contents[i].name.replace(".css", "")).replace(/\-/g, ' ');
-
-                ThemeManager.loadFile(moduleThemesDir + contents[i].name, {name: name, title: title, dark: true});
+                tempArr.push({
+                    file: contents[i].name,
+                    name: "Themes-for-Brackets-" + contents[i].name.replace(".css", ""),
+                    title: "Themes for Brackets  " + upperCase(contents[i].name.replace(".css", "")).replace(/\-/g, ' ')
+                });
+                
+                //text.innerHTML += '* ' + a + ' <br />![' + a + ' theme](https://raw.github.com/Jacse/themes-for-brackets/master/images/' + contents[i].name.replace(".css", "") + '.png) \n';
+                //var name = "Themes-for-Brackets-" + contents[i].name.replace(".css", ""),
+                //   title = "Themes for Brackets  " + upperCase(contents[i].name.replace(".css", "")).replace(/\-/g, ' ');
             }
+        }
+        
+        //Sort themes alphabetically
+        tempArr.sort(function (a, b) {
+            if (a.file < b.file) {
+                return -1;
+            }
+            if (a.file > b.file) {
+                return 1;
+            }
+            return 0;
+        });
+        for (i = 0; i < tempArr.length; i++) {
+            ThemeManager.loadFile(moduleThemesDir + tempArr[i].file, {name: tempArr[i].name, title: tempArr[i].title, dark: true});
         }
     });
 

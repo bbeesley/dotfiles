@@ -2,8 +2,6 @@ define(function (require, exports) {
     "use strict";
 
     var _               = brackets.getModule("thirdparty/lodash"),
-        EditorManager   = brackets.getModule("editor/EditorManager"),
-        CommandManager  = brackets.getModule("command/CommandManager"),
         FileUtils       = brackets.getModule("file/FileUtils");
 
     var marked        = require("marked"),
@@ -20,10 +18,12 @@ define(function (require, exports) {
 
     var avatarType             = Preferences.get("avatarType"),
         enableAdvancedFeatures = Preferences.get("enableAdvancedFeatures"),
+        useDifftool            = false,
         isShown                = false,
         commit                 = null,
-        previousFile           = null,
-        $viewer                = null;
+        isInitial              = null,
+        $viewer                = null,
+        $editorHolder          = null;
 
     var setExpandState = _.debounce(function () {
         var allFiles = $viewer.find(".commit-files a"),
@@ -53,7 +53,7 @@ define(function (require, exports) {
                 relativeFilePath = $li.attr("x-file"),
                 $diffContainer = $li.find(".commit-diff");
 
-            Git.getDiffOfFileFromCommit(commit.hash, relativeFilePath).then(function (diff) {
+            Git.getDiffOfFileFromCommit(commit.hash, relativeFilePath, isInitial).then(function (diff) {
                 $diffContainer.html(Utils.formatDiff(diff));
                 $diffContainer.scrollTop($a.attr("scrollPos") || 0);
 
@@ -67,6 +67,11 @@ define(function (require, exports) {
             $a.addClass("active");
             setExpandState();
         }
+    }
+
+    function showDiff($el) {
+        var file = $el.closest("[x-file]").attr("x-file");
+        Git.difftoolFromHash(commit.hash, file, isInitial);
     }
 
     function expandAll() {
@@ -84,10 +89,15 @@ define(function (require, exports) {
             .on("click", ".commit-files a", function () {
                 toggleDiff($(this));
             })
+            .on("click", ".commit-files .difftool", function (e) {
+                e.stopPropagation();
+                showDiff($(this));
+            })
             .on("click", ".openFile", function (e) {
                 e.stopPropagation();
                 var file = $(this).closest("[x-file]").attr("x-file");
                 Utils.openEditorForFile(file, true);
+                hide();
             })
             .on("click", ".close", function () {
                 // Close history viewer
@@ -195,12 +205,14 @@ define(function (require, exports) {
 
         renderFiles(files);
 
-        var firstFile = selectedFile || $viewer.find(".commit-files ul li:first-child").text().trim();
-        if (firstFile) {
-            Git.getDiffOfFileFromCommit(commit.hash, firstFile).then(function (diff) {
-                $viewer.find(".commit-files a[data-file='" + firstFile + "']").first().addClass("active");
-                $viewer.find(".commit-diff").html(Utils.formatDiff(diff));
-            });
+        if (selectedFile) {
+            var $fileEntry = $viewer.find(".commit-files li[x-file='" + selectedFile + "'] a").first();
+            if ($fileEntry.length) {
+                toggleDiff($fileEntry);
+                window.setTimeout(function () {
+                    $viewer.find(".body").animate({ scrollTop: $fileEntry.position().top - 10 });
+                }, 80);
+            }
         }
 
         attachEvents();
@@ -208,7 +220,9 @@ define(function (require, exports) {
 
     function renderFiles(files) {
         $viewer.find(".filesContainer").append(Mustache.render(historyViewerFilesTemplate, {
-            files: files
+            files: files,
+            Strings: Strings,
+            useDifftool: useDifftool
         }));
 
         // Activate/Deactivate load more button
@@ -222,7 +236,7 @@ define(function (require, exports) {
     }
 
     function loadMoreFiles() {
-        Git.getFilesFromCommit(commit.hash).then(function (files) {
+        Git.getFilesFromCommit(commit.hash, isInitial).then(function (files) {
 
             hasNextPage = files.slice((currentPage + 1) * PAGE_SIZE).length > 0;
             files = files.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
@@ -251,7 +265,11 @@ define(function (require, exports) {
         });
     }
 
-    function render(hash, $editorHolder) {
+    function render() {
+        if ($viewer) {
+            remove();
+        }
+
         $viewer = $("<div>").addClass("git spinner large spin");
 
         currentPage = 0;
@@ -260,15 +278,21 @@ define(function (require, exports) {
         return $viewer.appendTo($editorHolder);
     }
 
-    function show(commitInfo, _previousFile) {
-        isShown       = true;
-        commit        = commitInfo;
-        previousFile  = _previousFile;
-        // TODO: we will need to replace this with something ours later and not to use private API
-        EditorManager._showCustomViewer({
-            render: render,
-            onRemove: onRemove
-        }, commit.hash);
+    var initialize = _.once(function () {
+        Git.getConfig("diff.tool").done(function (config) {
+            useDifftool = !!config;
+        });
+    });
+
+    function show(commitInfo, doc, options) {
+        initialize();
+
+        isShown   = true;
+        commit    = commitInfo;
+        isInitial = options.isInitial;
+
+        $editorHolder = $("#editor-holder");
+        render();
     }
 
     function onRemove() {
@@ -284,12 +308,8 @@ define(function (require, exports) {
     }
 
     function remove() {
-        if (previousFile && previousFile.file) {
-            // TODO: use utils?
-            CommandManager.execute("file.open", previousFile.file);
-        } else {
-            EditorManager._closeCustomViewer();
-        }
+        $viewer.remove();
+        onRemove();
     }
 
     function isVisible() {

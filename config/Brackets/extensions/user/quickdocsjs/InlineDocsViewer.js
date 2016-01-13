@@ -36,8 +36,12 @@ define(function (require, exports, module) {
         InlineWidget        = brackets.getModule("editor/InlineWidget").InlineWidget,
         KeyEvent            = brackets.getModule("utils/KeyEvent"),
         NativeApp           = brackets.getModule("utils/NativeApp"),
-        Strings             = brackets.getModule("strings");
+        Strings             = brackets.getModule("strings"),
+		QuickOpenJS			= require('QuickOpenJS');
+
     
+	var infoUrl,infoUrlName,licenseUrl,licenseUrlName;
+
     // Load template
     var inlineEditorTemplate = require("text!InlineDocsViewer.html");
     
@@ -50,16 +54,60 @@ define(function (require, exports, module) {
     
     /**
      * @param {!string} jsPropName
-     * @param {!{SUMMARY:string, SYNTAX:string, RETURN:string, URL:string, VALUES:Array.<{TITLE:string, DESCRIPTION:string}>}} jsPropDetails
+     * @param {!{SUMMARY:string, SYNTAX:string, RETURN:string, EXTRAS: Object, URL:string, VALUES:Array.<{TITLE:string, DESCRIPTION:string}>}} jsPropDetails
      */
     function InlineDocsViewer(jsPropName, jsPropDetails) {
         InlineWidget.call(this);
         
         // valueInfo.t = title (.d = description)
         var propValues = jsPropDetails.VALUES.map(function (valueInfo) {
-            return { value: valueInfo.t, description: valueInfo.d, type: valueInfo.type };
+			valueInfo.cssOptionalDefault = 'display:none;';
+			if (valueInfo.optional) {
+				if (valueInfo.default !== null && typeof valueInfo.default !== "undefined") {
+					valueInfo.default = 'Default: '+valueInfo.default;
+					valueInfo.cssOptionalDefault = 'display:inline;';
+				}
+				valueInfo.cssOptional = 'display:inline;';
+			} else {
+				valueInfo.cssOptional = 'display:none;';
+			}
+			var propsForProps = false;
+			if ("pa" in valueInfo) {
+				propsForProps = valueInfo.pa.map(function (propsForValue) {
+					propsForValue.cssOptionalDefault = 'display:none;';
+					if (propsForValue.optional) {
+						if (propsForValue.default !== null && typeof propsForValue.default !== "undefined") {
+							propsForValue.default = 'Default: '+propsForValue.default;
+							propsForValue.cssOptionalDefault = 'display:inline;';
+						}
+						propsForValue.cssOptional = 'display:inline;';
+					} else {
+						propsForValue.cssOptional = 'display:none;';
+					}
+
+					return {
+						name: 					propsForValue.t,
+						description: 			parseJSDocs(propsForValue.d),
+						type: 					propsForValue.type,
+						default: 				propsForValue.default,
+						cssOptional: 			propsForValue.cssOptional,
+						cssOptionalDefault: 	propsForValue.cssOptionalDefault
+					};
+				});
+			}
+				
+            return {
+				name: 					valueInfo.t,
+				description: 			parseJSDocs(valueInfo.d),
+				propsForProps:			propsForProps,
+				type: 					valueInfo.type,
+				default: 				valueInfo.default,
+				cssOptional: 			valueInfo.cssOptional,
+				cssOptionalDefault: 	valueInfo.cssOptionalDefault
+			};
         });
-		var returnValues = [{description: jsPropDetails.RETURN.d, type: jsPropDetails.RETURN.type}];
+		
+		var returnValues = [{description: parseJSDocs(jsPropDetails.RETURN.d), type: jsPropDetails.RETURN.type}];
 
         
         var bottom_style = '', syntax_style = '', return_style = '';
@@ -75,10 +123,39 @@ define(function (require, exports, module) {
             return_style = 'display: none;';
         }
        
+		window.addEventListener
+		if (jsPropDetails.URL && jsPropDetails.URL.indexOf("http://nodejs.org") === 0) {
+			infoUrl 		= "http://nodejs.org";
+			infoUrlName 	= "NodeJS.org";
+			licenseUrl		= "https://raw.githubusercontent.com/joyent/node/v0.10.32/LICENSE";
+			licenseUrlName	= "NodeJS License";
+		} else if (jsPropDetails.URL && jsPropDetails.URL.indexOf("http://api.jquery.com") === 0) {
+			infoUrl 		= "https://api.jquery.com/";
+			infoUrlName 	= "jquery.com"
+			licenseUrl		= "http://en.wikipedia.org/wiki/MIT_License";
+			licenseUrlName	= "MIT License";
+		} else if (jsPropDetails.URL && jsPropDetails.URL.indexOf("http://facebook.github.io") === 0) {
+			infoUrl 		= "http://facebook.github.io/react/";
+			infoUrlName 	= "ReactJS";
+			licenseUrl		= "https://raw.githubusercontent.com/facebook/react/master/LICENSE";
+			licenseUrlName	= "BSD License";
+		} else {
+			infoUrl 		= "https://developer.mozilla.org/";
+			infoUrlName 	= "mozilla.org"
+			licenseUrl		= "https://developer.mozilla.org/en-US/docs/MDN/About#Copyrights_and_licenses";
+			licenseUrlName	= "Creative Commons License";
+		}
         
+
         var templateVars = {
             propName      : jsPropName,
-            summary       : jsPropDetails.SUMMARY,
+            summary       : parseJSDocs(jsPropDetails.SUMMARY),
+            creationExtras: ("author" in jsPropDetails.EXTRAS || "createDate" in jsPropDetails.EXTRAS) ? true : false,
+            modifiedExtras: ("lastmodifiedBy" in jsPropDetails.EXTRAS || "lastmodifiedDate" in jsPropDetails.EXTRAS) ? true : false,
+            author        : "author" in jsPropDetails.EXTRAS ? jsPropDetails.EXTRAS.author : "",
+            lastmodifiedBy : "lastmodifiedBy" in jsPropDetails.EXTRAS ? jsPropDetails.EXTRAS.lastmodifiedBy : "",
+            createDate  : "createDate" in jsPropDetails.EXTRAS ? jsPropDetails.EXTRAS.createDate : "",
+            lastmodifiedDate: "lastmodifiedDate" in jsPropDetails.EXTRAS ? jsPropDetails.EXTRAS.lastmodifiedDate : "",
             syntax        : jsPropDetails.SYNTAX,
             returnValues  : returnValues,
             propValues    : propValues,
@@ -86,11 +163,14 @@ define(function (require, exports, module) {
             BottomStyle   : bottom_style,
             SyntaxStyle   : syntax_style,
             ReturnStyle   : return_style,
-            Strings       : Strings
+            Strings       : Strings,
+			infoUrl		  : infoUrl,
+			infoUrlName   : infoUrlName,
+			licenseUrl    : licenseUrl,
+			licenseUrlName: licenseUrlName
         };
         
-        var html = Mustache.render(inlineEditorTemplate, templateVars);
-        
+        var html = Mustache.render(inlineEditorTemplate, templateVars);	
         this.$wrapperDiv = $(html);
         this.$htmlContent.append(this.$wrapperDiv);
         
@@ -98,11 +178,14 @@ define(function (require, exports, module) {
         this.$wrapperDiv.find("a").each(function (index, elem) {
             var $elem = $(elem);
             var url = $elem.attr("href");
-            if (url && url.substr(0, 4) !== "http") {
+            if (url && url.substr(0, 4) !== "http" && !$elem.hasClass('jumpToDef')) {
                 // URLs in JSON data are relative
                 url = "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/" + url;
                 $elem.attr("href", url);
-            }
+            } else if (url) {
+				// URLs in JSON data are relative
+                $elem.attr("href", url);
+			}
             $elem.attr("title", url);
         });
         
@@ -112,6 +195,13 @@ define(function (require, exports, module) {
         this.$scroller = this.$wrapperDiv.find(".scroller");
         this.$scroller.on("mousewheel", this._handleWheelScroll);
         this._onKeydown = this._onKeydown.bind(this);
+
+		this.$jumpToDef = this.$wrapperDiv.find(".jumpToDef");
+		this.$jumpToDef.on('click', function(event) {
+			event.preventDefault();
+			var linkFunc = $(this).attr("href").substr(1);
+			QuickOpenJS.itemFocus(linkFunc);
+		});
     }
     
     InlineDocsViewer.prototype = Object.create(InlineWidget.prototype);
@@ -230,6 +320,46 @@ define(function (require, exports, module) {
         this.hostEditor.setInlineWidgetHeight(this, this.$wrapperDiv.height() + 20, true);
     };
     
+
+	/**
+	 * {@link get_userdefined_tags}
+	 * @param   {String} doc [[Description]]
+	 * @returns {String} [[Description]]
+	 */
+	function parseJSDocs(doc) {
+		if (typeof doc == "string") {
+			doc = doc.replace(/<br \/>|<br>/,'\r\n');
+			doc = doc.replace(/{@link\s+([^|}]*?)\|\s*(.*?)}/m,function(match,p1,p2) {
+				if (/^https?:\/\//.test(p1.trim())) {
+					return '<a href="'+p1.trim()+'">'+p2.trim()+'</a>';
+				}
+				return '<a class="jumpToDef" href="#'+p1.trim()+'">'+p2.trim()+'</a>';
+			});
+			doc = doc.replace(/(?:\[(.*?)\])?{@link\s+([^| ]*?)(?:\s+(.*?))?}/m,function(match,p1,p2,p3) {
+				if (p1) {
+					if (/^https?:\/\//.test(p1.trim())) {
+						return '<a href="'+p2.trim()+'">'+p1.trim()+'</a>';
+					}
+					return '<a class="jumpToDef" href="#'+p2.trim()+'">'+p1.trim()+'</a>';
+				}
+				if (p3) {
+					if (/^https?:\/\//.test(p2.trim())) {
+						return '<a href="'+p2.trim()+'">'+p3.trim()+'</a>';
+					}
+					return '<a class="jumpToDef" href="#'+p2.trim()+'">'+p3.trim()+'</a>';
+				}
+				if (/^https?:\/\//.test(p2.trim())) {
+					return '<a href="'+p2.trim()+'">'+p2.trim()+'</a>';
+				}
+				return '<a class="jumpToDef" href="#'+p2.trim()+'">'+p2.trim()+'</a>';
+
+			});
+			doc = doc.replace(/\r\n/,'<br />');
+		}
+		return doc;
+	}
+
+
     
     module.exports = InlineDocsViewer;
 });

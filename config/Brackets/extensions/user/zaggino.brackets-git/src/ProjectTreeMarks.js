@@ -2,90 +2,104 @@ define(function (require) {
     "use strict";
 
     var _                 = brackets.getModule("thirdparty/lodash"),
-        FileSystem        = brackets.getModule("filesystem/FileSystem");
+        FileSystem        = brackets.getModule("filesystem/FileSystem"),
+        ProjectManager    = brackets.getModule("project/ProjectManager");
 
     var EventEmitter      = require("src/EventEmitter"),
         Events            = require("src/Events"),
         Git               = require("src/git/Git"),
         Preferences       = require("src/Preferences"),
-        Promise           = require("bluebird"),
-        Utils             = require("src/Utils");
+        Promise           = require("bluebird");
 
     var ignoreEntries = [],
         newPaths      = [],
         modifiedPaths = [];
 
+    if (!Preferences.get("markModifiedInTree")) {
+        // end here, no point in processing the code below
+        return;
+    }
+
+    function loadIgnoreContents() {
+        var defer = Promise.defer(),
+            gitRoot = Preferences.get("currentGitRoot"),
+            excludeContents,
+            gitignoreContents;
+
+        var finish = _.after(2, function () {
+            defer.resolve(excludeContents + "\n" + gitignoreContents);
+        });
+
+        FileSystem.getFileForPath(gitRoot + ".git/info/exclude").read(function (err, content) {
+            excludeContents = err ? "" : content;
+            finish();
+        });
+
+        FileSystem.getFileForPath(gitRoot + ".gitignore").read(function (err, content) {
+            gitignoreContents = err ? "" : content;
+            finish();
+        });
+
+        return defer.promise;
+    }
+
     function refreshIgnoreEntries() {
         function regexEscape(str) {
             // NOTE: We cannot use StringUtils.regexEscape() here because we don't wanna replace *
-            return str.replace(/([.?+\^$\[\]\\(){}|\-])/g, "\\$1");
+            return str.replace(/([.?+\^$\\(){}|])/g, "\\$1");
         }
 
-        return new Promise(function (resolve) {
+        return loadIgnoreContents().then(function (content) {
+            var gitRoot = Preferences.get("currentGitRoot");
 
-            if (!Preferences.get("markModifiedInTree")) {
-                return resolve();
-            }
+            ignoreEntries = _.compact(_.map(content.split("\n"), function (line) {
+                // Rules: http://git-scm.com/docs/gitignore
+                var type = "deny",
+                    leadingSlash,
+                    trailingSlash,
+                    regex;
 
-            var projectRoot = Utils.getProjectRoot();
-
-            FileSystem.getFileForPath(projectRoot + ".gitignore").read(function (err, content) {
-                if (err) {
-                    ignoreEntries = [];
-                    return resolve();
+                line = line.trim();
+                if (!line || line.indexOf("#") === 0) {
+                    return;
                 }
 
-                ignoreEntries = _.compact(_.map(content.split("\n"), function (line) {
-                    // Rules: http://git-scm.com/docs/gitignore
-                    var type = "deny",
-                        leadingSlash,
-                        trailingSlash,
-                        regex;
+                // handle explicitly allowed files/folders with a leading !
+                if (line.indexOf("!") === 0) {
+                    line = line.slice(1);
+                    type = "accept";
+                }
+                // handle lines beginning with a backslash, which is used for escaping ! or #
+                if (line.indexOf("\\") === 0) {
+                    line = line.slice(1);
+                }
+                // handle lines beginning with a slash, which only matches files/folders in the root dir
+                if (line.indexOf("/") === 0) {
+                    line = line.slice(1);
+                    leadingSlash = true;
+                }
+                // handle lines ending with a slash, which only exludes dirs
+                if (line.lastIndexOf("/") === line.length) {
+                    // a line ending with a slash ends with **
+                    line += "**";
+                    trailingSlash = true;
+                }
 
-                    line = line.trim();
-                    if (!line || line.indexOf("#") === 0) {
-                        return;
-                    }
+                // NOTE: /(.{0,})/ is basically the same as /(.*)/, but we can't use it because the asterisk
+                // would be replaced later on
 
-                    // handle explicitly allowed files/folders with a leading !
-                    if (line.indexOf("!") === 0) {
-                        line = line.slice(1);
-                        type = "accept";
-                    }
-                    // handle lines beginning with a backslash, which is used for escaping ! or #
-                    if (line.indexOf("\\") === 0) {
-                        line = line.slice(1);
-                    }
-                    // handle lines beginning with a slash, which only matches files/folders in the root dir
-                    if (line.indexOf("/") === 0) {
-                        line = line.slice(1);
-                        leadingSlash = true;
-                    }
-                    // handle lines ending with a slash, which only exludes dirs
-                    if (line.lastIndexOf("/") === line.length) {
-                        // a line ending with a slash ends with **
-                        line += "**";
-                        trailingSlash = true;
-                    }
+                // create the intial regexp here. We need the absolute path 'cause it could be that there
+                // are external files with the same name as a project file
+                regex = regexEscape(gitRoot) + (leadingSlash ? "" : "((.+)/)?") + regexEscape(line) + (trailingSlash ? "" : "(/.{0,})?");
+                // replace all the possible asterisks
+                regex = regex.replace(/\*\*$/g, "(.{0,})").replace(/(\*\*|\*$)/g, "(.+)").replace(/\*/g, "([^/]*)");
+                regex = "^" + regex + "$";
 
-                    // NOTE: /(.{0,})/ is basically the same as /(.*)/, but we can't use it because the asterisk
-                    // would be replaced later on
-
-                    // create the intial regexp here. We need the absolute path 'cause it could be that there
-                    // are external files with the same name as a project file
-                    regex = regexEscape(projectRoot) + (leadingSlash ? "" : "((.+)/)?") + regexEscape(line) + (leadingSlash ? "" : "(/.{0,})?");
-                    // replace all the possible asterisks
-                    regex = regex.replace(/\*\*$/g, "(.{0,})").replace(/(\*\*|\*$)/g, "(.+)").replace(/\*/g, "([^/]+)");
-                    regex = "^" + regex + "$";
-
-                    return {
-                        regexp: new RegExp(regex),
-                        type: type
-                    };
-                }));
-
-                return resolve();
-            });
+                return {
+                    regexp: new RegExp(regex),
+                    type: type
+                };
+            }));
         });
     }
 
@@ -107,10 +121,21 @@ define(function (require) {
         return modifiedPaths.indexOf(fullPath) !== -1;
     }
 
-    function _refreshProjectFiles(selector, dataEntry) {
-        $(selector).find("li").each(function () {
+    ProjectManager.addClassesProvider(function (data) {
+        var fullPath = data.fullPath;
+        if (isIgnored(fullPath)) {
+            return "git-ignored";
+        } else if (isNew(fullPath)) {
+            return "git-new";
+        } else if (isModified(fullPath)) {
+            return "git-modified";
+        }
+    });
+
+    function _refreshOpenFiles() {
+        $("#working-set-list-container").find("li").each(function () {
             var $li = $(this),
-                data = $li.data(dataEntry);
+                data = $li.data("file");
             if (data) {
                 var fullPath = data.fullPath;
                 $li.toggleClass("git-ignored", isIgnored(fullPath))
@@ -121,41 +146,29 @@ define(function (require) {
     }
 
     var refreshOpenFiles = _.debounce(function () {
-        _refreshProjectFiles("#open-files-container", "file");
+        _refreshOpenFiles();
     }, 100);
-
-    var refreshProjectFiles = _.debounce(function () {
-        _refreshProjectFiles("#project-files-container", "entry");
-    }, 100);
-
-    function refreshBoth() {
-        refreshOpenFiles();
-        refreshProjectFiles();
-    }
 
     function attachEvents() {
-        if (Preferences.get("markModifiedInTree")) {
-            $("#open-files-container").on("contentChanged", refreshOpenFiles).triggerHandler("contentChanged");
-            $("#project-files-container").on("contentChanged after_open.jstree", refreshProjectFiles).triggerHandler("contentChanged");
-        }
+        $("#working-set-list-container").on("contentChanged", refreshOpenFiles).triggerHandler("contentChanged");
     }
 
     function detachEvents() {
-        $("#open-files-container").off("contentChanged", refreshOpenFiles);
-        $("#project-files-container").off("contentChanged after_open.jstree", refreshProjectFiles);
+        $("#working-set-list-container").off("contentChanged", refreshOpenFiles);
     }
 
     // this will refresh ignore entries when .gitignore is modified
     EventEmitter.on(Events.BRACKETS_FILE_CHANGED, function (evt, file) {
-        if (file.fullPath === Utils.getProjectRoot() + ".gitignore") {
+        if (file.fullPath === Preferences.get("currentGitRoot") + ".gitignore") {
             refreshIgnoreEntries().finally(function () {
-                refreshBoth();
+                refreshOpenFiles();
             });
         }
     });
+
     // this will refresh new/modified paths on every status results
     EventEmitter.on(Events.GIT_STATUS_RESULTS, function (files) {
-        var projectRoot = Utils.getProjectRoot();
+        var gitRoot = Preferences.get("currentGitRoot");
 
         newPaths = [];
         modifiedPaths = [];
@@ -164,7 +177,7 @@ define(function (require) {
             var isNew = entry.status.indexOf(Git.FILE_STATUS.UNTRACKED) !== -1 ||
                         entry.status.indexOf(Git.FILE_STATUS.ADDED) !== -1;
 
-            var fullPath = projectRoot + entry.file;
+            var fullPath = gitRoot + entry.file;
             if (isNew) {
                 newPaths.push(fullPath);
             } else {
@@ -172,13 +185,16 @@ define(function (require) {
             }
         });
 
-        refreshBoth();
+        ProjectManager.rerenderTree();
+        refreshOpenFiles();
     });
+
     // this will refresh ignore entries when git project is opened
     EventEmitter.on(Events.GIT_ENABLED, function () {
         refreshIgnoreEntries();
         attachEvents();
     });
+
     // this will clear entries when non-git project is opened
     EventEmitter.on(Events.GIT_DISABLED, function () {
         ignoreEntries = [];

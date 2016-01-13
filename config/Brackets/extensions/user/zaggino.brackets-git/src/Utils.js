@@ -15,6 +15,8 @@ define(function (require, exports, module) {
 
     // Local modules
     var ErrorHandler    = require("src/ErrorHandler"),
+        Events          = require("src/Events"),
+        EventEmitter    = require("src/EventEmitter"),
         Git             = require("src/git/Git"),
         Preferences     = require("src/Preferences"),
         Promise         = require("bluebird"),
@@ -24,11 +26,14 @@ define(function (require, exports, module) {
     var formatDiffTemplate      = require("text!templates/format-diff.html"),
         questionDialogTemplate  = require("text!templates/git-question-dialog.html"),
         outputDialogTemplate    = require("text!templates/git-output.html"),
-        writeTestResults        = {};
+        writeTestResults        = {},
+        debugOn                 = Preferences.get("debugMode"),
+        EXT_NAME                = "[brackets-git] ";
 
     // Implementation
     function getProjectRoot() {
-        return ProjectManager.getProjectRoot().fullPath;
+        var projectRoot = ProjectManager.getProjectRoot();
+        return projectRoot ? projectRoot.fullPath : null;
     }
 
     // returns "C:/Users/Zaggi/AppData/Roaming/Brackets/extensions/user/zaggino.brackets-git/"
@@ -40,18 +45,24 @@ define(function (require, exports, module) {
     function formatDiff(diff) {
         var DIFF_MAX_LENGTH = 2000;
 
-        var tabSize      = Preferences.getGlobal("tabSize"),
+        var tabReplace   = "",
             verbose      = Preferences.get("useVerboseDiff"),
             numLineOld   = 0,
             numLineNew   = 0,
             lastStatus   = 0,
             diffData     = [];
 
+        var i = Preferences.getGlobal("tabSize");
+        while (i--) {
+            tabReplace += "&nbsp;";
+        }
+
         var LINE_STATUS = {
             HEADER: 0,
             UNCHANGED: 1,
             REMOVED: 2,
-            ADDED: 3
+            ADDED: 3,
+            EOF: 4
         };
 
         var diffSplit = diff.split("\n");
@@ -66,13 +77,39 @@ define(function (require, exports, module) {
             var lineClass   = "",
                 pushLine    = true;
 
-            if (line.match(/index\s[A-z0-9]{7}..[A-z0-9]{7}/)) {
+            if (line.indexOf("diff --git") === 0) {
+                lineClass = "diffCmd";
+
+                diffData.push({
+                    name: line.split("b/")[1],
+                    lines: []
+                });
+
                 if (!verbose) {
                     pushLine = false;
                 }
-            } else if (line.substr(0, 3) === "+++" || line.substr(0, 3) === "---" && !verbose) {
-                pushLine = false;
-            } else if (line[0] === "+" && line[1] !== "+") {
+            } else if (line.match(/index\s[A-z0-9]{7}\.\.[A-z0-9]{7}/)) {
+                if (!verbose) {
+                    pushLine = false;
+                }
+            } else if (line.substr(0, 3) === "+++" || line.substr(0, 3) === "---") {
+                if (!verbose) {
+                    pushLine = false;
+                }
+            } else if (line.indexOf("@@") === 0) {
+                lineClass = "position";
+
+                // Define the type of the line: Header
+                lastStatus = LINE_STATUS.HEADER;
+
+                // This read the start line for the diff and substract 1 for this line
+                var m = line.match(/^@@ -([,0-9]+) \+([,0-9]+) @@/);
+                var s1 = m[1].split(",");
+                var s2 = m[2].split(",");
+
+                numLineOld = s1[0] - 1;
+                numLineNew = s2[0] - 1;
+            } else if (line[0] === "+") {
                 lineClass = "added";
                 line = line.substring(1);
 
@@ -81,7 +118,7 @@ define(function (require, exports, module) {
 
                 // Add 1 to the num line for new document
                 numLineNew++;
-            } else if (line[0] === "-" && line[1] !== "-") {
+            } else if (line[0] === "-") {
                 lineClass = "removed";
                 line = line.substring(1);
 
@@ -100,30 +137,11 @@ define(function (require, exports, module) {
                 // Add 1 to old a new num lines
                 numLineOld++;
                 numLineNew++;
-            } else if (line.indexOf("@@") === 0) {
-                lineClass = "position";
-
-                // Define the type of the line: Header
-                lastStatus = LINE_STATUS.HEADER;
-
-                // This read the start line for the diff and substract 1 for this line
-                var m = line.match(/^@@ -([,0-9]+) \+([,0-9]+) @@/);
-                var s1 = m[1].split(",");
-                var s2 = m[2].split(",");
-
-                numLineOld = s1[0] - 1;
-                numLineNew = s2[0] - 1;
-            } else if (line.indexOf("diff --git") === 0) {
-                lineClass = "diffCmd";
-
-                diffData.push({
-                    name: line.split("b/")[1],
-                    lines: []
-                });
-
-                if (!verbose) {
-                    pushLine = false;
-                }
+            } else if (line === "\\ No newline at end of file") {
+                lastStatus = LINE_STATUS.EOF;
+                lineClass = "end-of-file";
+            } else {
+                console.log("Unexpected line in diff: " + line);
             }
 
             if (pushLine) {
@@ -132,6 +150,7 @@ define(function (require, exports, module) {
 
                 switch (lastStatus) {
                     case LINE_STATUS.HEADER:
+                    case LINE_STATUS.EOF:
                         // _numLineOld = "";
                         // _numLineNew = "";
                         break;
@@ -149,7 +168,18 @@ define(function (require, exports, module) {
                         _numLineNew = numLineNew;
                 }
 
-                line = _.escape(line).replace(/\s/g, "&nbsp;");
+                // removes ZERO WIDTH NO-BREAK SPACE character (BOM)
+                line = line.replace(/\uFEFF/g, "");
+
+                // exposes other potentially harmful characters
+                line = line.replace(/[\u2000-\uFFFF]/g, function (x) {
+                    return "<U+" + x.charCodeAt(0).toString(16).toUpperCase() + ">";
+                });
+
+                line = _.escape(line)
+                    .replace(/\t/g, tabReplace)
+                    .replace(/\s/g, "&nbsp;");
+
                 line = line.replace(/(&nbsp;)+$/g, function (trailingWhitespace) {
                     return "<span class='trailingWhitespace'>" + trailingWhitespace + "</span>";
                 });
@@ -159,8 +189,7 @@ define(function (require, exports, module) {
                         "numLineOld": _numLineOld,
                         "numLineNew": _numLineNew,
                         "line": line,
-                        "lineClass": lineClass,
-                        "tabSize": tabSize
+                        "lineClass": lineClass
                     });
                 }
             }
@@ -320,6 +349,12 @@ define(function (require, exports, module) {
         console[type || "log"](encodeSensitiveInformation(msg));
     }
 
+    function consoleDebug(msg) {
+        if (debugOn) {
+            console.log(EXT_NAME + encodeSensitiveInformation(msg));
+        }
+    }
+
     /**
      * Reloads the Document's contents from disk, discarding any unsaved changes in the editor.
      *
@@ -344,7 +379,7 @@ define(function (require, exports, module) {
     function stripWhitespaceFromFile(filename, clearWholeFile) {
         return new Promise(function (resolve, reject) {
 
-            var fullPath                  = getProjectRoot() + filename,
+            var fullPath                  = Preferences.get("currentGitRoot") + filename,
                 addEndlineToTheEndOfFile  = Preferences.get("addEndlineToTheEndOfFile"),
                 removeBom                 = Preferences.get("removeByteOrderMark"),
                 normalizeLineEndings      = Preferences.get("normalizeLineEndings");
@@ -367,8 +402,8 @@ define(function (require, exports, module) {
                         }
 
                         if (removeBom) {
-                            // remove BOM - \ufeff
-                            text = text.replace(/\ufeff/g, "");
+                            // remove BOM - \uFEFF
+                            text = text.replace(/\uFEFF/g, "");
                         }
                         if (normalizeLineEndings) {
                             // normalizes line endings
@@ -379,11 +414,15 @@ define(function (require, exports, module) {
 
                         if (lineNumbers) {
                             lineNumbers.forEach(function (lineNumber) {
-                                lines[lineNumber] = lines[lineNumber].replace(/\s+$/, "");
+                                if (typeof lines[lineNumber] === "string") {
+                                    lines[lineNumber] = lines[lineNumber].replace(/\s+$/, "");
+                                }
                             });
                         } else {
                             lines.forEach(function (ln, lineNumber) {
-                                lines[lineNumber] = lines[lineNumber].replace(/\s+$/, "");
+                                if (typeof lines[lineNumber] === "string") {
+                                    lines[lineNumber] = lines[lineNumber].replace(/\s+$/, "");
+                                }
                             });
                         }
 
@@ -449,7 +488,7 @@ define(function (require, exports, module) {
         });
     }
 
-    function stripWhitespaceFromFiles(gitStatusResults) {
+    function stripWhitespaceFromFiles(gitStatusResults, stageChanges) {
         var notificationDefer = Promise.defer(),
             startTime = (new Date()).getTime(),
             queue = Promise.resolve();
@@ -472,11 +511,15 @@ define(function (require, exports, module) {
 
                         return stripWhitespaceFromFile(fileObj.file, clearWholeFile).then(function () {
                             // stage the files again to include stripWhitespace changes
-                            return Git.stage(fileObj.file).then(function () {
-
+                            var notifyProgress = function () {
                                 var t = (new Date()).getTime() - startTime;
                                 notificationDefer.progress(t + "ms - " + Strings.CLEAN_FILE_END + ": " + fileObj.file);
-                            });
+                            };
+                            if (stageChanges) {
+                                return Git.stage(fileObj.file).then(notifyProgress);
+                            } else {
+                                notifyProgress();
+                            }
                         });
                     });
 
@@ -504,6 +547,15 @@ define(function (require, exports, module) {
         });
     }
 
+    if (Preferences.get("clearWhitespaceOnSave")) {
+        EventEmitter.on(Events.BRACKETS_DOCUMENT_SAVED, function (evt, doc) {
+            var fullPath       = doc.file.fullPath,
+                currentGitRoot = Preferences.get("currentGitRoot"),
+                path           = fullPath.substring(currentGitRoot.length);
+            stripWhitespaceFromFile(path);
+        });
+    }
+
     // Public API
     exports.formatDiff                  = formatDiff;
     exports.getProjectRoot              = getProjectRoot;
@@ -516,6 +568,7 @@ define(function (require, exports, module) {
     exports.setLoading                  = setLoading;
     exports.unsetLoading                = unsetLoading;
     exports.consoleLog                  = consoleLog;
+    exports.consoleDebug                = consoleDebug;
     exports.encodeSensitiveInformation  = encodeSensitiveInformation;
     exports.reloadDoc                   = reloadDoc;
     exports.stripWhitespaceFromFiles    = stripWhitespaceFromFiles;

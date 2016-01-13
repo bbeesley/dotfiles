@@ -17,6 +17,7 @@ define(function (require, exports, module) {
     'JSON',
     'Math',
     'Map',
+    'NaN',
     'Number',
     'Object',
     'parseInt',
@@ -360,8 +361,18 @@ define(function (require, exports, module) {
     'jQuery'
   ];
 
+  var mocha = [
+    'describe',
+    'it'
+  ];
+
+  var brackets = [
+    'define',
+    'brackets'
+  ];
+
   var globals = {};
-  ecmaIdentifiers.concat(browserGlobals).concat(developmentGlobals).concat(workerGlobals).concat(nodeGlobals).concat(jquery).forEach(function (name) {
+  ecmaIdentifiers.concat(browserGlobals).concat(developmentGlobals).concat(workerGlobals).concat(nodeGlobals).concat(jquery).concat(mocha).concat(brackets).forEach(function (name) {
     globals[name] = true;
   });
   module.exports = globals;

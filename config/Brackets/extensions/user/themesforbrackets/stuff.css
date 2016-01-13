@@ -1,9 +1,3 @@
-.CodeMirror-scroll {
-    background-color: transparent !important;
-}
-.CodeMirror-gutters {
-    border-right: none;
-}
 #status-indicators,
 #status-indicators div:not(#status-inspection),
 #status-info,
@@ -17,7 +11,13 @@
 #working-set-header {
     text-shadow: none;
 }
-
+.sidebar-selection-extension, .filetree-selection-extension { /* weird extension of the selected filename - disable styling so we can style by using .sidebar-selection and won't have to target these as well */
+    background: transparent;
+    border: none;
+}
+.working-set-header, .working-set-header>span {
+    background: transparent;
+}
 .inline-widget .CodeMirror-scroll .CodeMirror-linenumbers {
     background-color: transparent;
 }

@@ -10,9 +10,10 @@ define(function (require, exports, module) {
   var Document = brackets.getModule("document/Document");
   var documentManager = brackets.getModule("document/DocumentManager");
   var editorManager = brackets.getModule("editor/EditorManager");
+  var mainViewManager = brackets.getModule("view/MainViewManager");
 
   var refreshing = false;
-  $(documentManager).on('currentDocumentChange', function (e, newDocument, oldDocument) {
+  $(editorManager).on('activeEditorChange', function (e, newDocument, oldDocument) {
     try {
       refreshing = false;
       if (oldDocument) {
@@ -82,6 +83,9 @@ define(function (require, exports, module) {
         if (node.id) {
           fn.locals[node.id.name] = true;
         }
+        if (node.rest && node.rest.type === 'Identifier') {
+          fn.locals[node.rest.name] = true;
+        }
       }
       var newMarkers = [];
       var newMarkerLocations = [];
@@ -114,6 +118,7 @@ define(function (require, exports, module) {
           declareFunction(node);
         },
         'FunctionExpression': declareFunction,
+        'ArrowFunctionExpression': declareFunction,
         'TryStatement': function (node) {
           node.handler.body.locals = node.handler.body.locals || {};
           node.handler.body.locals[node.handler.param.name] = true;

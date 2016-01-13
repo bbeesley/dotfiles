@@ -3,16 +3,26 @@
     background: url(../images/georapbox-jslint-icon.svg) no-repeat 0 0;
 }
 
-/* 
+/*
  * ===========================
- *       JSLINT DIALOG 
+ *       JSLINT DIALOG
  * ===========================
 */
 .georapbox-jslint-settings-dialog {
-    width: 55%;
+	width: 680px !important;
+}
+
+.georapbox-jslint-settings-dialog .modal-body {
+    max-height: 350px;
 }
 
 /* Dialog header */
+.georapbox-jslint-settings-dialog .modal-header h1 {
+    padding-bottom: 2px;
+    font-size: 28px;
+    line-height: 28px;
+}
+
 .georapbox-jslint-settings-dialog .header-options {
     position: absolute;
     top: 11px;
@@ -37,10 +47,13 @@
     border-radius: 3px;
     display: none;
 }
+.dark .georapbox-jslint-settings-dialog .modal-footer .textarea-options a {
+    color: #3f70b2;
+}
 .georapbox-jslint-settings-dialog .modal-footer.rollover:hover .textarea-options {
     display: block;
 }
-.georapbox-jslint-settings-dialog .btn:disabled ,
+.georapbox-jslint-settings-dialog .btn:disabled,
 .georapbox-jslint-settings-dialog button:disabled,
 .georapbox-jslint-settings-dialog a:disabled {
     opacity: 0.5;
@@ -58,12 +71,17 @@
     border-radius: 3px 3px 0 0;
 	cursor: default;
 }
+.dark .georapbox-jslint-settings-dialog .modal-footer h2 {
+    background-color: #5d81b2;
+}
 .georapbox-jslint-settings-dialog .modal-footer textarea {
     width: 100%;
     height: 70px;
     margin-top: 0;
     box-sizing: border-box;
     border-radius: 0 0 3px 3px;
+    border: 1px solid #727272;
+    color: #121212;
     background: #ffffff !important;
     resize: vertical;
     cursor: default;
@@ -85,7 +103,7 @@
 }
 .georapbox-jslint-settings-dialog .column {
     float: left;
-    width: 31%;
+    width: 46%;
     margin: 0 2% 2% 0;
 }
 .georapbox-jslint-settings-dialog .column div {
@@ -106,6 +124,10 @@
     width: 2em;
     margin: 0;
 }
+.dark .georapbox-jslint-settings-dialog .column button {
+    border-color: #94a2b2 #547598 #547598 #94a2b2;
+    background-color: #5d81b2;
+}
 .georapbox-jslint-settings-dialog .column button:hover {
     background-color: #6495ED;
 }
@@ -119,6 +141,7 @@
     border-radius: 0px 3px 3px 0px;
     color: #808080;
     font-family: serif;
+    font-style: inherit;
     display: inline-block;
     padding: 0 0.5em;
     width: 40px;
@@ -126,14 +149,17 @@
     margin: 0 0 0 -3px;
     cursor: pointer;
 }
+.dark .georapbox-jslint-settings-dialog .column var {
+    border: 1pt solid #464646;
+}
 .georapbox-jslint-settings-dialog .column var.true {
-    color: #000000;   
+    color: #000000;
     border-color: #9D968C #C5BFB3 #C5BFB3 #6F6A61;
     background-color: #ffffff;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2) inset;
 }
 .georapbox-jslint-settings-dialog .column var.false {
-    color: #000000;   
+    color: #000000;
     border-color: #9D968C #C5BFB3 #C5BFB3 #6F6A61;
     background-color: #C0C0C0;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2) inset;
@@ -152,8 +178,8 @@
 }
 
 /* Media queries */
-@media only screen and (max-width: 1366px) {
+/*@media only screen and (max-width: 1366px) {
     .georapbox-jslint-settings-dialog {
         width: 80%;
     }
-}
+}*/

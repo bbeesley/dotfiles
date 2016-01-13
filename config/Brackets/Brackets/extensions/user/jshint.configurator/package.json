@@ -1,0 +1,27 @@
+{
+    "name": "jshint.configurator",
+    "title": "JSHint Configurator",
+    "description": "Enables configuration of JSHint options. Reads from current document's inline configuration directive or from '.jshintrc' configuration file. Extract JSHint options to JSON format.",
+    "homepage": "https://github.com/georapbox/brackets-JSHint-Configurator",
+    "version": "1.1.6",
+    "author": "George Raptis <georapbox@gmail.com> (http://georap.gr)",
+    "license": "MIT",
+    "keywords": [
+        "jshint",
+        "javascript",
+        "lint",
+        "linter",
+        "configurator",
+        "options",
+        ".jshintrc"
+    ],
+    "i18n": ["en", "ja"],
+    "package-i18n": {
+        "ja": {
+            "description": "JSHint オプションの設定を可能にする。現在のドキュメントのインライン設定ディレクティブ、または '.jshintrc' 設定ファイルから読み込む。JSHint オプションを JSON 形式で表示する。"
+        }
+    },
+    "engines": {
+        "brackets": ">=0.37.0"
+    }
+}

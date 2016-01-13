@@ -6,10 +6,10 @@
 define(function (require, exports) {
 
     // Local modules
-    var Promise = require("bluebird"),
-        Cli     = require("src/Cli"),
-        GitCli  = require("src/git/GitCli"),
-        Utils   = require("src/Utils");
+    var Preferences = require("src/Preferences"),
+        Promise     = require("bluebird"),
+        GitCli      = require("src/git/GitCli"),
+        Utils       = require("src/Utils");
 
     // Implementation
     function pushToNewUpstream(remoteName, remoteBranch) {
@@ -87,15 +87,11 @@ define(function (require, exports) {
         });
     }
 
-    function isProjectRepositoryRoot() {
-        return Cli.pathExists(Utils.getProjectRoot() + ".git");
-    }
-
     function getMergeInfo() {
         var baseCheck  = ["MERGE_MODE", "rebase-apply"],
             mergeCheck = ["MERGE_HEAD", "MERGE_MSG"],
             rebaseCheck = ["rebase-apply/next", "rebase-apply/last", "rebase-apply/head-name"],
-            gitFolder  = Utils.getProjectRoot() + ".git/";
+            gitFolder  = Preferences.get("currentGitRoot") + ".git/";
 
         return Promise.all(baseCheck.map(function (fileName) {
             return Utils.loadPathContent(gitFolder + fileName);
@@ -169,7 +165,6 @@ define(function (require, exports) {
     exports.getFileHistory          = getFileHistory;
     exports.resetIndex              = resetIndex;
     exports.discardAllChanges       = discardAllChanges;
-    exports.isProjectRepositoryRoot = isProjectRepositoryRoot;
     exports.getMergeInfo            = getMergeInfo;
     exports.discardFileChanges      = discardFileChanges;
     exports.getRemoteUrl            = getRemoteUrl;

@@ -1,37 +1,82 @@
-/*global define, $, brackets, window, js_beautify, style_html, css_beautify, localStorage */
+/*global define, $, brackets, window, style_html, localStorage, console, alert */
 
 define(function (require, exports, module) {
 
-    "use strict";
+    'use strict';
 
-    var AppInit = brackets.getModule("utils/AppInit"),
-        CommandManager = brackets.getModule("command/CommandManager"),
+    /* Globals */
+    var DEBUG_MODE,
+        COMMAND_ID = 'me.drewh.jsbeautify',
+        OLD_COMMAND_ID = 'beautify',
+        COMMAND_SAVE_ID = COMMAND_ID + '.autosave',
+        COMMAND_TIMESTAMP = COMMAND_ID + '-timeStamp',
+        CONTEXTUAL_COMMAND_ID = COMMAND_ID + 'Contextual';
+
+    var Menus = brackets.getModule('command/Menus'),
+        AppInit = brackets.getModule('utils/AppInit'),
         Commands = brackets.getModule('command/Commands'),
-        EditorManager = brackets.getModule("editor/EditorManager"),
-        Editor = brackets.getModule("editor/Editor").Editor,
-        FileSystem = brackets.getModule("filesystem/FileSystem"),
-        ProjectManager = brackets.getModule("project/ProjectManager"),
-        DocumentManager = brackets.getModule("document/DocumentManager"),
-        PreferencesManager = brackets.getModule('preferences/PreferencesManager'),
-        Menus = brackets.getModule("command/Menus"),
-        NodeDomain = brackets.getModule("utils/NodeDomain"),
-        NodeConnection = brackets.getModule("utils/NodeConnection"),
-        ExtensionUtils = brackets.getModule("utils/ExtensionUtils");
+        Editor = brackets.getModule('editor/Editor').Editor,
+        NodeDomain = brackets.getModule('utils/NodeDomain'),
+        FileSystem = brackets.getModule('filesystem/FileSystem'),
+        EditorManager = brackets.getModule('editor/EditorManager'),
+        NodeConnection = brackets.getModule('utils/NodeConnection'),
+        ExtensionUtils = brackets.getModule('utils/ExtensionUtils'),
+        CommandManager = brackets.getModule('command/CommandManager'),
+        ProjectManager = brackets.getModule('project/ProjectManager'),
+        DocumentManager = brackets.getModule('document/DocumentManager'),
+        PreferencesManager = brackets.getModule('preferences/PreferencesManager');
 
-    var COMMAND_TIMESTAMP = "me.drewh.jsbeautify.timeStamp",
-        COMMAND_SAVE_ID = "me.drewh.jsbeautify-autosave",
-        COMMAND_ID = "me.drewh.jsbeautify",
-        CONTEXTUAL_COMMAND_ID = "me.drewh.jsbeautifyContextual";
+    /* Formatters */
+    var Strings = require('strings'),
+        js_beautify = require('thirdparty/js-beautify/js/lib/beautify').js_beautify,
+        css_beautify = require('thirdparty/js-beautify/js/lib/beautify-css').css_beautify,
+        html_beautify = require('thirdparty/js-beautify/js/lib/beautify-html').html_beautify;
 
+    /* Variables */
+    var beautifyOnSave,
+        settingsFileName = '.jsbeautifyrc',
+        menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU),
+        settings = JSON.parse(require('text!settings.json')),
+        debugPreferences = PreferencesManager.getExtensionPrefs('debug'),
+        beautifyPreferences = PreferencesManager.getExtensionPrefs(COMMAND_ID),
+        oldBeautifyPreferences = PreferencesManager.getExtensionPrefs(OLD_COMMAND_ID),
+        windowsCommand = {
+            key: 'Ctrl-Shift-L',
+            platform: 'win'
+        },
+        macCommand = {
+            key: 'Cmd-Shift-L',
+            platform: 'mac'
+        },
+        command = [windowsCommand, macCommand];
 
-    var js_beautify = require('thirdparty/js-beautify/js/lib/beautify').js_beautify;
-    var css_beautify = require('thirdparty/js-beautify/js/lib/beautify-css').css_beautify;
-    var html_beautify = require('thirdparty/js-beautify/js/lib/beautify-html').html_beautify;
+    var commandBeautify = Strings.BEAUTIFY;
+    if (typeof(commandBeautify) == 'undefined') {
+      commandBeautify = 'Beautify';
+    }
 
-    var settings = JSON.parse(require("text!settings.json"));
-    var settingsFileName = '.jsbeautifyrc';
+    // Brackets debug mode
+    DEBUG_MODE = debugPreferences.get('showErrorsInStatusBar');
 
-    var beautifyPreferences =  PreferencesManager.getExtensionPrefs('beautify');
+    beautifyOnSave = beautifyPreferences.get('on_save') || false;
+    if (!beautifyOnSave) {
+        beautifyPreferences.set('on_save', false);
+        beautifyPreferences.save();
+    }
+
+    function __debug(msg, code) {
+        if (DEBUG_MODE) {
+            var m = '[brackets-beautify] :: ' + msg;
+            if (typeof msg !== 'string') {
+                m = msg;
+            }
+            if (code === 0) {
+                console.log(m);
+            } else {
+                console.error(m);
+            }
+        }
+    }
 
     /**
      *
@@ -39,19 +84,14 @@ define(function (require, exports, module) {
      * @param {String} indentChar
      * @param {String} indentSize
      */
-
     function _formatJavascript(unformattedText, indentChar, indentSize) {
-
         var options = {
             indent_size: indentSize,
             indent_char: indentChar
         };
-
         var formattedText = js_beautify(unformattedText, $.extend(options, settings));
-
         return formattedText;
     }
-
 
     /**
      *
@@ -61,14 +101,11 @@ define(function (require, exports, module) {
      */
 
     function _formatHTML(unformattedText, indentChar, indentSize) {
-
         var options = {
             indent_size: indentSize,
             indent_char: indentChar
         };
-
         var formattedText = html_beautify(unformattedText, $.extend(options, settings));
-
         return formattedText;
     }
 
@@ -80,12 +117,10 @@ define(function (require, exports, module) {
      */
 
     function _formatCSS(unformattedText, indentChar, indentSize) {
-
         var formattedText = css_beautify(unformattedText, {
             indent_size: indentSize,
             indent_char: indentChar
         });
-
         return formattedText;
     }
 
@@ -103,9 +138,16 @@ define(function (require, exports, module) {
         var path = beautifyPreferences.get('sassConvertPath');
 
         if (!path) {
-            alert('You need to provide a path to the sass-convert program');
+            // try old one
+            console.log('Fallback to old preference');
+            path = oldBeautifyPreferences.get('sassConvertPath');
         }
-        var simpleDomain = new NodeDomain("sassformat", ExtensionUtils.getModulePath(module, "node/SassFormatDomain"));
+
+        if (!path) {
+            __debug(Strings.SASS_ERROR, 0); // Don't error on this
+        }
+
+        var simpleDomain = new NodeDomain('sassformat', ExtensionUtils.getModulePath(module, 'node/SassFormatDomain'));
         var fullPath = DocumentManager.getCurrentDocument().file.fullPath;
         var parsePromise = simpleDomain.exec('parse', path, fullPath, indentSize);
         parsePromise.done(function (res) {
@@ -116,17 +158,36 @@ define(function (require, exports, module) {
         });
     }
 
+    function batchUpdate(formattedText, isSelection) {
+        var editor = EditorManager.getCurrentFullEditor();
+        var cursor = editor.getCursorPos();
+        var scroll = editor.getScrollPos();
+        var doc = DocumentManager.getCurrentDocument();
+        var selection = editor.getSelection();
+        doc.batchOperation(function () {
+            if (settings.git_happy) {
+                formattedText += '\n';
+            }
+            if (isSelection) {
+                doc.replaceRange(formattedText, selection.start, selection.end);
+            } else {
+                doc.setText(formattedText);
+            }
+            editor.setCursorPos(cursor);
+            editor.setScrollPos(scroll.x, scroll.y);
+        });
+    }
+
     /**
      * Format
      */
 
     function format(autoSave) {
-
         var indentChar, indentSize, formattedText;
         var unformattedText, isSelection = false;
         var useTabs = Editor.getUseTabChar();
 
-        console.log(settings);
+        __debug(settings, 0);
         if (useTabs) {
             indentChar = '\t';
             indentSize = 1;
@@ -137,7 +198,6 @@ define(function (require, exports, module) {
 
         var editor = EditorManager.getCurrentFullEditor();
         var selectedText = editor.getSelectedText();
-
         var selection = editor.getSelection();
 
         if (selectedText.length > 0) {
@@ -148,7 +208,6 @@ define(function (require, exports, module) {
         }
 
         var doc = DocumentManager.getCurrentDocument();
-
         var language = doc.getLanguage();
         var fileType = language._id;
 
@@ -164,6 +223,7 @@ define(function (require, exports, module) {
         case 'php':
         case 'xml':
         case 'ejs':
+        case 'handlebars':
             formattedText = _formatHTML(unformattedText, indentChar, indentSize);
             batchUpdate(formattedText, isSelection);
             break;
@@ -173,54 +233,37 @@ define(function (require, exports, module) {
             formattedText = _formatCSS(unformattedText, indentChar, indentSize);
             batchUpdate(formattedText, isSelection);
             break;
+
         case 'scss':
+
             _formatSASS(indentChar, indentSize, function (err, res) {
                 if (err) {
-                    alert('An error occurred formatting the SASS file');
+                    console.log(err);
+                    formattedText = _formatCSS(unformattedText, indentChar, indentSize);
+                    batchUpdate(formattedText, isSelection);
                 } else {
                     // SASS format only works on entire file for now
                     batchUpdate(res, false);
                 }
             });
+
             break;
+
         default:
-            if (!autoSave) alert('Could not determine file type');
+            if (!autoSave) {
+                alert(Strings.FILE_ERROR);
+            }
             return;
         }
     }
 
-    function batchUpdate(formattedText, isSelection) {
-
-        var editor = EditorManager.getCurrentFullEditor();
-
-        var cursor = editor.getCursorPos();
-        var scroll = editor.getScrollPos();
-        var doc = DocumentManager.getCurrentDocument();
-
-        var selection = editor.getSelection();
-
-        doc.batchOperation(function () {
-
-            if (settings.git_happy) {
-                formattedText += '\n';
-            }
-
-            if (isSelection) {
-                doc.replaceRange(formattedText, selection.start, selection.end);
-            } else {
-                doc.setText(formattedText);
-            }
-
-            editor.setCursorPos(cursor);
-            editor.setScrollPos(scroll.x, scroll.y);
-        });
-    }
-
 
     function onSave(event, doc) {
-        if ((event.timeStamp - localStorage.getItem(COMMAND_TIMESTAMP)) > 1000) {
+        var currentTimestamp = Date.now();
+
+        if (currentTimestamp === undefined || (currentTimestamp - localStorage.getItem(COMMAND_TIMESTAMP)) > 1000) {
             format(true);
-            localStorage.setItem(COMMAND_TIMESTAMP, event.timeStamp);
+            localStorage.setItem(COMMAND_TIMESTAMP, currentTimestamp);
             CommandManager.execute(Commands.FILE_SAVE, {
                 doc: doc
             });
@@ -234,9 +277,9 @@ define(function (require, exports, module) {
             if (content) {
                 try {
                     settings = JSON.parse(content);
-                    console.log('settings loaded' + settings);
+                    __debug('settings loaded' + settings, 0);
                 } catch (e) {
-                    console.error("Beautify: error parsing " + settingsFile + ". Details: " + e);
+                    __debug('error parsing ' + settingsFile + '. Details: ' + e);
                     return;
                 }
             }
@@ -244,41 +287,30 @@ define(function (require, exports, module) {
     }
 
     function toggle(command, fromCheckbox) {
-        var newValue = (typeof fromCheckbox === "undefined") ? enabled : fromCheckbox;
-        $(DocumentManager)[newValue ? 'on' : 'off']('documentSaved', onSave);
-        preferences.setValue('enabled', newValue);
+        var newValue = (typeof fromCheckbox === 'undefined') ? beautifyOnSave : fromCheckbox;
+        DocumentManager[newValue ? 'on' : 'off']('documentSaved', onSave);
         command.setChecked(newValue);
+        beautifyPreferences.set('on_save', newValue);
+        beautifyPreferences.save();
     }
-
-    var preferences = PreferencesManager.getPreferenceStorage(COMMAND_SAVE_ID, {
-        enabled: false
-    });
-
-    var enabled = preferences.getValue('enabled');
 
     /**
      * File menu
      */
-
-    CommandManager.register("Beautify", COMMAND_ID, format);
-    var commandOnSave = CommandManager.register("Beautify on Save", COMMAND_SAVE_ID, function () {
+    CommandManager.register(commandBeautify, COMMAND_ID, format);
+    var commandOnSave = CommandManager.register(Strings.BEAUTIFY_ON_SAVE, COMMAND_SAVE_ID, function () {
         toggle(this, !this.getChecked());
-        if (this.getChecked()) localStorage.setItem(COMMAND_TIMESTAMP, 0);
+        if (this.getChecked()) {
+            localStorage.setItem(COMMAND_TIMESTAMP, 0);
+        }
     });
 
-    var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
-
-    var windowsCommand = {
-        key: "Ctrl-Shift-L",
-        platform: "win"
-    };
-
-    var macCommand = {
-        key: "Cmd-Shift-L",
-        platform: "mac"
-    };
-
-    var command = [windowsCommand, macCommand];
+    /**
+     * Contextual menu
+     */
+    CommandManager.register(commandBeautify, CONTEXTUAL_COMMAND_ID, format);
+    var contextMenu = Menus.getContextMenu(Menus.ContextMenuIds.EDITOR_MENU);
+    contextMenu.addMenuItem(CONTEXTUAL_COMMAND_ID);
 
     toggle(commandOnSave);
 
@@ -288,27 +320,18 @@ define(function (require, exports, module) {
 
     AppInit.appReady(function () {
 
-        $(DocumentManager).on("documentRefreshed.beautify", function (e, document) {
-            if (document.file.fullPath ===
-                ProjectManager.getProjectRoot().fullPath + settingsFileName) {
+        DocumentManager.on('documentRefreshed.beautify', function (e, document) {
+            if (document.file.fullPath === ProjectManager.getProjectRoot().fullPath + settingsFileName) {
                 loadConfig();
             }
         });
 
-        $(ProjectManager).on("projectOpen.beautify", function () {
+        ProjectManager.on('projectOpen.beautify', function () {
             loadConfig();
         });
 
         loadConfig();
 
     });
-
-    /**
-     * Contextual menu
-     */
-
-    CommandManager.register("Beautify", CONTEXTUAL_COMMAND_ID, format);
-    var contextMenu = Menus.getContextMenu(Menus.ContextMenuIds.EDITOR_MENU);
-    contextMenu.addMenuItem(CONTEXTUAL_COMMAND_ID);
 
 });

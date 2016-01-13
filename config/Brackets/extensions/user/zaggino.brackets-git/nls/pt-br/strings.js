@@ -153,6 +153,8 @@ define({
     // TODO: localize DIALOG_RESET_SOFT to pt-br
     // DIFF:                               "Diff",
     DIFF:                                  "Diff",
+    // DIFFTOOL:                           "Diff with difftool",
+    // TODO: localize DIFFTOOL to pt-br
     // DIFF_FAILED_SEE_FILES:              "Git diff failed to provide diff results. This is the list of staged files to be commited:",
     // TODO: localize DIFF_FAILED_SEE_FILES to pt-br
     // ENABLE_ADVANCED_FEATURES:           "Enable advanced features",
@@ -353,8 +355,6 @@ define({
     SHOWN_DATE_FORMAT:                     "Formato de data dos commits no histórico",
     // SHOW_BASH_TERMINAL_BUTTON:          "Show Bash/Terminal button in the panel",
     // TODO: localize SHOW_BASH_TERMINAL_BUTTON to pt-br
-    // SHOW_REPORT_BUG_BUTTON:             "Show Report Bug button in the panel",
-    SHOW_REPORT_BUG_BUTTON:                "Mostrar botão Relatar Erro no painel",
     // SHOW_UNTRACKED:                     "Show untracked",
     // TODO: localize SHOW_UNTRACKED to pt-br
     // STRIP_WHITESPACE_FROM_COMMITS:      "Strip trailing whitespace from commits",
@@ -365,8 +365,6 @@ define({
     // TODO: localize TITLE_CHECKOUT to pt-br
     // TITLE_RESET:                        "Do you really wish to reset?",
     // TODO: localize TITLE_RESET to pt-br
-    // TOOLTIP_BUG:                        "Report bug",
-    TOOLTIP_BUG:                           "Relatar erro",
     // TOOLTIP_CHECKOUT_COMMIT:            "Checkout a specific commit",
     // TODO: localize TOOLTIP_CHECKOUT_COMMIT to pt-br
     // TOOLTIP_CLONE:                      "Clone existing repository",
@@ -431,6 +429,8 @@ define({
     USE_REBASE:                            "Usar REBASE",
     // USE_VERBOSE_DIFF:                   "Show verbose output in diffs",
     USE_VERBOSE_DIFF:                      "Mostrar saída detalhada em diffs",
+    // USE_DIFFTOOL:                       "Use difftool for diffs",
+    // TODO: localize USE_DIFFTOOL to pt-br
     // USING_GIT_VERSION:                  "Git version",
     USING_GIT_VERSION:                     "Versão do Git",
     // VIEW_AUTHORS_FILE:                  "View authors of file",

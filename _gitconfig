@@ -2,7 +2,7 @@
 	editor = vi
 	excludesfile = /home/bill/.config/git/ignore
 [user]
-	email = bbeesley@me.com
+	email = bill.beesley@williamhill.com
 	name = Bill Beesley
 [alias]
 	co = checkout
@@ -10,6 +10,8 @@
 	ci = commit
 	st = status
 [push]
-	default = matching
+	default = current
 [credential]
 	helper = cache
+[http]
+        sslVerify = false
