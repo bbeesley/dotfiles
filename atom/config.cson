@@ -1,14 +1,8 @@
 "*":
-  core:
-    audioBeep: false
-    openEmptyEditorOnStart: false
-    projectHome: "~/code"
+  core: {}
   editor:
     invisibles: {}
-    scrollPastEnd: true
-    showIndentGuide: true
-    tabLength: 4
   "exception-reporting":
-    userId: "574c4f71-2092-0097-93d8-96f91daa6495"
+    userId: "3a59a7b1-841b-53bc-8720-e6c9458adcca"
   welcome:
     showOnStartup: false
