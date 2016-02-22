@@ -1,8 +1,4 @@
 "*":
-  "exception-reporting":
-    userId: "574c4f71-2092-0097-93d8-96f91daa6495"
-  welcome:
-    showOnStartup: false
   core:
     audioBeep: false
     openEmptyEditorOnStart: false
@@ -12,3 +8,7 @@
     scrollPastEnd: true
     showIndentGuide: true
     tabLength: 4
+  "exception-reporting":
+    userId: "574c4f71-2092-0097-93d8-96f91daa6495"
+  welcome:
+    showOnStartup: false

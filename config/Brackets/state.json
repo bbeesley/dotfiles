@@ -6,7 +6,7 @@
         "/opt/brackets/samples/root/Getting Started",
         "/usr/share/brackets/samples/root/Getting Started"
     ],
-    "projectPath": "/home/bbeesley/code/node-oxi/",
+    "projectPath": "/home/bbeesley/code/unstable/sportsbook-api-vm/",
     "project": {
         "/opt/brackets/samples/root/Getting Started/": {
             "project.treeState": [],
@@ -660,7 +660,56 @@
                 "activePaneId": "first-pane",
                 "splitPercentage": 1,
                 "panes": {
-                    "first-pane": []
+                    "first-pane": [
+                        {
+                            "file": "/home/bbeesley/code/sdet/node-workspace/virtualData.js",
+                            "active": false,
+                            "viewState": {
+                                "selections": [
+                                    {
+                                        "start": {
+                                            "line": 1,
+                                            "ch": 1064
+                                        },
+                                        "end": {
+                                            "line": 1,
+                                            "ch": 1064
+                                        },
+                                        "reversed": false,
+                                        "primary": true
+                                    }
+                                ],
+                                "scrollPos": {
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            }
+                        },
+                        {
+                            "file": "/home/bbeesley/code/sdet/node-workspace/virtual-all-sports.js",
+                            "active": true,
+                            "viewState": {
+                                "selections": [
+                                    {
+                                        "start": {
+                                            "line": 1,
+                                            "ch": 5
+                                        },
+                                        "end": {
+                                            "line": 1,
+                                            "ch": 18
+                                        },
+                                        "reversed": false,
+                                        "primary": true
+                                    }
+                                ],
+                                "scrollPos": {
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            }
+                        }
+                    ]
                 }
             },
             "project.treeState": [
@@ -710,12 +759,75 @@
                     ]
                 }
             }
+        },
+        "/home/bbeesley/code/unstable/sportsbook-api-vm/": {
+            "code-folding.folds": {
+                "/home/bbeesley/code/unstable/sportsbook-api-vm/Vagrantfile": {}
+            },
+            "mainView.state": {
+                "orientation": null,
+                "activePaneId": "first-pane",
+                "splitPercentage": 1,
+                "panes": {
+                    "first-pane": [
+                        {
+                            "file": "/home/bbeesley/code/unstable/sportsbook-api-vm/Vagrantfile",
+                            "active": true,
+                            "viewState": {
+                                "selections": [
+                                    {
+                                        "start": {
+                                            "line": 19,
+                                            "ch": 29
+                                        },
+                                        "end": {
+                                            "line": 19,
+                                            "ch": 29
+                                        },
+                                        "reversed": false,
+                                        "primary": true
+                                    }
+                                ],
+                                "scrollPos": {
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
         }
     },
     "afterFirstLaunch": "true",
     "currentSort": "view.sortWorkingSetByAdded",
-    "lastInfoURLFetchTime": 1452610367382,
+    "lastInfoURLFetchTime": 1455968055959,
     "updateInfo": [
+        {
+            "buildNumber": 16680,
+            "versionString": "Release 1.6",
+            "dateString": "01-20-2016",
+            "releaseNotesURL": "https://github.com/adobe/brackets/wiki/Release-Notes:-1.6",
+            "downloadURL": "http://brackets.io",
+            "newFeatures": [
+                {
+                    "name": "Split View of Same File",
+                    "description": "It's now possible to open the same file in both split panes to view different parts of the file at once."
+                },
+                {
+                    "name": "Flip Files to Other Split Pane Quickly",
+                    "description": "Move files between different split panes using new flip buttons in the split panes."
+                },
+                {
+                    "name": "Type Inference in Hints List",
+                    "description": "Javascript code hints now provide more information like type inference and associated documentation."
+                },
+                {
+                    "name": "Hide All Panels with No-Distraction Mode",
+                    "description": "Cmd-Shift-2 will now enable no-distraction mode, that will allow you to work with very minial UI."
+                }
+            ]
+        },
         {
             "buildNumber": 16538,
             "versionString": "Release 1.5",
@@ -1903,11 +2015,23 @@
             ]
         }
     ],
-    "extensionUpdateInfo": [],
-    "lastExtensionRegistryCheckTime": 1452611249316,
+    "extensionUpdateInfo": [
+        {
+            "id": "new-moon",
+            "installVersion": "1.5.0",
+            "registryVersion": "1.6.0"
+        },
+        {
+            "id": "zaggino.brackets-git",
+            "installVersion": "0.15.0",
+            "registryVersion": "0.16.2"
+        }
+    ],
+    "lastExtensionRegistryCheckTime": 1455275895786,
     "brackets-git.lastVersion": "0.15.0",
     "code-folding.folds": {},
     "recentProjects": [
+        "/home/bbeesley/code/unstable/sportsbook-api-vm",
         "/home/bbeesley/code/node-oxi",
         "/home/bbeesley/code/gaming-tools",
         "/home/bbeesley/code/sportsbook-api-vm",
@@ -1929,27 +2053,19 @@
         "/home/bbeesley/code/sportsbook-api-vm/": "origin",
         "/home/bbeesley/code/trans-proxy/": "origin",
         "/home/bbeesley/code/node-oxi/": "origin",
-        "/home/bbeesley/code/gaming-tools/": "origin"
+        "/home/bbeesley/code/gaming-tools/": "origin",
+        "/home/bbeesley/code/unstable/sportsbook-api-vm/": "origin"
     },
-    "nextHealthDataSendTime": 1452697047889,
+    "nextHealthDataSendTime": 1456139901933,
     "workingSetSortMethod": "cmd.sortWorkingSetByAdded",
     "auto-install-extensions": {},
-    "HealthData.Logs": {
-        "fileStats": {
-            "openedFileExt": {
-                "js": 2
-            },
-            "workingSetFileExt": {
-                "js": 2
-            }
-        }
-    },
+    "HealthData.Logs": {},
     "healthDataNotificationShown": true,
-    "brackets-git.currentGitRoot": "/home/bbeesley/code/node-oxi/",
+    "brackets-git.currentGitRoot": "/home/bbeesley/code/unstable/sportsbook-api-vm/",
     "brackets-git.currentGitSubfolder": "",
     "UUID": "79e166a1-669b-4344-9212-ce2b4327c6ca",
     "find-in-files-results": {
-        "visible": true,
+        "visible": false,
         "size": 321,
         "contentSize": 286
     },
