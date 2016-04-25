@@ -1,11 +1,17 @@
 Host github.com
-  Hostname ssh.github.com
+  Hostname altssh.github.com
   Port 443
-  User bill
+  User git
+
+Host gitlab.com
+  Hostname altssh.gitlab.com
+  User git
+  Port 443
+  PreferredAuthentications publickey
 
 Host intelbox
-  Hostname intelbox.billbeesley.com
-  Port 443
+  Hostname intelbox
+  Port 22
   User bill
 
 Host billbeesley.com

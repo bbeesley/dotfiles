@@ -29,3 +29,7 @@ export VAGRANT_DEFAULT_PROVIDER=virtualbox
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export PATH="$PATH:$HOME/cx/dev_tools/scripts" # WHC scripts
+
+source ~/.git-prompt.sh
+TERM=xterm-color
+PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h:\[\033[33;1m\]\w\[\033[m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ '

@@ -1,8 +1,31 @@
 "*":
-  core: {}
+  core:
+    customFileTypes:
+      "source.ini": [
+        ".buckconfig"
+        ".flowconfig"
+      ]
+      "source.json": [
+        ".arcconfig"
+        "BUCK.autodeps"
+      ]
+      "source.python": [
+        "BUCK"
+      ]
+    disabledPackages: [
+      "tree-view"
+    ]
+  docblockr: {}
   editor:
     invisibles: {}
+    preferredLineLength: 120
+    tabLength: 4
   "exception-reporting":
     userId: "3a59a7b1-841b-53bc-8720-e6c9458adcca"
+  "file-watcher":
+    promptWhenFileHasChangedOnDisk: false
+  nuclide:
+    "nuclide-home":
+      showHome: false
   welcome:
     showOnStartup: false
