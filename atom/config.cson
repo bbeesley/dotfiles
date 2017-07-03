@@ -3,6 +3,7 @@
     customFileTypes:
       "source.ini": [
         ".buckconfig"
+        ".hgrc"
         ".flowconfig"
       ]
       "source.json": [
@@ -15,17 +16,19 @@
     disabledPackages: [
       "tree-view"
     ]
-  docblockr: {}
+    telemetryConsent: "limited"
   editor:
-    invisibles: {}
-    preferredLineLength: 120
     tabLength: 4
   "exception-reporting":
-    userId: "3a59a7b1-841b-53bc-8720-e6c9458adcca"
-  "file-watcher":
-    promptWhenFileHasChangedOnDisk: false
+    userId: "b5fb2593-ef85-c740-fd50-f8c191cc1fe5"
   nuclide:
+    "nuclide-flow":
+      warnOnNotInstalled: false
     "nuclide-home":
       showHome: false
+  wakatime:
+    apikey: "Saved in your ~/.wakatime.cfg file"
+  "wakatime-hidden":
+    lastInit: 1495182542
   welcome:
     showOnStartup: false
