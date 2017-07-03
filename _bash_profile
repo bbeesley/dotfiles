@@ -1,0 +1,44 @@
+# Git prompt
+if [ -f /etc/bashrc ]; then
+    source ~/.git-prompt.sh
+fi
+
+# Colours
+export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h:\[\033[33;1m\]\w\[\033[m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ '
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+alias ls='ls -GFh'
+TERM=xterm-color
+
+# Bash Completion
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+    . $(brew --prefix)/etc/bash_completion
+fi
+
+# Git Completion
+if [ -f ~/.git-completion.bash ]; then
+      . ~/.git-completion.bash
+fi
+
+# Aliases
+alias fuckoff='killall node java'
+alias g='git'
+
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+
+# WHC PATH
+export PATH=$PATH:/Users/bbeesley/whc/dev_tools/scripts/
+
+# Update default gem location
+export GEM_HOME=/usr/local/bin
+
+# User binaries
+export PATH=$PATH:/Users/bbeesley/.bin/
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+
+# wakatime
+source /users/bbeesley/src/bash-wakatime/bash-wakatime.sh
+
+# fuck
