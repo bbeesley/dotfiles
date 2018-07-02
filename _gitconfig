@@ -2,7 +2,7 @@
 	editor = vim
 	excludesfile = /home/bill/.config/git/ignore
 [user]
-	email = bill.beesley@williamhill.com
+	email = bill@recombix.com
 	name = Bill Beesley
 [alias]
 	co = checkout
@@ -15,7 +15,4 @@
 [credential]
 	helper = cache
 [http]
-        sslVerify = false
-
-[include]
-        path = /Users/bbeesley/whc/dev_tools/scripts/git/gitconfig
+        sslVerify = true
