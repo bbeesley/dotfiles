@@ -54,22 +54,25 @@ module.exports =
 
   toggle: ->
 
+    if ! atom.workspace.getActiveTextEditor()
+      # Prevent zen mode for undefined editors, e.g. settings
+      atom.notifications.addInfo 'Zen cannot be achieved in this view.'
+      return
+
     body = document.querySelector('body')
-    editor = atom.workspace.getActiveTextEditor()
+    editor =  atom.workspace.getActiveTextEditor()
+    editorElm =  atom.workspace.getActiveTextEditor().element
 
     # should really check current fullsceen state
     fullscreen = atom.config.get 'Zen.fullscreen'
     width = atom.config.get 'Zen.width'
     softWrap = atom.config.get 'Zen.softWrap'
-    typewriter = atom.config.get 'Zen.typewriter'
     minimap = atom.config.get 'Zen.minimap'
 
-    if body.getAttribute('data-zen') isnt 'true'
+    # Left panel needed for hide/restore
+    panel = atom.workspace.getLeftDock()
 
-      # Prevent zen mode for undefined editors
-      if editor is undefined # e.g. settings-view
-        atom.notifications.addInfo 'Zen cannot be achieved in this view.'
-        return
+    if body.getAttribute('data-zen') isnt 'true'
 
       if atom.config.get 'Zen.tabs'
         body.setAttribute 'data-zen-tabs', atom.config.get 'Zen.tabs'
@@ -110,20 +113,45 @@ module.exports =
         requestAnimationFrame ->
           $('atom-text-editor:not(.mini)').css 'width', editor.getDefaultCharWidth() * width
 
-      if typewriter
-          if not atom.config.get('editor.scrollPastEnd')
-              atom.config.set('editor.scrollPastEnd', true)
-              @scrollPastEndReset = true
+      if atom.config.get 'Zen.typewriter'
+        if not atom.config.get('editor.scrollPastEnd')
+          atom.config.set('editor.scrollPastEnd', true)
+          @scrollPastEndReset = true
+        else
+          @scrollPastEndReset = false
+        @lineChanged = editor.onDidChangeCursorPosition ->
+          halfScreen = Math.floor(editor.getRowsPerPage() / 2)
+          cursor = editor.getCursorScreenPosition()
+          editorElm.setScrollTop(editor.getLineHeightInPixels() * (cursor.row - halfScreen))
+
+      @typewriterConfig = atom.config.observe 'Zen.typewriter', =>
+        if not atom.config.get 'Zen.typewriter'
+          if @scrollPastEndReset
+            @scrollPastEndReset = false
+            atom.config.set 'editor.scrollPastEnd', false
+          @lineChanged?.dispose()
+        else
+          if not atom.config.get 'editor.scrollPastEnd'
+            if not @scrollPastEndReset
+              atom.config.set 'editor.scrollPastEnd', true
+            @scrollPastEndReset = true
           else
-              @scrollPastEndReset = false
+            @scrollPastEndReset = false
+          @lineChanged?.dispose()
           @lineChanged = editor.onDidChangeCursorPosition ->
-              requestAnimationFrame ->
-                  @halfScreen = Math.floor(editor.getRowsPerPage() / 2)
-                  @cursor = editor.getCursorScreenPosition()
-                  editor.setScrollTop(editor.getLineHeightInPixels() * (@cursor.row - @halfScreen))
+            halfScreen = Math.floor(editor.getRowsPerPage() / 2)
+            cursor = editor.getCursorScreenPosition()
+            editorElm.setScrollTop editor.getLineHeightInPixels() * (cursor.row - halfScreen)
 
       # Hide TreeView
-      if $('.tree-view').length
+      if $('.nuclide-file-tree').length
+        if panel.isVisible()
+          atom.commands.dispatch(
+            atom.views.getView(atom.workspace),
+            'nuclide-file-tree:toggle'
+          )
+          @restoreTree = true
+      else if $('.tree-view').length
         atom.commands.dispatch(
           atom.views.getView(atom.workspace),
           'tree-view:toggle'
@@ -163,10 +191,17 @@ module.exports =
 
       # Restore TreeView
       if @restoreTree
-        atom.commands.dispatch(
-          atom.views.getView(atom.workspace),
-          'tree-view:show'
-        )
+        if $('.nuclide-file-tree').length
+          unless panel.isVisible()
+            atom.commands.dispatch(
+              atom.views.getView(atom.workspace),
+              'nuclide-file-tree:toggle'
+            )
+        else
+          atom.commands.dispatch(
+            atom.views.getView(atom.workspace),
+            'tree-view:show'
+          )
         @restoreTree = false
 
       # Restore Minimap
@@ -182,4 +217,7 @@ module.exports =
       @fontChanged?.dispose()
       @paneChanged?.dispose()
       @lineChanged?.dispose()
-      atom.config.set('editor.scrollPastEnd', false) if @scrollPastEndReset
+      if @scrollPastEndReset
+        atom.config.set('editor.scrollPastEnd', false)
+        @scrollPastEndReset = false
+      @typewriterConfig?.dispose()

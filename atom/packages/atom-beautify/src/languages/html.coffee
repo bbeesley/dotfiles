@@ -1,15 +1,8 @@
-# Get Atom defaults
-scope = ['text.html']
-tabLength = atom?.config.get('editor.tabLength', scope: scope) ? 4
-softTabs = atom?.config.get('editor.softTabs', scope: scope) ? true
-defaultIndentSize = (if softTabs then tabLength else 1)
-defaultIndentChar = (if softTabs then " " else "\t")
-defaultIndentWithTabs = not softTabs
-
 module.exports = {
 
   name: "HTML"
   namespace: "html"
+  scope: ['text.html']
 
   ###
   Supported Grammars
@@ -32,13 +25,12 @@ module.exports = {
       description: "Indent <head> and <body> sections."
     indent_size:
       type: 'integer'
-      default: defaultIndentSize
+      default: null
       minimum: 0
       description: "Indentation size/length"
     indent_char:
       type: 'string'
-      default: defaultIndentChar
-      minimum: 0
+      default: null
       description: "Indentation character"
     brace_style:
       type: 'string'
@@ -57,11 +49,11 @@ module.exports = {
     wrap_attributes:
       type: 'string'
       default: "auto"
-      enum: ["auto", "force"]
-      description: "Wrap attributes to new lines [auto|force]"
+      enum: ["auto", "force", "force-aligned", "force-expand-multiline"]
+      description: "Wrap attributes to new lines [auto|force|force-aligned|force-expand-multiline]"
     wrap_attributes_indent_size:
       type: 'integer'
-      default: defaultIndentSize
+      default: null
       minimum: 0
       description: "Indent wrapped attributes to after N characters"
     preserve_newlines:
@@ -74,7 +66,17 @@ module.exports = {
       description: "Number of line-breaks to be preserved in one chunk"
     unformatted:
       type: 'array'
-      default: ['a', 'sub', 'sup', 'b', 'i', 'u']
+      default: [
+            'a', 'abbr', 'area', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite',
+            'code', 'data', 'datalist', 'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img',
+            'input', 'ins', 'kbd', 'keygen', 'label', 'map', 'mark', 'math', 'meter', 'noscript',
+            'object', 'output', 'progress', 'q', 'ruby', 's', 'samp', 'select', 'small',
+            'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var',
+            'video', 'wbr', 'text',
+            'acronym', 'address', 'big', 'dt', 'ins', 'small', 'strike', 'tt',
+            'pre',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+        ]
       items:
         type: 'string'
       description: "List of tags (defaults to inline) that should not be reformatted"

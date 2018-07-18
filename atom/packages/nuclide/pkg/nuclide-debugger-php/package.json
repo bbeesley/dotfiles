@@ -1,0 +1,51 @@
+{
+  "name": "nuclide-debugger-php",
+  "main": "./lib/main.js",
+  "version": "0.0.0",
+  "description": "Allows debugging of PHP from Nuclide",
+  "author": "Nuclide : Debugging",
+  "atomTestRunner": "../../lib/test-runner-entry.js",
+  "nuclide": {
+    "configMetadata": {
+      "pathComponents": [
+        "Debugger",
+        "HHVM"
+      ]
+    },
+    "config": {
+      "hhvmRuntimeArgs": {
+        "title": "Arguments for your HHVM runtime",
+        "type": "string",
+        "default": "",
+        "description": "Arguments to call the HHVM runtime with, e.g. to pass a config file."
+      },
+      "hhvmRuntimePath": {
+        "title": "Path to your HHVM runtime",
+        "type": "string",
+        "default": "/usr/local/bin/hhvm",
+        "description": "Path to the HHVM runtime on your server."
+      },
+      "hhvmServerAttachPort": {
+        "title": "Webserver debugger port",
+        "type": "number",
+        "default": "8999",
+        "description": "Port to use when attaching to webserver"
+      }
+    },
+    "packageType": "Atom",
+    "testRunner": "apm"
+  },
+  "providedServices": {
+    "additional-log-files": {
+      "description": "HHVM debugger log files",
+      "versions": {
+        "0.0.0": "createAdditionalLogFilesProvider"
+      }
+    },
+    "nuclide-home.homeFragments": {
+      "versions": {
+        "0.0.0": "getHomeFragments"
+      }
+    }
+  }
+}

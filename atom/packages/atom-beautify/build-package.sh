@@ -1,44 +1,66 @@
 #!/bin/sh
 
-echo "Downloading latest Atom release..."
-curl -s -L "https://atom.io/download/mac" \
-  -H 'Accept: application/octet-stream' \
-  -o atom.zip
-
-mkdir atom
-unzip -q atom.zip -d atom
-export PATH=$PWD/atom/Atom.app/Contents/Resources/app/apm/bin:$PATH
+if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x16
+    export DISPLAY=":99"
+fi
 
 echo "Using Atom version:"
-ATOM_PATH=./atom ./atom/Atom.app/Contents/Resources/app/atom.sh -v
+"$ATOM_SCRIPT_NAME" -v
+echo "Using APM version:"
+"$APM_SCRIPT_NAME" -v
 
 echo "Downloading package dependencies..."
-atom/Atom.app/Contents/Resources/app/apm/node_modules/.bin/apm clean
-atom/Atom.app/Contents/Resources/app/apm/node_modules/.bin/apm install
+"$APM_SCRIPT_NAME" clean
+"$APM_SCRIPT_NAME" install
 
-TEST_PACKAGES="${APM_TEST_PACKAGES:=none}"
-
-if [ "$TEST_PACKAGES" != "none" ]; then
-  echo "Installing atom package dependencies..."
-  for pack in $TEST_PACKAGES ; do
-    atom/Atom.app/Contents/Resources/app/apm/node_modules/.bin/apm install $pack
-  done
-fi
+echo "Installing atom package dependencies..."
+"$APM_SCRIPT_NAME" install --packages-file atom-packages.txt
 
 if [ -f ./node_modules/.bin/coffeelint ]; then
   if [ -d ./src ]; then
     echo "Linting package..."
     ./node_modules/.bin/coffeelint src
-    rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
   fi
   if [ -d ./spec ]; then
     echo "Linting package specs..."
     ./node_modules/.bin/coffeelint spec
-    rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
   fi
 fi
 
-echo "Running specs..."
-ATOM_PATH=./atom atom/Atom.app/Contents/Resources/app/apm/node_modules/.bin/apm test --path atom/Atom.app/Contents/Resources/app/atom.sh
+if [ -f ./node_modules/.bin/eslint ]; then
+  if [ -d ./src ]; then
+    echo "Linting package..."
+    ./node_modules/.bin/eslint src
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
+  fi
+  if [ -d ./spec ]; then
+    echo "Linting package specs..."
+    ./node_modules/.bin/eslint spec
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
+  fi
+fi
 
+if [ -f ./node_modules/.bin/standard ]; then
+  if [ -d ./src ]; then
+    echo "Linting package..."
+    ./node_modules/.bin/standard "src/**/*.js"
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
+  fi
+  if [ -d ./spec ]; then
+    echo "Linting package specs..."
+    ./node_modules/.bin/standard "spec/**/*.js"
+    rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi
+  fi
+fi
+
+if [ -d ./spec ]; then
+  echo "Running specs..."
+  "$ATOM_SCRIPT_NAME" --test spec
+else
+  echo "Missing spec folder! Please consider adding a test suite in `./spec`"
+  exit 1
+fi
 exit

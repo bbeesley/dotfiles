@@ -4,40 +4,85 @@ Requires https://github.com/bbatsov/rubocop
 
 "use strict"
 Beautifier = require('./beautifier')
+path = require('path')
 
 module.exports = class Rubocop extends Beautifier
   name: "Rubocop"
+  link: "https://github.com/bbatsov/rubocop"
+  isPreInstalled: false
 
   options: {
     Ruby:
       indent_size: true
+      rubocop_path: true
   }
 
-  beautify: (text, language, options) ->
-
-    path = require 'path'
-    fs = require 'fs'
-
-    configFile = path.join(atom.project.getPaths()[0], ".rubocop.yml")
-
-    if fs.existsSync(configFile)
-      @debug("rubocop", config, fs.readFileSync(configFile, 'utf8'))
-    else
-      yaml = require("yaml-front-matter")
-      # Generate config file
-      config = {
-        "Style/IndentationWidth":
-          "Width": options.indent_size
+  executables: [
+    {
+      name: "Rubocop"
+      cmd: "rubocop"
+      homepage: "http://rubocop.readthedocs.io/"
+      installation: "http://rubocop.readthedocs.io/en/latest/installation/"
+      version: {
+        parse: (text) -> text.match(/(\d+\.\d+\.\d+)/)[1]
       }
+    }
+  ]
 
-      configFile = @tempFile("rubocop-config", yaml.safeDump(config))
-      @debug("rubocop", config, configFile)
+  beautify: (text, language, options, context) ->
+    fullPath = context.filePath or ""
+    [projectPath, _relativePath] = atom.project.relativizePath(fullPath)
 
-    @run("rubocop", [
-      "--auto-correct"
-      "--config", configFile
-      tempFile = @tempFile("temp", text)
-      ], {ignoreReturnCode: true})
-      .then(=>
-        @readFile(tempFile)
+    # Deprecate options.rubocop_path
+    if options.rubocop_path
+      @deprecateOptionForExecutable("Rubocop", "Ruby - Rubocop Path (rubocop_path)", "Path")
+
+    # Find the rubocop path
+    @Promise.all([
+      @which(options.rubocop_path) if options.rubocop_path
+      @which('rubocop')
+    ])
+    .then((paths) =>
+      @debug('rubocop paths', paths)
+      # Get first valid, absolute path
+      rubocopPath = paths.find((p) -> p and path.isAbsolute(p)) or "rubocop"
+      @verbose('rubocopPath', rubocopPath)
+      @debug('rubocopPath', rubocopPath, paths)
+
+      # Find or generate a config file if non exists
+      configFile = @findFile(path.dirname(fullPath), ".rubocop.yml")
+      if !configFile?
+        yaml = require("yaml-front-matter")
+        config = {
+          "Style/IndentationWidth":
+            "Width": options.indent_size
+        }
+        tempConfig = @tempFile("rubocop-config", yaml.safeDump(config))
+
+      rubocopArguments = [
+        "--auto-correct"
+        "--force-exclusion"
+        "--stdin", "atom-beautify.rb" # filename is required but not used
+      ]
+      exeOptions = {
+        ignoreReturnCode: true,
+        cwd: projectPath if configFile?,
+        onStdin: (stdin) -> stdin.end text
+      }
+      rubocopArguments.push("--config", tempConfig) if tempConfig?
+      @debug("rubocop arguments", rubocopArguments)
+
+      (if options.rubocop_path then \
+        @run(rubocopPath, rubocopArguments, exeOptions) else \
+        @exe("rubocop").run(rubocopArguments, exeOptions)
+      ).then((stdout) =>
+        @debug("rubocop output", stdout)
+        # Rubocop output an error if stdout is empty
+        return text if stdout.length == 0
+
+        result = stdout.split("====================\n")
+        result = stdout.split("====================\r\n") if result.length == 1
+
+        result[result.length - 1]
       )
+    )

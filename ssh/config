@@ -1,17 +1,5 @@
-Host github.com
-  Hostname altssh.github.com
-  Port 443
-  User git
-
-Host git.nonprod.williamhill.plc
-  Hostname git.nonprod.williamhill.plc
-  IdentityFile ~/.ssh/git_nonprod
-
-Host gitlab.com
-  Hostname altssh.gitlab.com
-  User git
-  Port 443
-  PreferredAuthentications publickey
+Host dione.bysh.me
+  IdentityFile ~/.ssh/id_personal
 
 Host intelbox
   Hostname intelbox

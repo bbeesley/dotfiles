@@ -1,15 +1,8 @@
-# Get Atom defaults
-scope = ['source.sql']
-tabLength = atom?.config.get('editor.tabLength', scope: scope) ? 4
-softTabs = atom?.config.get('editor.softTabs', scope: scope) ? true
-defaultIndentSize = (if softTabs then tabLength else 1)
-defaultIndentChar = (if softTabs then " " else "\t")
-defaultIndentWithTabs = not softTabs
-
 module.exports = {
 
   name: "SQL"
   namespace: "sql"
+  scope: ['source.sql']
 
   ###
   Supported Grammars
@@ -30,18 +23,22 @@ module.exports = {
     # SQL
     indent_size:
       type: 'integer'
-      default: defaultIndentSize
+      default: null
       minimum: 0
       description: "Indentation size/length"
+    reindent:
+      type: 'boolean'
+      default: true
+      description: "Change indentations of the statements. Uncheck this option to preserve indentation"
     keywords:
       type: 'string'
       default: "upper"
       description: "Change case of keywords"
-      enum: ["lower","upper","capitalize"]
+      enum: ["unchanged","lower","upper","capitalize"]
     identifiers:
       type: 'string'
-      default: "lower"
+      default: "unchanged"
       description: "Change case of identifiers"
-      enum: ["lower","upper","capitalize"]
+      enum: ["unchanged","lower","upper","capitalize"]
 
 }

@@ -1,0 +1,50 @@
+{
+  "menu": [
+    {
+      "label": "View",
+      "submenu": [
+        {
+          "command": "tree-view:toggle",
+          "label": "Toggle File Tree"
+        }
+      ]
+    },
+    {
+      "label": "Nuclide",
+      "submenu": [
+        {
+          "label": "File Tree",
+          "submenu": [
+            {
+              "label": "Toggle Focus",
+              "command": "tree-view:toggle-focus"
+            },
+            {
+              "label": "Reveal Active File in File Tree",
+              "command": "tree-view:reveal-active-file"
+            },
+            {
+              "label": "Collapse File Tree",
+              "command": "tree-view:recursive-collapse-all"
+            },
+            {
+              "label": "New File...",
+              "command": "tree-view:add-file-relative"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "context-menu": {
+    "atom-pane atom-text-editor, [data-path]:not(.nuclide-file-tree-path)": [
+      {
+        "command": "tree-view:reveal-active-file",
+        "label": "Reveal in File Tree"
+      },
+      {
+        "type": "separator"
+      }
+    ]
+  }
+}

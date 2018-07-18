@@ -1,0 +1,73 @@
+{
+  "name": "nuclide-flow",
+  "main": "./lib/main.js",
+  "version": "0.0.0",
+  "description": "Provides support for Flow in Nuclide",
+  "author": "Flow",
+  "atomTestRunner": "../../lib/test-runner-entry.js",
+  "nuclide": {
+    "configMetadata": {
+      "pathComponents": [
+        "Language",
+        "Flow"
+      ]
+    },
+    "config": {
+      "pathToFlow": {
+        "title": "Path to Flow Executable",
+        "type": "string",
+        "default": "flow",
+        "description": "Absolute path to the Flow executable on your system."
+      },
+      "canUseFlowBin": {
+        "title": "Use the Flow binary included in each project's flow-bin (requires restart)",
+        "type": "boolean",
+        "default": false,
+        "description": "WARNING: Checking this box is a security risk. When you open a project we will immediately run code contained within it. Only use this setting if you fully trust all of the projects that you open."
+      },
+      "stopFlowOnExit": {
+        "title": "Stop Flow On Exit",
+        "type": "boolean",
+        "default": true,
+        "description": "If Nuclide was responsible for starting a Flow server (on the client-side), stop it when Nuclide closes or reloads."
+      },
+      "flowAutocompleteResultsFirst": {
+        "title": "Show Flow autocomplete results first",
+        "type": "boolean",
+        "default": true,
+        "description": "If checked, Flow suggestions will be placed before the rest of autocomplete results (e.g. snippets etc.). Requires restart to take effect."
+      },
+      "excludeOtherAutocomplete": {
+        "title": "Exclude other autocomplete results",
+        "type": "boolean",
+        "default": false,
+        "description": "If checked, only autocomplete results from Flow will appear in JS files. Not recommended. Requires restart to take effect."
+      },
+      "warnOnNotInstalled": {
+        "title": "Warn when Flow is not found",
+        "type": "boolean",
+        "default": true,
+        "description": "If a .flowconfig file is found, but Flow itself cannot be found, pop up a warning explaining how to install Flow"
+      },
+      "functionSnippetShouldIncludeArguments": {
+        "title": "Autocompleted function snippets will include calling parens and arguments.",
+        "type": "boolean",
+        "default": true,
+        "description": "If unchecked, functions will autocomplete as only their name, and not include their calling parens and arguments."
+      },
+      "liveSyntaxErrors": {
+        "title": "Live syntax errors",
+        "type": "boolean",
+        "default": true,
+        "description": "If checked, Flow will report syntax errors as you type; otherwise, and to see other errors, you have to trigger a flow check by saving any file. (requires restart)"
+      }
+    },
+    "packageType": "Atom",
+    "testRunner": "apm"
+  },
+  "activationHooks": [
+    "language-babel:grammar-used",
+    "language-javascript-jsx:grammar-used",
+    "language-javascript:grammar-used"
+  ]
+}

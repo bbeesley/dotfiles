@@ -1,0 +1,27 @@
+{
+  "name": "nuclide-debugger-native",
+  "main": "./lib/main.js",
+  "version": "0.0.0",
+  "description": "Nuclide lldb debugging client",
+  "author": "Nuclide : Debugging",
+  "atomTestRunner": "../../lib/test-runner-entry.js",
+  "nuclide": {
+    "packageType": "Atom",
+    "testRunner": "apm"
+  },
+  "providedServices": {
+    "debugger.native-debugger-service": {
+      "description": "LLDB debugger provider.",
+      "versions": {
+        "0.0.0": "createNativeDebuggerService"
+      }
+    }
+  },
+  "consumedServices": {
+    "nuclide.buck-platforms": {
+      "versions": {
+        "0.0.0": "consumePlatformService"
+      }
+    }
+  }
+}

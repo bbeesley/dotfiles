@@ -7,6 +7,9 @@ Beautifier = require('./beautifier')
 
 module.exports = class HTMLBeautifier extends Beautifier
   name: "HTML Beautifier"
+  link: "https://github.com/threedaymonk/htmlbeautifier"
+  isPreInstalled: false
+
   options: {
     ERB:
       indent_size: true

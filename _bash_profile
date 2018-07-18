@@ -23,6 +23,10 @@ fi
 # Aliases
 alias fuckoff='killall node java'
 alias g='git'
+mkd (){
+    mkdir $1
+    cd $1
+}
 
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
@@ -42,3 +46,11 @@ export NVM_DIR="$HOME/.nvm"
 source /users/bbeesley/src/bash-wakatime/bash-wakatime.sh
 
 # fuck
+# git-scripts
+export PATH=$PATH:/Users/bbeesley/projects/git-scripts/bin:/usr/local/go/bin
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/bbeesley/Downloads/google-cloud-sdk/path.bash.inc' ]; then source '/Users/bbeesley/Downloads/google-cloud-sdk/path.bash.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/bbeesley/Downloads/google-cloud-sdk/completion.bash.inc' ]; then source '/Users/bbeesley/Downloads/google-cloud-sdk/completion.bash.inc'; fi

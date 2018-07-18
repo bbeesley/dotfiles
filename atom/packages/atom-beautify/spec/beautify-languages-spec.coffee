@@ -4,6 +4,10 @@ beautifier = new Beautifiers()
 fs = require "fs"
 path = require "path"
 JsDiff = require('diff')
+shellEnv = require('shell-env')
+
+# Fix https://discuss.atom.io/t/specs-do-not-load-shell-environment-variables-activationhooks-core-loaded-shell-environment/44199
+process.env = shellEnv.sync()
 
 # Use the command `window:run-package-specs` (cmd-alt-ctrl-p) to run specs.
 #
@@ -15,22 +19,42 @@ isWindows = process.platform is 'win32' or
   process.env.OSTYPE is 'cygwin' or
   process.env.OSTYPE is 'msys'
 
+unsupportedLangs = {
+  all: [
+  ]
+  windows: [
+    "ocaml"
+    "r"
+    "clojure"
+    # Broken
+    "apex"
+    "bash"
+    "csharp"
+    "d"
+    "elm"
+    "java"
+    "objectivec"
+    "opencl"
+  ]
+}
+
 describe "BeautifyLanguages", ->
 
   optionsDir = path.resolve(__dirname, "../examples")
 
   # Activate all of the languages
   allLanguages = [
-    "c", "coffee-script", "css", "html",
-    "java", "javascript", "json", "less",
-    "mustache", "objective-c", "perl", "php",
-    "python", "ruby", "sass", "sql", "svg",
-    "xml", "csharp", "gfm", "marko",
-    "go", "html-swig"
+    "blade", "c", "clojure", "coffee-script", "css", "csharp", "d",
+    "gfm", "go", "html", "html-swig", "java", "javascript",
+    "json", "less", "lua", "marko", "mustache", "objective-c",
+    "perl", "php", "python", "ruby", "sass", "sql",
+    "svg", "xml"
     ]
   # All Atom packages that Atom Beautify is dependent on
   dependentPackages = [
     'autocomplete-plus'
+    'fuse'
+    'react'
     # 'linter'
     #   'atom-typescript' # it logs too much...
   ]
@@ -53,15 +77,14 @@ describe "BeautifyLanguages", ->
       pack = atom.packages.getLoadedPackage("atom-beautify")
       pack.activateNow()
       # Need more debugging on Windows
-      if isWindows
-        # Change logger level
-        atom.config.set('atom-beautify._loggerLevel', 'verbose')
+      # Change logger level
+      atom.config.set('atom-beautify.general.loggerLevel', 'info')
       # Return promise
       return activationPromise
 
     # Set Uncrustify config path
     # uncrustifyConfigPath = path.resolve(__dirname, "../examples/nested-jsbeautifyrc/uncrustify.cfg")
-    # uncrustifyLangs = ["c", "cpp", "objectivec", "cs", "d", "java", "pawn", "vala"]
+    # uncrustifyLangs = ["apex", "c", "cpp", "objectivec", "cs", "d", "java", "pawn", "vala"]
     # for lang in uncrustifyLangs
     #     do (lang) ->
       # atom.config.set("atom-beautify.#{lang}_configPath", uncrustifyConfigPath)
@@ -94,6 +117,14 @@ describe "BeautifyLanguages", ->
           # All Languages for configuration
           langNames = fs.readdirSync(langsDir)
           for lang in langNames
+
+            shouldSkipLang = false
+            if unsupportedLangs.all.indexOf(lang) isnt -1
+              shouldSkipLang = true
+            if isWindows and unsupportedLangs.windows.indexOf(lang) isnt -1
+              console.warn("Tests for Windows do not support #{lang}")
+              shouldSkipLang = true
+
             do (lang) ->
               # Generate the path to where al of the tests are
               testsDir = path.resolve(langsDir, lang)
@@ -114,7 +145,7 @@ describe "BeautifyLanguages", ->
                   fs.mkdirSync(expectedDir)
 
                 # Language group tests
-                describe "when beautifying language '#{lang}'", ->
+                describe "#{if shouldSkipLang then '#' else ''}when beautifying language '#{lang}'", ->
 
                   # All tests for language
                   testNames = fs.readdirSync(originalDir)
@@ -123,11 +154,12 @@ describe "BeautifyLanguages", ->
                       ext = path.extname(testFileName)
                       testName = path.basename(testFileName, ext)
                       # If prefixed with underscore (_) then this is a hidden test
+                      shouldSkip = false
                       if testFileName[0] is '_'
                         # Do not show this test
-                        return
+                        shouldSkip = true
                       # Confirm this is a test
-                      it "#{testName} #{testFileName}", ->
+                      it "#{if shouldSkip then '# ' else ''}#{testName} #{testFileName}", ->
 
                         # Generate paths to test files
                         originalTestPath = path.resolve(originalDir, testFileName)
@@ -156,51 +188,59 @@ describe "BeautifyLanguages", ->
 
                         beautifyCompleted = false
                         completionFun = (text) ->
-                          expect(text instanceof Error).not.toEqual(true, text)
-                          return beautifyCompleted = true if text instanceof Error
-                        #   logger.verbose(expectedTestPath, text) if ext is ".less"
-                        #   if text instanceof Error
-                        #     return beautifyCompleted = text # text == Error
+                          try
+                            expect(text instanceof Error).not.toEqual(true, text.message or text.toString())
+                            return beautifyCompleted = true if text instanceof Error
+                          #   logger.verbose(expectedTestPath, text) if ext is ".less"
+                          #   if text instanceof Error
+                          #     return beautifyCompleted = text # text == Error
 
-                          expect(text).not.toEqual(null, "Language or Beautifier not found")
-                          return beautifyCompleted = true if text is null
+                            expect(text).not.toEqual(null, "Language or Beautifier not found")
+                            return beautifyCompleted = true if text is null
 
-                          expect(typeof text).toEqual("string", "Text: #{text}")
-                          return beautifyCompleted = true if typeof text isnt "string"
+                            expect(typeof text).toEqual("string", "Text: #{text}")
+                            return beautifyCompleted = true if typeof text isnt "string"
 
-                          # Replace Newlines
-                          text = text.replace(/(?:\r\n|\r|\n)/g, '⏎\n')
-                          expectedContents = expectedContents\
-                            .replace(/(?:\r\n|\r|\n)/g, '⏎\n')
-                          # Replace tabs
-                          text = text.replace(/(?:\t)/g, '↹')
-                          expectedContents = expectedContents\
-                            .replace(/(?:\t)/g, '↹')
-                          # Replace spaces
-                          text = text.replace(/(?:\ )/g, '␣')
-                          expectedContents = expectedContents\
-                            .replace(/(?:\ )/g, '␣')
+                            # Replace Newlines
+                            text = text.replace(/(?:\r\n|\r|\n)/g, '⏎\n')
+                            expectedContents = expectedContents\
+                              .replace(/(?:\r\n|\r|\n)/g, '⏎\n')
+                            # Replace tabs
+                            text = text.replace(/(?:\t)/g, '↹')
+                            expectedContents = expectedContents\
+                              .replace(/(?:\t)/g, '↹')
+                            # Replace spaces
+                            text = text.replace(/(?:\ )/g, '␣')
+                            expectedContents = expectedContents\
+                              .replace(/(?:\ )/g, '␣')
 
-                          # Check for beautification errors
-                          if text isnt expectedContents
-                            # console.warn(allOptions, text, expectedContents)
-                            fileName = expectedTestPath
-                            oldStr=text
-                            newStr=expectedContents
-                            oldHeader="beautified"
-                            newHeader="expected"
-                            diff = JsDiff.createPatch(fileName, oldStr, \
-                              newStr, oldHeader, newHeader)
-                            # Get options
-                            opts = beautifier.getOptionsForLanguage(allOptions, language)
-                            # Show error message with debug information
-                            expect(text).toEqual(expectedContents, \
-                              "Beautifier output does not match expected \
-                              output:\n#{diff}\n\n\
-                              With options:\n\
-                              #{JSON.stringify(opts, undefined, 4)}")
-                          # All done!
-                          beautifyCompleted = true
+                            # Check for beautification errors
+                            if text isnt expectedContents
+                              # console.warn(allOptions, text, expectedContents)
+                              fileName = expectedTestPath
+                              oldStr=text
+                              newStr=expectedContents
+                              oldHeader="beautified"
+                              newHeader="expected"
+                              diff = JsDiff.createPatch(fileName, oldStr, \
+                                newStr, oldHeader, newHeader)
+                              # Get options
+                              opts = beautifier.getOptionsForLanguage(allOptions, language)
+                              selectedBeautifier = beautifier.getBeautifierForLanguage(language)
+                              if selectedBeautifier?
+                                opts = beautifier.transformOptions(selectedBeautifier, language.name, opts)
+
+                              # Show error message with debug information
+                              expect(text).toEqual(expectedContents, \
+                                "Beautifier '#{selectedBeautifier?.name}' output does not match expected \
+                                output:\n#{diff}\n\n\
+                                With options:\n\
+                                #{JSON.stringify(opts, undefined, 4)}")
+                            # All done!
+                            beautifyCompleted = true
+                          catch e
+                            console.error(e)
+                            beautifyCompleted = e
 
                         runs ->
                           try

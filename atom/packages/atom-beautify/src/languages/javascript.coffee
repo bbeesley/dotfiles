@@ -1,15 +1,8 @@
-# Get Atom defaults
-scope = ['source.js']
-tabLength = atom?.config.get('editor.tabLength', scope: scope) ? 4
-softTabs = atom?.config.get('editor.softTabs', scope: scope) ? true
-defaultIndentSize = (if softTabs then tabLength else 1)
-defaultIndentChar = (if softTabs then " " else "\t")
-defaultIndentWithTabs = not softTabs
-
 module.exports = {
 
   name: "JavaScript"
   namespace: "js"
+  scope: ['source.js']
 
   ###
   Supported Grammars
@@ -28,18 +21,17 @@ module.exports = {
   defaultBeautifier: "JS Beautify"
 
   ###
-
   ###
   options:
     # JavaScript
     indent_size:
       type: 'integer'
-      default: defaultIndentSize
+      default: null
       minimum: 0
       description: "Indentation size/length"
     indent_char:
       type: 'string'
-      default: defaultIndentChar
+      default: null
       description: "Indentation character"
     indent_level:
       type: 'integer'
@@ -47,7 +39,7 @@ module.exports = {
       description: "Initial indentation level"
     indent_with_tabs:
       type: 'boolean'
-      default: defaultIndentWithTabs
+      default: null
       description: "Indentation uses tabs, overrides `Indent Size` and `Indent Char`"
     preserve_newlines:
       type: 'boolean'
@@ -72,8 +64,8 @@ module.exports = {
     brace_style:
       type: 'string'
       default: "collapse"
-      enum: ["collapse", "expand", "end-expand", "none"]
-      description: "[collapse|expand|end-expand|none]"
+      enum: ["collapse", "collapse-preserve-inline", "expand", "end-expand", "none"]
+      description: "[collapse|collapse-preserve-inline|expand|end-expand|none]"
     break_chained_methods:
       type: 'boolean'
       default: false
@@ -111,5 +103,14 @@ module.exports = {
       default: false
       description: "If a terminating comma should be inserted into \
                   arrays, object literals, and destructured objects."
+    end_of_line:
+      type: 'string'
+      default: "System Default"
+      enum: ["CRLF","LF","System Default"]
+      description: "Override EOL from line-ending-selector"
+    object_curly_spacing:
+      type: 'boolean'
+      default: false
+      description: "Insert spaces between brackets in object literals"
 
 }

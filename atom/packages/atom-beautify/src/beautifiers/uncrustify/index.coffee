@@ -10,7 +10,31 @@ _ = require('lodash')
 
 module.exports = class Uncrustify extends Beautifier
   name: "Uncrustify"
+  link: "https://github.com/uncrustify/uncrustify"
+  executables: [
+    {
+      name: "Uncrustify"
+      cmd: "uncrustify"
+      homepage: "http://uncrustify.sourceforge.net/"
+      installation: "https://github.com/uncrustify/uncrustify"
+      version: {
+        parse: (text) ->
+          try
+            v = text.match(/uncrustify (\d+\.\d+)/)[1]
+          catch error
+            @error(error)
+            v = text.match(/Uncrustify-(\d+\.\d+)/)[1] if not v?
+          if v
+            return v + ".0"
+      }
+      docker: {
+        image: "unibeautify/uncrustify"
+      }
+    }
+  ]
+
   options: {
+    Apex: true
     C: true
     "C++": true
     "C#": true
@@ -22,7 +46,10 @@ module.exports = class Uncrustify extends Beautifier
     Arduino: true
   }
 
-  beautify: (text, language, options) ->
+  beautify: (text, language, options, context) ->
+    fileExtension = context.fileExtension
+
+    uncrustify = @exe("uncrustify")
     # console.log('uncrustify.beautify', language, options)
     return new @Promise((resolve, reject) ->
       configPath = options.configPath
@@ -36,20 +63,21 @@ module.exports = class Uncrustify extends Beautifier
         editor = atom.workspace.getActiveTextEditor()
         if editor?
           basePath = path.dirname(editor.getPath())
+          projectPath = atom.workspace.project.getPaths()[0]
           # console.log(basePath);
-          configPath = path.resolve(basePath, configPath)
+          # Expand Home Directory in Config Path
+          expandedConfigPath = expandHomeDir(configPath)
+          configPath = path.resolve(projectPath, expandedConfigPath)
           resolve configPath
         else
           reject(new Error("No Uncrustify Config Path set! Please configure Uncrustify with Atom Beautify."))
     )
     .then((configPath) =>
-
-      # Expand Home Directory in Config Path
-      configPath = expandHomeDir(configPath)
-
       # Select Uncrustify language
       lang = "C" # Default is C
       switch language
+        when "Apex"
+          lang = "Apex"
         when "C"
           lang = "C"
         when "C++"
@@ -69,18 +97,16 @@ module.exports = class Uncrustify extends Beautifier
         when "Arduino"
           lang = "CPP"
 
-      @run("uncrustify", [
+      uncrustify.run([
         "-c"
         configPath
         "-f"
-        @tempFile("input", text)
+        @tempFile("input", text, fileExtension and ".#{fileExtension}")
         "-o"
-        outputFile = @tempFile("output", text)
+        outputFile = @tempFile("output", text, fileExtension and ".#{fileExtension}")
         "-l"
         lang
-        ], help: {
-          link: "http://sourceforge.net/projects/uncrustify/"
-        })
+        ])
         .then(=>
           @readFile(outputFile)
         )

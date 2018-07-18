@@ -15,12 +15,19 @@
       ]
     disabledPackages: [
       "tree-view"
+      "image-view"
+      "jslint"
+      "linter"
+      "linter-ui-default"
     ]
     telemetryConsent: "limited"
   editor:
     tabLength: 4
   "exception-reporting":
     userId: "b5fb2593-ef85-c740-fd50-f8c191cc1fe5"
+  "linter-ui-default":
+    panelHeight: 223
+    showPanel: true
   nuclide:
     "nuclide-flow":
       warnOnNotInstalled: false

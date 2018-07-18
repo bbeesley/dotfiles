@@ -1,0 +1,17 @@
+genrule(
+  name = 'good_rule',
+  bash = 'echo good > $OUT',
+  out = 'good.txt',
+)
+
+genrule(
+  name = 'good_rule_two',
+  bash = 'echo good > $OUT',
+  out = 'good.txt',
+)
+
+genrule(
+  name = 'bad_rule',
+  bash = 'exit 1 && echo bad > $OUT',
+  out = 'bad.txt',
+)

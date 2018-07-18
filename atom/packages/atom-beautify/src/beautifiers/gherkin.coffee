@@ -3,17 +3,18 @@
 
 "use strict"
 Beautifier = require('./beautifier')
-Lexer = require('gherkin').Lexer('en')
-logger = require('../logger')(__filename)
 
 module.exports = class Gherkin extends Beautifier
   name: "Gherkin formatter"
+  link: "https://github.com/Glavin001/atom-beautify/blob/master/src/beautifiers/gherkin.coffee"
 
   options: {
     gherkin: true
   }
 
   beautify: (text, language, options) ->
+    Lexer = require('gherkin').Lexer('en')
+    logger = @logger
     return new @Promise((resolve, reject) ->
       recorder = {
         lines: []
@@ -121,7 +122,7 @@ module.exports = class Gherkin extends Beautifier
       lexer = new Lexer(recorder)
       lexer.scan(text)
 
-      loggerLevel = atom?.config.get('atom-beautify._loggerLevel')
+      loggerLevel = atom?.config.get('atom-beautify.general.loggerLevel')
       if loggerLevel is 'verbose'
         for line in recorder.lines
           logger.verbose("> #{line}")

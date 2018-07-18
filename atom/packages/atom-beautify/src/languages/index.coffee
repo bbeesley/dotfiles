@@ -12,36 +12,55 @@ module.exports = class Languages
   # Supported unique configuration keys
   # Used for detecting nested configurations in .jsbeautifyrc
   languageNames: [
+    "apex"
     "arduino"
+    "bash"
+    "blade"
     "c-sharp"
     "c"
+    "clojure"
     "coffeescript"
+    "coldfusion"
     "cpp"
+    "crystal"
     "css"
     "csv"
     "d"
     "ejs"
+    "elm"
     "erb"
+    "erlang"
     "gherkin"
+    "glsl"
+    "gn"
     "go"
+    "gohtml"
     "fortran"
     "handlebars"
     "haskell"
     "html"
+    "jade"
     "java"
     "javascript"
     "json"
     "jsx"
+    "latex"
     "less"
+    "lua"
     "markdown"
     'marko'
     "mustache"
+    "nginx"
+    "nunjucks"
     "objective-c"
+    "ocaml"
     "pawn"
     "perl"
     "php"
     "puppet"
     "python"
+    "r"
+    "riotjs"
     "ruby"
     "rust"
     "sass"
@@ -51,11 +70,19 @@ module.exports = class Languages
     "svg"
     "swig"
     "tss"
+    "tsx"
     "twig"
     "typescript"
+    "ux_markup"
     "vala"
+    "vue"
+    "vhdl"
     "visualforce"
     "xml"
+    "xtemplate"
+    "yaml"
+    "terraform"
+    "verilog"
   ]
 
   ###
@@ -85,6 +112,6 @@ module.exports = class Languages
     _.union(
       _.filter(@languages, (language) -> _.isEqual(language.name, name))
       _.filter(@languages, (language) -> _.isEqual(language.namespace, namespace))
-      _.filter(@languages, (language) -> _.contains(language.grammars, grammar))
-      _.filter(@languages, (language) -> _.contains(language.extensions, extension))
+      _.filter(@languages, (language) -> _.includes(language.grammars, grammar))
+      _.filter(@languages, (language) -> _.includes(language.extensions, extension))
     )

@@ -7,6 +7,8 @@ Beautifier = require('./beautifier')
 
 module.exports = class Sqlformat extends Beautifier
   name: "sqlformat"
+  link: "https://github.com/andialbrecht/sqlparse"
+  isPreInstalled: false
 
   options: {
     SQL: true
@@ -15,10 +17,10 @@ module.exports = class Sqlformat extends Beautifier
   beautify: (text, language, options) ->
     @run("sqlformat", [
       @tempFile("input", text)
-      "--reindent"
+      "--reindent" if options.reindent is true
       "--indent_width=#{options.indent_size}" if options.indent_size?
-      "--keywords=#{options.keywords}" if options.keywords?
-      "--identifiers=#{options.identifiers}" if options.identifiers?
+      "--keywords=#{options.keywords}" if (options.keywords? && options.keywords != 'unchanged')
+      "--identifiers=#{options.identifiers}" if (options.identifiers? && options.identifiers != 'unchanged')
       ], help: {
         link: "https://github.com/andialbrecht/sqlparse"
       })

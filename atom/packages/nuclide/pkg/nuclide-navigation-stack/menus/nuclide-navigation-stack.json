@@ -1,0 +1,20 @@
+{
+  "menu": [
+    {
+      "label": "Go",
+      "submenu": [
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Back",
+          "command": "nuclide-navigation-stack:navigate-backwards"
+        },
+        {
+          "label": "Forward",
+          "command": "nuclide-navigation-stack:navigate-forwards"
+        }
+      ]
+    }
+  ]
+}

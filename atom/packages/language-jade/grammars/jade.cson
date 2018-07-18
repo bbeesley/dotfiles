@@ -31,7 +31,7 @@
     ]
   }
   {
-    'begin': '^(\\s*)(script)(?=[.#(\\s])((?![^\\n]*type=)|(?=[^\\n]*text/javascript))'
+    'begin': '^(\\s*)(script)((\\.$)|(?=[.#(].*\\.$))'
     'beginCaptures':
       '2':
         'name': 'entity.name.tag.script.jade'
@@ -65,10 +65,10 @@
     ]
   }
   {
-    'begin': '^(\\s*)(style)(?=[.#(\\s])'
+    'begin': '^(\\s*)(style)((\\.$)|(?=[.#(].*\\.$))'
     'beginCaptures':
       '2':
-        'name': 'entity.name.tag.script.jade'
+        'name': 'entity.name.tag.style.jade'
     'comment': 'Style tag with CSS code.'
     'end': '^(?!(\\1\\s)|\\s*$)'
     'name': 'source.style.jade'
@@ -255,7 +255,7 @@
     ]
   }
   {
-    'begin': '^\\s*'
+    'begin': '^\\s*+(?=[^/])'
     'comment': 'All constructs that generally span a single line starting with any number of white-spaces.'
     'end': '$'
     'name': 'tag.jade'
@@ -506,23 +506,37 @@
       }
     ]
   'flow_control':
-    'begin': '(for|if|else if|else|each|until|while|unless|case)(\\s+|$)'
-    'captures':
-      '1':
-        'name': 'storage.type.function.jade'
-    'comment': 'Jade control flow.'
-    'end': '$'
-    'name': 'meta.control.flow.jade'
     'patterns': [
       {
-        'begin': ''
+        'begin': '(for|if|else if|each|until|while|unless|case)(\\s+|$)'
+        'captures':
+          '1':
+            'name': 'storage.type.function.jade'
+        'comment': 'Jade control flow.'
         'end': '$'
-        'name': 'js.embedded.control.flow.jade'
+        'name': 'meta.control.flow.jade'
         'patterns': [
           {
-            'include': 'source.js'
+            'begin': ''
+            'end': '$'
+            'name': 'js.embedded.control.flow.jade'
+            'patterns': [
+              {
+                'include': 'source.js'
+              }
+            ]
           }
         ]
+      }
+      {
+        'match': '(else)(?! if)\\s*([^\\s].*)?$'
+        'captures':
+          '1':
+            'name': 'storage.type.function.jade'
+          '2':
+            'name': 'invalid.illegal.html_entity.text.jade'
+        'comment': 'Jade control flow.'
+        'name': 'meta.control.flow.jade'
       }
     ]
   'html_entity':
@@ -558,7 +572,7 @@
         'name': 'tag.inline.jade'
         'patterns': [
           {
-            'include': '#tag_name'
+            'include': '#inline_jade_tag_name'
           }
           {
             'include': '#tag_id'
@@ -777,11 +791,11 @@
         'captures':
           '1':
             'name': 'entity.other.attribute-name.tag.jade'
-        'match': '([^\\s(),=/]+)\\s*((?=\\))|,|\\s+|$)(?!=)'
+        'match': '([^\\s(),=/]+|\\[[^\\s,=/]+]|\\([^\\s(),=/]+\\))\\s*((?=\\))|,|\\s+|$)(?!=)'
         'name': 'attributes.tag.jade'
       }
       {
-        'begin': '([^\\s(),=/]*[^\\s(),=!/])\\s*(!?\\=)'
+        'begin': '([^\\s,=/]*[^\\s,=!/])\\s*(!?\\=)'
         'beginCaptures':
           '1':
             'name': 'entity.other.attribute-name.tag.jade'
@@ -809,11 +823,17 @@
       }
     ]
   'tag_classes':
-    'match': '\\.[\\w-]+'
-    'name': 'constant.language.js'
+    'captures':
+      '1':
+        'name': 'entity.other.attribute-name.class.css.jade'
+    'match': '(\\.[a-zA-Z0-9_-]+)'
+    'name': 'meta.selector.css.jade'
   'tag_id':
-    'match': '#[\\w-]+'
-    'name': 'entity.other.attribute-name.id.jade'
+    'captures':
+      '1':
+        'name': 'entity.other.attribute-name.id.css.jade'
+    'match': '(#[\\w-]+)'
+    'name': 'meta.selector.css.jade'
   'tag_mixin_attributes':
     'begin': '(&attributes\\()'
     'captures':
@@ -848,6 +868,30 @@
             'include': 'source.js'
           }
         ]
+      }
+    ]
+  'inline_jade_tag_name':
+    'begin': '(?<=#\\[)'
+    'end': '(?=(?<!:)\\s|\\])'
+    'patterns': [
+      {
+        'match': '((\\w|-|:(?!\\s))+)'
+        'name': 'entity.name.tag.jade'
+      }
+      {
+        'include': '#tag_classes'
+      }
+      {
+        'include': '#tag_id'
+      }
+      {
+        'include': '#tag_attributes'
+      }
+      {
+        'include': '#tag_mixin_attributes'
+      }
+      {
+        'include': '#printed_expression'
       }
     ]
   'tag_text':
