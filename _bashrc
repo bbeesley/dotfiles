@@ -34,13 +34,13 @@ source ~/.git-prompt.sh
 TERM=xterm-color
 PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h:\[\033[33;1m\]\w\[\033[m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ '
 
-export NVM_DIR="/Users/bbeesley/.nvm"
+export NVM_DIR="/Users/${HOME}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # tabtab source for serverless package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
-[ -f /Users/bbeesley/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash ] && . /Users/bbeesley/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash
+[ -f /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash ] && . /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash
 # tabtab source for sls package
 # uninstall by removing these lines or running `tabtab uninstall sls`
-[ -f /Users/bbeesley/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash ] && . /Users/bbeesley/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash
+[ -f /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash ] && . /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash

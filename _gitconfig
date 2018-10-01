@@ -1,18 +1,12 @@
-[core]
-	editor = vim
-	excludesfile = /home/bill/.config/git/ignore
 [user]
-	email = bill@recombix.com
+	signingkey = 135FB500CB4850C9908E1AF37523533AAC7A69D9
 	name = Bill Beesley
+	email = bill.beesley@dazn.com
+[commit]
+	gpgsign = true
 [alias]
 	co = checkout
 	br = branch
 	ci = commit
 	st = status
-        cp = cherry-pick
-[push]
-	default = current
-[credential]
-	helper = cache
-[http]
-        sslVerify = true
+	cp = cherry-pick

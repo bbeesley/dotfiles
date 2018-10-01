@@ -30,27 +30,21 @@ mkd (){
 
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
-# WHC PATH
-export PATH=$PATH:/Users/bbeesley/whc/dev_tools/scripts/
-
 # Update default gem location
 export GEM_HOME=/usr/local/bin
 
 # User binaries
-export PATH=$PATH:/Users/bbeesley/.bin/
+export PATH=$PATH:${HOME}/.bin/
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
 # wakatime
-source /users/bbeesley/src/bash-wakatime/bash-wakatime.sh
+source ${HOME}/src/bash-wakatime/bash-wakatime.sh
 
 # fuck
 # git-scripts
-export PATH=$PATH:/Users/bbeesley/projects/git-scripts/bin:/usr/local/go/bin
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/bbeesley/Downloads/google-cloud-sdk/path.bash.inc' ]; then source '/Users/bbeesley/Downloads/google-cloud-sdk/path.bash.inc'; fi
+export PATH=$PATH:${HOME}/projects/git-scripts/bin:/usr/local/go/bin
 
 # The next line enables shell command completion for gcloud.
-if [ -f '/Users/bbeesley/Downloads/google-cloud-sdk/completion.bash.inc' ]; then source '/Users/bbeesley/Downloads/google-cloud-sdk/completion.bash.inc'; fi
+if [ -f "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc" ]; then source "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc"; fi
