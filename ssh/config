@@ -1,25 +1,3 @@
 Host dione.bysh.me
   IdentityFile ~/.ssh/id_personal
 
-Host intelbox
-  Hostname intelbox
-  Port 22
-  User bill
-
-Host billbeesley.com
-  Hostname billbeesley.com
-  IdentityFile ~/.ssh/billbeesleycom.pem
-  User bill
-  Port 443
-
-Host vegas1
-  Hostname 10.1.29.12
-  User bbeesley
-  PermitLocalCommand yes
-  LocalCommand source ~/dotfiles/_bashrc
-
-Host vegas2
-  Hostname 10.1.28.48
-  User bbeesley
-  PermitLocalCommand yes
-  LocalCommand source /home/bbeesley/dotfiles/_bashrc
