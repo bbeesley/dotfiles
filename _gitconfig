@@ -10,3 +10,8 @@
 	ci = commit
 	st = status
 	cp = cherry-pick
+        cb = rev-parse --abbrev-ref HEAD
+[core]
+	excludesfile = /Users/bill.beesley/.gitignore_global
+[gpg]
+	program = gpg2

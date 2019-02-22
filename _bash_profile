@@ -48,3 +48,9 @@ export PATH=$PATH:${HOME}/projects/git-scripts/bin:/usr/local/go/bin
 
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc" ]; then source "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc"; fi
+# git-scripts
+export PATH=$PATH:/Users/bill.beesley/projects/git-scripts/bin
+
+# python shit
+export PATH=$PATH:${HOME}/Library/Python/2.7/bin
+
