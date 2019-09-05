@@ -2,7 +2,7 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/bill.beesley/.oh-my-zsh"
+export ZSH="/Users/bbeesley/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -97,22 +97,14 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# git-scripts
-export PATH=$PATH:${HOME}/projects/git-scripts/bin:/usr/local/go/bin
 
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc" ]; then source "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc"; fi
 # git-scripts
-export PATH=$PATH:/Users/bill.beesley/projects/git-scripts/bin
-
-# python shit
-export PATH=$PATH:${HOME}/Library/Python/2.7/bin
+export PATH=$PATH:/Users/bbeesley/SynologyDrive/projects/git-scripts/bin
 
 # node_modules
 export PATH=${PATH}:./node_modules/.bin
-
-# drone token
-source ${HOME}/.drone_secrets
 
 # url encode and decode
 
