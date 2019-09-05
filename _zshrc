@@ -2,7 +2,7 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/bill.beesley/.oh-my-zsh"
+export ZSH="/Users/bbeesley/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -68,7 +68,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-nvm)
+plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -97,60 +97,6 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# git-scripts
-export PATH=$PATH:${HOME}/projects/git-scripts/bin:/usr/local/go/bin
 
-# The next line enables shell command completion for gcloud.
-if [ -f "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc" ]; then source "${HOME}/Downloads/google-cloud-sdk/completion.bash.inc"; fi
-# git-scripts
-export PATH=$PATH:/Users/bill.beesley/projects/git-scripts/bin
-
-# python shit
-export PATH=$PATH:${HOME}/Library/Python/2.7/bin
-
-# node_modules
-export PATH=${PATH}:./node_modules/.bin
-
-# drone token
-source ${HOME}/.drone_secrets
-
-# url encode and decode
-
-urlencode() {
-    # urlencode <string>
-    old_lc_collate=$LC_COLLATE
-    LC_COLLATE=C
-
-    local length="${#1}"
-    for (( i = 0; i < length; i++ )); do
-        local c="${1:i:1}"
-        case $c in
-            [a-zA-Z0-9.~_-]) printf "$c" ;;
-            *) printf '%%%02X' "'$c" ;;
-        esac
-    done
-
-    LC_COLLATE=$old_lc_collate
-}
-
-urldecode() {
-    # urldecode <string>
-
-    local url_encoded="${1//+/ }"
-    printf '%b' "${url_encoded//%/\\x}"
-}
-
-clean-rail-params() {
-    echo "$1" | sed 's|:|%3A|g' | sed 's|;|%3B|g'
-}
-
-# get rail local
-fetch-rail() {
-    curl "localhost:8080$(clean-rail-params $1)" | json_pp
-}
-
-bindkey "[D" backward-word
-bindkey "[C" forward-word
-bindkey "^[a" beginning-of-line
-bindkey "^[e" end-of-line
-
+PATH="/Users/bbeesley/Library/Python/3.7/bin:/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
+export PATH

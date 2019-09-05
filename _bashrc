@@ -1,50 +1,10 @@
-# .bashrc
-
-# Source global definitions
-if [ -f /etc/bashrc ]; then
-	. /etc/bashrc
-fi
-
-# Uncomment the following line if you don't like systemctl's auto-paging feature:
-# export SYSTEMD_PAGER=
-
-# User specific aliases and functions
-alias fp="ps -Af | grep"
-alias behat="php ~/lib/behat.phar"
-# alias pbcopy='xclip -selection clipboard'
-# alias pbpaste='xclip -selection clipboard -o'
-export EDITOR=vi
-
-# maven shit
-export M2_HOME=/opt/apache-maven-3.3.3
-export M2=$M2_HOME/bin
-PATH=$M2:$PATH
-
-# java shit
-JAVA_HOME=/etc/alternatives/java_sdk
-export JAVA_HOME
-PATH=$JAVA_HOME/bin:$PATH
-export PATH
-export VAGRANT_DEFAULT_PROVIDER=virtualbox
-
-export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
-export PATH="$PATH:$HOME/cx/dev_tools/scripts" # WHC scripts
-
-source ~/.git-prompt.sh
-TERM=xterm-color
-PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h:\[\033[33;1m\]\w\[\033[m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ '
-
-export NVM_DIR="${HOME}/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # tabtab source for serverless package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
-[ -f /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash ] && . /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash
+[ -f /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash ] && . /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/serverless.bash
 # tabtab source for sls package
 # uninstall by removing these lines or running `tabtab uninstall sls`
-[ -f /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash ] && . /Users/${HOME}/.config/yarn/global/node_modules/serverless/node_modules/tabtab/.completions/sls.bash
-
+[ -f /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.bash ] && . /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.bash
 # tabtab source for slss package
 # uninstall by removing these lines or running `tabtab uninstall slss`
-[ -f /Users/bill.beesley/.nvm/versions/node/v8.12.0/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash ] && . /Users/bill.beesley/.nvm/versions/node/v8.12.0/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash
+[ -f /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash ] && . /Users/bbeesley/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash
