@@ -54,3 +54,43 @@ export PATH=$PATH:/Users/bill.beesley/projects/git-scripts/bin
 # python shit
 export PATH=$PATH:${HOME}/Library/Python/2.7/bin
 
+# node_modules
+export PATH=${PATH}:./node_modules/.bin
+
+# drone token
+source ${HOME}/.drone_secrets
+
+# url encode and decode
+
+urlencode() {
+    # urlencode <string>
+    old_lc_collate=$LC_COLLATE
+    LC_COLLATE=C
+
+    local length="${#1}"
+    for (( i = 0; i < length; i++ )); do
+        local c="${1:i:1}"
+        case $c in
+            [a-zA-Z0-9.~_-]) printf "$c" ;;
+            *) printf '%%%02X' "'$c" ;;
+        esac
+    done
+
+    LC_COLLATE=$old_lc_collate
+}
+
+urldecode() {
+    # urldecode <string>
+
+    local url_encoded="${1//+/ }"
+    printf '%b' "${url_encoded//%/\\x}"
+}
+
+clean-rail-params() {
+    echo "$1" | sed 's|:|%3A|g' | sed 's|;|%3B|g'
+}
+
+# get rail local
+fetch-rail() {
+    curl "localhost:8080$(clean-rail-params $1)" | json_pp
+}
