@@ -68,7 +68,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-nvm)
+plugins=(git git-open node npm npx nvm brew docker osx thefuck)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -97,6 +97,8 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+# tell spotlight not to index node_modules
+alias hide-modules="find . -type d -path './.*' -prune -o -path './Pictures*' -prune -o -path './Library*' -prune -o -path '*node_modules/*' -prune -o -type d -name 'node_modules' -exec touch '{}/.metadata_never_index' \; -print"
 # git-scripts
 export PATH=$PATH:${HOME}/projects/git-scripts/bin:/usr/local/go/bin
 
@@ -154,3 +156,18 @@ bindkey "[C" forward-word
 bindkey "^[a" beginning-of-line
 bindkey "^[e" end-of-line
 
+
+# tabtab source for serverless package
+# uninstall by removing these lines or running `tabtab uninstall serverless`
+[[ -f /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/serverless.zsh ]] && . /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/serverless.zsh
+# tabtab source for sls package
+# uninstall by removing these lines or running `tabtab uninstall sls`
+[[ -f /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/sls.zsh ]] && . /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/sls.zsh
+# tabtab source for slss package
+# uninstall by removing these lines or running `tabtab uninstall slss`
+[[ -f /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/slss.zsh ]] && . /Users/bill.beesley/projects/discovery-stream-transformer/node_modules/tabtab/.completions/slss.zsh
+# added by travis gem
+[ -f /Users/bill.beesley/.travis/travis.sh ] && source /Users/bill.beesley/.travis/travis.sh
+
+# tf docs
+source <(terraform-docs completion zsh)

@@ -48,3 +48,6 @@ export NVM_DIR="${HOME}/.nvm"
 # tabtab source for slss package
 # uninstall by removing these lines or running `tabtab uninstall slss`
 [ -f /Users/bill.beesley/.nvm/versions/node/v8.12.0/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash ] && . /Users/bill.beesley/.nvm/versions/node/v8.12.0/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash
+
+# added by travis gem
+[ -f /Users/bill.beesley/.travis/travis.sh ] && source /Users/bill.beesley/.travis/travis.sh
