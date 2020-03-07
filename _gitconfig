@@ -1,17 +1,17 @@
+[core]
+	editor = vim
+	excludesfile = /Users/bbeesley/.config/git/ignore
 [user]
-	signingkey = 135FB500CB4850C9908E1AF37523533AAC7A69D9
+	email = bbeesley@me.com
 	name = Bill Beesley
-	email = bill.beesley@dazn.com
-[commit]
-	gpgsign = true
+	signingkey = 7523533AAC7A69D9
 [alias]
 	co = checkout
 	br = branch
 	ci = commit
 	st = status
-	cp = cherry-pick
-        cb = rev-parse --abbrev-ref HEAD
-[core]
-	excludesfile = /Users/bill.beesley/.gitignore_global
-[gpg]
-	program = gpg2
+        cp = cherry-pick
+[push]
+	default = current
+[credential]
+	helper = cache
