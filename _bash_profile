@@ -27,7 +27,6 @@ rmi() {
     # Delete all images
     docker rmi $(docker images -q)
 }
-eval "$(pyenv init -)"
 
 export PATH="$HOME/.cargo/bin:$PATH"
 

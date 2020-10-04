@@ -1,5 +1,6 @@
 Host *
-  UseKeychain yes
-  AddKeysToAgent yes
-  IdentityFile ~/.ssh/bill.beesley-2018-10-15-rsa
   IdentityFile ~/.ssh/id_rsa
+
+Host cloud9.beesley.dev
+  HostName cloud9.beesley.dev
+  User ubuntu
