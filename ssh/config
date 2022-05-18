@@ -1,5 +1,2 @@
 Host *
-  UseKeychain yes
-  AddKeysToAgent yes
-  IdentityFile ~/.ssh/bill.beesley-2018-10-15-rsa
   IdentityFile ~/.ssh/id_rsa
