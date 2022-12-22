@@ -1,6 +1,6 @@
 [core]
 	editor = vim
-	excludesfile = /Users/bbeesley/.config/git/ignore
+	excludesfile = /Users/bbeesley/.gitignore_global
 [user]
 	email = bbeesley@me.com
 	name = Bill Beesley
@@ -15,3 +15,5 @@
 	default = current
 [credential]
 	helper = cache
+[init]
+	defaultBranch = main

@@ -2,3 +2,13 @@ Host *
   UseKeychain yes
   AddKeysToAgent yes
   IdentityFile ~/.ssh/id_rsa
+
+Host boozlecloud
+  HostName boozlecloud.local
+  Port 222
+
+Host cloud9-env1
+  HostName 52.56.209.106
+  User ubuntu
+  IdentityFile ~/.ssh/id_rsa
+
