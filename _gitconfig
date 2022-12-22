@@ -1,6 +1,6 @@
 [core]
 	editor = vim
-	excludesfile = /Users/bbeesley/.gitignore_global
+	excludesfile = ~/.gitignore_global
 [user]
 	email = bbeesley@me.com
 	name = Bill Beesley
