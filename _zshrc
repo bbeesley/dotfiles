@@ -97,8 +97,6 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# git-scripts
-export PATH=$PATH:${HOME}/synology-drive/projects/git-scripts/bin
 
 # node_modules
 export PATH=${PATH}:./node_modules/.bin
@@ -177,3 +175,20 @@ load-nvmrc() {
 }
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+[ -d "$HOME/.sc-tools" ] && source "$HOME/.sc-tools/dotfiles/env.zsh" #sc-tools-setup
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
+
+# git-scripts
+export PATH="$PATH:$HOME/projects/git-scripts/bin"
+
+# pnpm
+export PNPM_HOME="/Users/bill.beesley/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm endalias pn=pnpm

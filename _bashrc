@@ -7,3 +7,8 @@
 # tabtab source for slss package
 # uninstall by removing these lines or running `tabtab uninstall slss`
 [ -f ${HOME}/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash ] && . ${HOME}/.nvm/versions/node/v8.11.1/lib/node_modules/serverless/node_modules/tabtab/.completions/slss.bash
+
+[ -d "$HOME/.sc-tools" ] && source "$HOME/.sc-tools/dotfiles/env.bash" #sc-tools-setup
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"

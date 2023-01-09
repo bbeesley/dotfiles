@@ -2,9 +2,9 @@
 	editor = vim
 	excludesfile = ~/.gitignore_global
 [user]
-	email = bbeesley@me.com
+	email = bill.beesley@soundcloud.com
 	name = Bill Beesley
-	signingkey = 7523533AAC7A69D9
+	signingkey = 6AD6ECDE6405F60754739FEF75B94608F7064678
 [alias]
 	co = checkout
 	br = branch
@@ -17,3 +17,7 @@
 	helper = cache
 [init]
 	defaultBranch = main
+[pull]
+	ff = only
+[commit]
+	gpgsign = true

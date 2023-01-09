@@ -1,16 +1,16 @@
 #!/bin/bash
 
-## function to check we're not on the master branch, deal with it if we are
+## function to check we're not on the main branch, deal with it if we are
 function branchTest {
-  if [[ $(cd ~/dotfiles && git status ~/dotfiles | grep 'On branch master') ]]; then
-    echo "We're on the master branch, we should work on a specific one for this box"
+  if [[ $(cd ~/dotfiles && git status ~/dotfiles | grep 'On branch main') ]]; then
+    echo "We're on the main branch, we should work on a specific one for this box"
     box=$(hostname -s)
     cd ~/dotfiles
     [[ $(git branch | grep $box) ]] && echo "This box already has a branch, checking it out" && git checkout $box
     [[ ! $(git branch | grep $box) ]] && echo "This box doesnt have a branch, making one and checking it out" && git branch $box && git checkout $box
     branchTest
   else
-    echo "Great, we're not on the master branch, lets proceed"
+    echo "Great, we're not on the main branch, lets proceed"
   fi
 }
 
