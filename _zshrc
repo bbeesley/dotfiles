@@ -192,3 +192,7 @@ export PATH="$PATH:$HOME/projects/git-scripts/bin"
 export PNPM_HOME="/Users/bill.beesley/Library/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 # pnpm endalias pn=pnpm
+
+# ignore docker platform errors
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+
